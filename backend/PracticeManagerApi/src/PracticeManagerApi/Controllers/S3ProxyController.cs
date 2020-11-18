@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -29,7 +29,15 @@ namespace PracticeManagerApi.Controllers
             this.S3Client = s3Client;
 
             this.BucketName = configuration[Startup.AppS3BucketKey];
-            if(string.IsNullOrEmpty(this.BucketName))
+
+            var appUseMinioText = configuration[Startup.AppUseMinioKey];
+
+            if (bool.TryParse(appUseMinioText, out var appUseMinio))
+            {
+                ((AmazonS3Config) this.S3Client.Config).ForcePathStyle = appUseMinio;
+            }
+
+            if (string.IsNullOrEmpty(this.BucketName))
             {
                 logger.LogCritical("Missing configuration for S3 bucket. The AppS3Bucket configuration must be set to a S3 bucket.");
                 throw new Exception("Missing configuration for S3 bucket. The AppS3Bucket configuration must be set to a S3 bucket.");

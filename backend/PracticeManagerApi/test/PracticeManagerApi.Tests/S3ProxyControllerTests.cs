@@ -44,6 +44,9 @@ namespace PracticeManagerApi.Tests
             // Use the region and possible profile specified in the appsettings.json file to construct an Amazon S3 service client.
             //this.S3Client = Configuration.GetAWSOptions().CreateServiceClient<IAmazonS3>();
 
+            var useMinioText = Configuration[Startup.AppUseMinioKey];
+            bool.TryParse(useMinioText, out var useMinio);
+
             var option = Configuration.GetAWSOptions();
             var credentials = CreateCredentials(option);
 
@@ -51,7 +54,7 @@ namespace PracticeManagerApi.Tests
             {
                 RegionEndpoint = RegionEndpoint.USEast1,
                 ServiceURL = "http://localhost:9000",
-                ForcePathStyle = true,
+                ForcePathStyle = useMinio,
             };
 
             this.S3Client = new AmazonS3Client(credentials, config);
@@ -64,7 +67,7 @@ namespace PracticeManagerApi.Tests
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <remarks>https://github.com/aws/aws-sdk-net/blob/7c88eeceb52869892adb1fe50c3f06c8f1a6b126/extensions/src/AWSSDK.Extensions.NETCore.Setup/ClientFactory.cs#L125:39</remarks>
         /// <param name="options"></param>
@@ -91,7 +94,9 @@ namespace PracticeManagerApi.Tests
         public async Task TestSuccessWorkFlow()
         {
             var lambdaFunction = new LambdaEntryPoint();
+
             Startup.Configuration[Startup.AppS3BucketKey] = this.BucketName;
+
 
             // Use sample API Gateway request that uploads an object with object key "foo.txt" and content of "Hello World".
             var requestStr = File.ReadAllText("./SampleRequests/S3ProxyController-Put.json");
@@ -147,7 +152,8 @@ namespace PracticeManagerApi.Tests
             {
                 if (disposing)
                 {
-                    AmazonS3Util.DeleteS3BucketWithObjectsAsync(this.S3Client, BucketName).Wait();
+                    this.S3Client.DeleteBucketAsync(BucketName).Wait();
+                    //AmazonS3Util.DeleteS3BucketWithObjectsAsync(this.S3Client, BucketName).Wait();
                     this.S3Client.Dispose();
                 }
 
