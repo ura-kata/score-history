@@ -1,8 +1,18 @@
 import React from 'react';
 import GenericTemplate from './GenericTemplate'
-import { FormControl, FormHelperText, Input, InputLabel } from '@material-ui/core'
+import { createStyles, FormControl, FormHelperText, Input, InputLabel, makeStyles, Theme } from '@material-ui/core'
+
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    img:{
+      height: "50vh"
+    }
+
+  })
+);
 
 const UploadScorePage = () => {
+  const classes = useStyles();
   const [file, setFile] = React.useState('');
 
   const handleUploadClick = (event: any) => {
@@ -26,7 +36,7 @@ const UploadScorePage = () => {
           <Input aria-describedby="" type="file" inputProps={{ accept: "image/*"}} onChange={handleUploadClick}></Input>
           <FormHelperText></FormHelperText>
         </FormControl>
-        <img src={file}></img>
+        <img src={file} className={classes.img}></img>
       </div>
     </GenericTemplate>
   )
