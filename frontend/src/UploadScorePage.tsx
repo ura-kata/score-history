@@ -1,6 +1,6 @@
 import React, {useCallback} from 'react';
 import GenericTemplate from './GenericTemplate'
-import { createStyles, FormControl, FormHelperText, Input, InputLabel, makeStyles, Theme, colors } from '@material-ui/core'
+import { createStyles, FormControl, FormHelperText, Input, Button, InputLabel, makeStyles, Theme, colors } from '@material-ui/core'
 import { useDropzone } from 'react-dropzone'
 import { readBuilderProgram } from 'typescript';
 
@@ -59,9 +59,14 @@ const UploadScorePage = () => {
   },[]);
   const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop});
 
+  const handlerUpload = ()=>{
+    alert("upload click!")
+  };
+
   return (
     <GenericTemplate title="アップロードスコア">
       <div>
+        <Button onClick={handlerUpload}>アップロード</Button>
         <div className={classes.imageDropZone}>
           <div {...getRootProps()}>
             <input {...getInputProps()} />
