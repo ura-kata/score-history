@@ -9,16 +9,19 @@ const useStyles = makeStyles((theme: Theme) =>
     img:{
       height: "50vh"
     },
+    imageDropZoneRoot: {
+      margin:"20px",
+    },
     imageDropZone:{
-      width: "80%",
+      width: "100%",
       height: "50px",
       cursor: "pointer",
-      margin:"20px",
       backgroundColor: colors.grey[200],
+      textAlign: "center",
       '&:hover': {
         backgroundColor: colors.yellow[100],
       }
-    }
+    },
   })
 );
 
@@ -67,10 +70,10 @@ const UploadScorePage = () => {
     <GenericTemplate title="アップロードスコア">
       <div>
         <Button onClick={handlerUpload}>アップロード</Button>
-        <div className={classes.imageDropZone}>
+        <div className={classes.imageDropZoneRoot}>
           <div {...getRootProps()}>
             <input {...getInputProps()} />
-            <div>
+            <div className={classes.imageDropZone}>
               このエリアをクリックするするか画像ドロップしてアップロードしてください
             </div>
           </div>
