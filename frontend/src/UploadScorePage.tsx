@@ -1,42 +1,83 @@
-import React from 'react';
+import React, {useCallback} from 'react';
 import GenericTemplate from './GenericTemplate'
-import { createStyles, FormControl, FormHelperText, Input, InputLabel, makeStyles, Theme } from '@material-ui/core'
+import { createStyles, FormControl, FormHelperText, Input, InputLabel, makeStyles, Theme, colors } from '@material-ui/core'
+import { useDropzone } from 'react-dropzone'
+import { readBuilderProgram } from 'typescript';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     img:{
       height: "50vh"
+    },
+    imageDropZone:{
+      width: "80%",
+      height: "50px",
+      cursor: "pointer",
+      margin:"20px",
+      backgroundColor: colors.grey[200],
+      '&:hover': {
+        backgroundColor: colors.yellow[100],
+      }
     }
-
   })
 );
 
+interface FileData{
+  fileUrl: string;
+  file: File;
+}
+
 const UploadScorePage = () => {
   const classes = useStyles();
-  const [file, setFile] = React.useState('');
+  const [fileDataList, setFileDataList] = React.useState([] as FileData[]);
 
-  const handleUploadClick = (event: any) => {
-    console.log();
-    let file = event.target.files[0];
-    const reader = new FileReader();
-    let url = reader.readAsDataURL(file);
-    reader.onloadend = (e) =>{
-      setFile(reader.result as string);
-    }
+  const onDrop = useCallback((acceptedFiles) => {
+    setFileDataList([])
+    const loadedFileDataList: FileData[] = [];
+    console.log("onDrop");
 
-    console.log(url);
-    setFile(file);
-  }
+    acceptedFiles.forEach((f: File) => {
+      console.log(f);
+      const reader = new FileReader();
+
+      reader.onabort = () => console.log('ファイルの読み込み中断');
+      reader.onerror = () => console.log('ファイルの読み込みエラー');
+      reader.onload = (e) => {
+        // 正常に読み込みが完了した
+
+          loadedFileDataList.push({
+            fileUrl: e.target?.result as string,
+            file: f
+          });
+          setFileDataList([...loadedFileDataList]);
+
+      };
+
+      reader.readAsDataURL(f);
+    })
+
+  },[]);
+  const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop});
 
   return (
     <GenericTemplate title="アップロードスコア">
       <div>
-        <FormControl >
-          <InputLabel></InputLabel>
-          <Input aria-describedby="" type="file" inputProps={{ accept: "image/*"}} onChange={handleUploadClick}></Input>
-          <FormHelperText></FormHelperText>
-        </FormControl>
-        <img src={file} className={classes.img}></img>
+        <div className={classes.imageDropZone}>
+          <div {...getRootProps()}>
+            <input {...getInputProps()} />
+            <div>
+              このエリアをクリックするするか画像ドロップしてアップロードしてください
+            </div>
+          </div>
+        </div>
+        <ul>
+          {fileDataList.map((fd, i) => (
+            <li>
+              <img src={fd.fileUrl} key={'image' + i} className={classes.img}></img>
+              <p>{fd.file.name}</p>
+            </li>
+          ))}
+        </ul>
       </div>
     </GenericTemplate>
   )
