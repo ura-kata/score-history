@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -29,7 +30,12 @@ namespace PracticeManagerApi
         // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            services.AddControllers()
+                .AddJsonOptions(option =>
+                {
+                    option.JsonSerializerOptions.ReadCommentHandling = JsonCommentHandling.Skip;
+                    option.JsonSerializerOptions.AllowTrailingCommas = true;
+                });
 
             // Add S3 to the ASP.NET Core dependency injection framework.
             services.AddAWSService<Amazon.S3.IAmazonS3>();
