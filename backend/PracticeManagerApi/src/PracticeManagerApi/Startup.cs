@@ -56,6 +56,14 @@ namespace PracticeManagerApi
                 ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
             });
 
+            app.UseCors(config=>
+            {
+                // Todo 将来的にきちんと Cors を設定する
+                config.AllowAnyOrigin();
+                config.AllowAnyHeader();
+                config.AllowAnyMethod();
+            });
+
             app.UseHttpsRedirection();
 
             app.UseRouting();
