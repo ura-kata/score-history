@@ -32,10 +32,17 @@ namespace PracticeManagerApi.Controllers.v1
 
             var appUseMinioText = configuration[Startup.AppUseMinioKey];
 
+            var s3Config = (AmazonS3Config)this.S3Client.Config;
+
             if (bool.TryParse(appUseMinioText, out var appUseMinio))
             {
-                ((AmazonS3Config) this.S3Client.Config).ForcePathStyle = appUseMinio;
+                s3Config.ForcePathStyle = appUseMinio;
             }
+
+            s3Config.Timeout = TimeSpan.FromSeconds(10);
+            s3Config.ReadWriteTimeout = TimeSpan.FromSeconds(10);
+            s3Config.RetryMode = Amazon.Runtime.RequestRetryMode.Standard;
+            s3Config.MaxErrorRetry = 3;
 
             if (string.IsNullOrEmpty(this.BucketName))
             {
