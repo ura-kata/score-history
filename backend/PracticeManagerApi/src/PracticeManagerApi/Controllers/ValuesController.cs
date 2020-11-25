@@ -6,27 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace PracticeManagerApi.Controllers
 {
-
-    [Route("api/version")]
-    public class VersionController : ControllerBase
-    {
-        /// <summary>
-        /// バージョンの取得
-        /// </summary>
-        /// <returns></returns>
-        public IActionResult GetVersion()
-        {
-            var version = new Dictionary<string, string>()
-            {
-                { "version", "dev"},
-            };
-
-            return Ok(version);
-
-        }
-    }
-
-        [Route("api/[controller]")]
+    [Route("api/[controller]")]
     public class ValuesController : ControllerBase
     {
         // GET api/values
