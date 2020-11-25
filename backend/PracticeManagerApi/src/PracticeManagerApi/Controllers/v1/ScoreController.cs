@@ -128,12 +128,17 @@ namespace PracticeManagerApi.Controllers.v1
 
             if (uploadErrorFileList.Any())
             {
-                var code = 500;
                 var errorMessage = string.Join(Environment.NewLine, new string[]
                 {
                     "次のファイルのアップロードに失敗しました"
                 }.Concat(uploadErrorFileList.Select(x => $"'{x}'")));
-                return Problem(detail: errorMessage, statusCode: code);
+                var errorValue = new Dictionary<string, object>
+                {
+                    {"message", errorMessage },
+                    {"upload_error_file_list", uploadErrorFileList }
+                };
+                return StatusCode(500, errorValue);
+
             }
 
             return Ok();

@@ -3,6 +3,9 @@ import GenericTemplate from './GenericTemplate'
 import { createStyles, FormControl, FormHelperText, Input, Button, InputLabel, makeStyles, Theme, colors, GridList, GridListTile, GridListTileBar } from '@material-ui/core'
 import { useDropzone } from 'react-dropzone'
 import { readBuilderProgram } from 'typescript';
+import PracticeManagerApiClient from './PracticeManagerApiClient'
+
+const client = new PracticeManagerApiClient("http://localhost:5000/");
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -65,8 +68,14 @@ const UploadScorePage = () => {
   },[]);
   const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop});
 
-  const handlerUpload = ()=>{
-    alert("upload click!")
+  const handlerUpload = async ()=>{
+    const error_file_list = await client.postScoreImage(fileDataList.map(x=>x.file));
+    if(0 < error_file_list?.length){
+      alert('ファイルのアップロードに失敗しました');
+    }
+    else{
+      alert('画像をアップロードしました');
+    }
   };
 
   return (
