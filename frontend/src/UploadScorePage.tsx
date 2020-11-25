@@ -1,6 +1,6 @@
 import React, {useCallback} from 'react';
 import GenericTemplate from './GenericTemplate'
-import { createStyles, FormControl, FormHelperText, Input, Button, InputLabel, makeStyles, Theme, colors } from '@material-ui/core'
+import { createStyles, FormControl, FormHelperText, Input, Button, InputLabel, makeStyles, Theme, colors, GridList, GridListTile, GridListTileBar } from '@material-ui/core'
 import { useDropzone } from 'react-dropzone'
 import { readBuilderProgram } from 'typescript';
 
@@ -22,6 +22,9 @@ const useStyles = makeStyles((theme: Theme) =>
         backgroundColor: colors.yellow[100],
       }
     },
+    imageList:{
+      backgroundColor: colors.grey[100],
+    }
   })
 );
 
@@ -78,14 +81,16 @@ const UploadScorePage = () => {
             </div>
           </div>
         </div>
-        <ul>
-          {fileDataList.map((fd, i) => (
-            <li>
-              <img src={fd.fileUrl} key={'image' + i} className={classes.img}></img>
-              <p>{fd.file.name}</p>
-            </li>
-          ))}
-        </ul>
+        <GridList className={classes.imageList}>
+          {
+            fileDataList.map((fd, i) => (
+              <GridListTile key={'image' + i.toString()}>
+                <img src={fd.fileUrl} className={classes.img} alt={fd.file.name}></img>
+                <GridListTileBar title={fd.file.name}/>
+              </GridListTile>
+            ))
+          }
+        </GridList>
       </div>
     </GenericTemplate>
   )
