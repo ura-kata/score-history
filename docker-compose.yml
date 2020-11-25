@@ -1,0 +1,53 @@
+version: '3'
+services:
+  minio:
+    image: minio/minio
+    container_name: pm_minio
+    ports:
+      - 9000:9000
+    environment:
+      - MINIO_ACCESS_KEY=minio_test
+      - MINIO_SECRET_KEY=minio_test_pass
+    command: server /data
+    networks:
+      - default
+      - pm_net
+  backend:
+    build: ./backend/
+    image: practice-manager-api
+    container_name: pm_backend
+    ports:
+      - 9083:80
+    volumes:
+      - ./.aws:/root/.aws
+      - ./appsettings.json:/app/appsettings.json
+    networks:
+      - default
+      - pm_net
+    depends_on:
+      - minio
+  frontend:
+    build: ./frontend/
+    image: practice-manager-app
+    container_name: pm_frontend
+    ports:
+      - 9082:80
+    networks:
+      - default
+      - pm_net
+  proxy:
+    image: nginx:1.19.4
+    container_name: pm_proxy
+    ports:
+      - 9080:80
+    networks:
+      - default
+      - pm_net
+    volumes:
+      - ./practice-manager.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - frontend
+      - backend
+networks:
+  pm_net:
+    external: false
