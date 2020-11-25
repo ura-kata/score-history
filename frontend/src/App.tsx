@@ -1,6 +1,7 @@
 import React from 'react';
 import {  BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import UploadScorePage from './UploadScorePage';
+import ApiTest from './ApiTest';
 
 
 const App = () => {
@@ -8,6 +9,7 @@ const App = () => {
     <Router>
       <Switch>
         <Route path="/" component={UploadScorePage} exact />
+        <Route path="/api-test" component={ApiTest} exact />
       </Switch>
 
     </Router>
