@@ -145,7 +145,46 @@ namespace PracticeManagerApi.Controllers.v1
             return Ok();
         }
 
+
         [HttpGet]
+        [Route("{score_name}/version/{version}")]
+        public async Task<ScoreVersion> GetVersion(
+            [FromRoute(Name = "score_name")] string scoreName,
+            [FromRoute(Name = "version")] int version)
+        {
+            var prefix = $"{scoreName}/{version}/";
+            var request = new ListObjectsRequest
+            {
+                BucketName = BucketName,
+                Prefix = prefix,
+            };
+
+            try
+            {
+                var response = await this.S3Client.ListObjectsAsync(request);
+                Logger.LogInformation($"List object from bucket {this.BucketName}. Prefix: '{prefix}', Request Id: {response.ResponseMetadata.RequestId}");
+
+                var pages = response.S3Objects.Select(x =>
+                new ScoreVersionPage
+                {
+                    Url = new Uri($"{S3Client.Config.ServiceURL}/{x.BucketName}/{x.Key}"),
+                    No = double.Parse(x.Key.Split('/').Last().Split('-')[0]),
+                }).ToArray();
+
+                return new ScoreVersion
+                {
+                    Version = version,
+                    Pages = pages,
+                };
+            }
+            catch (AmazonS3Exception e)
+            {
+                Logger.LogError(e, e.Message);
+                throw;
+            }
+        }
+
+            [HttpGet]
         public async IAsyncEnumerable<Score> GetScores()
         {
             yield return new Score();
@@ -156,6 +195,22 @@ namespace PracticeManagerApi.Controllers.v1
     {
         public IFormFileCollection Images { get; set; }
         public string Nos { get; set; }
+    }
+
+    public class ScoreVersion
+    {
+        [JsonPropertyName(name: "version")]
+        public int Version { get; set; }
+        [JsonPropertyName(name: "pages")]
+        public ScoreVersionPage[] Pages { get; set; }
+    }
+
+    public class ScoreVersionPage
+    {
+        [JsonPropertyName(name: "url")]
+        public Uri Url { get; set; }
+        [JsonPropertyName(name: "no")]
+        public double No { get; set; }
     }
 
     /// <summary>
