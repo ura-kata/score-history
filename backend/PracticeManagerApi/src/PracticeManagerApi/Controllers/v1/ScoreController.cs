@@ -112,6 +112,7 @@ namespace PracticeManagerApi.Controllers.v1
                     BucketName = BucketName,
                     Key = key,
                     InputStream = stream,
+                    CannedACL = S3CannedACL.PublicRead,
                 };
 
                 try
