@@ -1,9 +1,10 @@
 import React, {useCallback} from 'react';
 import GenericTemplate from '../templates/GenericTemplate'
-import { createStyles, FormControl, FormHelperText, Input, Button, InputLabel, makeStyles, Theme, colors, GridList, GridListTile, GridListTileBar } from '@material-ui/core'
+import { createStyles, FormControl, FormHelperText, Input, Button, InputLabel, makeStyles, Theme, colors, Grid, GridListTile, GridListTileBar } from '@material-ui/core'
 import { useDropzone } from 'react-dropzone'
 import { readBuilderProgram } from 'typescript';
 import PracticeManagerApiClient from '../../PracticeManagerApiClient'
+import ScoreViewer from '../atoms/ScoreViewer';
 
 const client = new PracticeManagerApiClient("http://localhost:5000/");
 
@@ -27,7 +28,13 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     imageList:{
       backgroundColor: colors.grey[100],
-    }
+    },
+    buttonGrid:{
+      margin: theme.spacing(1,0,1)
+    },
+    socreGrid:{
+      margin: theme.spacing(1,0,1)
+    },
   })
 );
 
@@ -47,18 +54,14 @@ const DisplayPage = () => {
 
   return (
     <GenericTemplate title="ディスプレイスコア">
-      <div>
-        <Button onClick={handlerDownload}>ディスプレイ</Button>
-        <GridList className={classes.imageList}>
-          {
-            imageUrlList.map((url, i) => (
-              <GridListTile key={'image' + i.toString()}>
-                <img src={url} className={classes.img} alt={i.toString()}></img>
-              </GridListTile>
-            ))
-          }
-        </GridList>
-      </div>
+      <Grid container>
+        <Grid item xs={12} className={classes.buttonGrid}>
+          <Button variant="outlined" color="primary" onClick={handlerDownload}>ダウンロード</Button>
+        </Grid>
+        <Grid item xs={12} className={classes.socreGrid}>
+          <ScoreViewer imageUrls={imageUrlList}></ScoreViewer>
+        </Grid>
+      </Grid>
     </GenericTemplate>
   )
 }
