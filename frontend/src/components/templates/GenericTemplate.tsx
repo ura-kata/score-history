@@ -5,6 +5,8 @@ import { colors, createMuiTheme, createStyles, CssBaseline, makeStyles, Theme, T
 import MenuIcon from "@material-ui/icons/Menu"
 import ChevronLeftIcon  from "@material-ui/icons/ChevronLeft"
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
+import ViewCarouselIcon from '@material-ui/icons/ViewCarousel';
+import ExtensionIcon from '@material-ui/icons/Extension';
 import { Link, } from "react-router-dom";
 import  Copyright from '../atoms/Copyright'
 
@@ -142,21 +144,21 @@ const GenericTemplate: React.FC<GenericTemplateProps> = ({
                 <ListItemIcon>
                   <CloudUploadIcon />
                 </ListItemIcon>
-                <ListItemText primary="アップロードスコア" />
+                <ListItemText primary="スコアのアップロード" />
               </ListItem>
             </Link>
             <Link to="/display" className={classes.link}>
               <ListItem button>
                 <ListItemIcon>
-                  <CloudUploadIcon />
+                  <ViewCarouselIcon />
                 </ListItemIcon>
-                <ListItemText primary="ディスプレイスコア" />
+                <ListItemText primary="スコアの表示" />
               </ListItem>
             </Link>
             <Link to="/api-test" className={classes.link}>
               <ListItem button>
                 <ListItemIcon>
-                  <CloudUploadIcon />
+                  <ExtensionIcon />
                 </ListItemIcon>
                 <ListItemText primary="API Test" />
               </ListItem>

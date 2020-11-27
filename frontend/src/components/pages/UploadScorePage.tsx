@@ -79,9 +79,9 @@ const UploadScorePage = () => {
   };
 
   return (
-    <GenericTemplate title="アップロードスコア">
+    <GenericTemplate title="スコアのアップロード">
       <div>
-        <Button onClick={handlerUpload}>アップロード</Button>
+        <Button variant="outlined" color="primary" onClick={handlerUpload}>アップロード</Button>
         <div className={classes.imageDropZoneRoot}>
           <div {...getRootProps()}>
             <input {...getInputProps()} />

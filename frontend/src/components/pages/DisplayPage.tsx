@@ -53,7 +53,7 @@ const DisplayPage = () => {
   };
 
   return (
-    <GenericTemplate title="ディスプレイスコア">
+    <GenericTemplate title="スコアの表示">
       <Grid container>
         <Grid item xs={12} className={classes.buttonGrid}>
           <Button variant="outlined" color="primary" onClick={handlerDownload}>ダウンロード</Button>
