@@ -1,9 +1,9 @@
 import React, {useCallback} from 'react';
-import GenericTemplate from './GenericTemplate'
+import GenericTemplate from '../templates/GenericTemplate'
 import { createStyles, FormControl, FormHelperText, Input, Button, InputLabel, makeStyles, Theme, colors, GridList, GridListTile, GridListTileBar } from '@material-ui/core'
 import { useDropzone } from 'react-dropzone'
 import { readBuilderProgram } from 'typescript';
-import PracticeManagerApiClient from './PracticeManagerApiClient'
+import PracticeManagerApiClient from '../../PracticeManagerApiClient'
 
 const client = new PracticeManagerApiClient("http://localhost:5000/");
 
@@ -79,9 +79,9 @@ const UploadScorePage = () => {
   };
 
   return (
-    <GenericTemplate title="アップロードスコア">
+    <GenericTemplate title="スコアのアップロード">
       <div>
-        <Button onClick={handlerUpload}>アップロード</Button>
+        <Button variant="outlined" color="primary" onClick={handlerUpload}>アップロード</Button>
         <div className={classes.imageDropZoneRoot}>
           <div {...getRootProps()}>
             <input {...getInputProps()} />

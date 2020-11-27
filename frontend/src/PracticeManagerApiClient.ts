@@ -1,4 +1,14 @@
 
+export interface ScoreVersionPage{
+  url: string;
+  no: number;
+}
+export interface ScoreVersion{
+  version: number;
+  pages: ScoreVersionPage[];
+
+}
+
 export default class PracticeManagerApiClient{
   constructor(private baseUrl: string){
 
@@ -18,6 +28,25 @@ export default class PracticeManagerApiClient{
       const json = await response.json();
 
       return json.version;
+    } catch(err){
+      throw err;
+    }
+  }
+
+  async getScoreVersion(): Promise<ScoreVersion> {
+    const url = new URL(`api/v1/score/${'test'}/version/${'0'}`, this.baseUrl);
+
+    try{
+      const response = await fetch(url.href, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const json = await response.json();
+
+      return json;
     } catch(err){
       throw err;
     }
