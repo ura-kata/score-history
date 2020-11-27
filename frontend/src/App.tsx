@@ -1,7 +1,7 @@
 import React from 'react';
 import {  BrowserRouter as Router, Route, Switch } from "react-router-dom";
-import UploadScorePage from './UploadScorePage';
-import DisplayPage from './DisplayPage'
+import UploadScorePage from './components/pages/UploadScorePage';
+import DisplayPage from './components/pages/DisplayPage'
 import ApiTest from './ApiTest';
 
 

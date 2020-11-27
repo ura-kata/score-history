@@ -1,9 +1,9 @@
 import React, {useCallback} from 'react';
-import GenericTemplate from './GenericTemplate'
+import GenericTemplate from '../templates/GenericTemplate'
 import { createStyles, FormControl, FormHelperText, Input, Button, InputLabel, makeStyles, Theme, colors, GridList, GridListTile, GridListTileBar } from '@material-ui/core'
 import { useDropzone } from 'react-dropzone'
 import { readBuilderProgram } from 'typescript';
-import PracticeManagerApiClient from './PracticeManagerApiClient'
+import PracticeManagerApiClient from '../../PracticeManagerApiClient'
 
 const client = new PracticeManagerApiClient("http://localhost:5000/");
 

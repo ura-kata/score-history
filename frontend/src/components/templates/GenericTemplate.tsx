@@ -6,7 +6,7 @@ import MenuIcon from "@material-ui/icons/Menu"
 import ChevronLeftIcon  from "@material-ui/icons/ChevronLeft"
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 import { Link, } from "react-router-dom";
-import  Copyright from './Copyright'
+import  Copyright from '../atoms/Copyright'
 
 
 const drawerWidth = 240;

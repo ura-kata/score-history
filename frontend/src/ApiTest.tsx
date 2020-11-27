@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import GenericTemplate from "./GenericTemplate";
+import GenericTemplate from "./components/templates/GenericTemplate";
 import {
   createStyles,
   Grid,
