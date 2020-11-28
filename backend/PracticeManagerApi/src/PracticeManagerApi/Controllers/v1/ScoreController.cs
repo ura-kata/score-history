@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.IO;
 using System.IO.Enumeration;
 using System.Linq;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Amazon.S3;
@@ -53,11 +54,6 @@ namespace PracticeManagerApi.Controllers.v1
             logger.LogInformation($"Configured to use bucket {this.BucketName}");
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateNewScoreAsync([FromBody] NewScore newScore)
-        {
-            throw new NotImplementedException();
-        }
 
         [HttpPost]
         [Route("{score_name}/version/{version}")]
@@ -184,11 +180,101 @@ namespace PracticeManagerApi.Controllers.v1
             }
         }
 
-            [HttpGet]
+        [HttpGet]
         public async IAsyncEnumerable<Score> GetScores()
         {
-            yield return new Score();
+            var prefix = $"";
+            var request = new ListObjectsRequest
+            {
+                BucketName = BucketName,
+                Prefix = prefix,
+                Delimiter = "/",
+                
+            };
+
+            Score[] scores;
+            try
+            {
+                var response = await this.S3Client.ListObjectsAsync(request);
+                Logger.LogInformation($"List object from bucket {this.BucketName}. Prefix: '{prefix}', Request Id: {response.ResponseMetadata.RequestId}");
+
+                scores = response.CommonPrefixes.Select(x =>
+                    new Score
+                    {
+                        MetaUrl= new Uri($"{S3Client.Config.ServiceURL}/{BucketName}/{x}{ScoreMeta.FileName}"),
+                    }).ToArray();
+            }
+            catch (AmazonS3Exception e)
+            {
+                Logger.LogError(e, e.Message);
+                throw;
+            }
+
+            foreach (var score in scores)
+            {
+                yield return score;
+            }
         }
+        
+        [HttpPost]
+        public async Task<IActionResult> CreateScoreAsync([FromBody] NewScore newScore)
+        {
+            var convertor = new ScoreMetaConvertor();
+
+            var meta = convertor.Convert(newScore);
+
+            var prefix = $"{meta.Name}/{ScoreMeta.FileName}";
+            
+
+            try
+            {
+                var request = new ListObjectsRequest
+                {
+                    BucketName = BucketName,
+                    Prefix = prefix,
+                };
+
+                var response = await this.S3Client.ListObjectsAsync(request);
+                Logger.LogInformation($"List object from bucket {this.BucketName}. Prefix: '{prefix}', Request Id: {response.ResponseMetadata.RequestId}");
+
+                if (response.S3Objects.Any())
+                {
+                    throw new InvalidOperationException($"'{meta.Name}' は存在します");
+                }
+            }
+            catch (AmazonS3Exception e)
+            {
+                Logger.LogError(e, e.Message);
+                throw;
+            }
+
+
+            try
+            {
+                var fileName = ScoreMeta.FileName;
+
+                var stream = await convertor.ConvertToUtf(meta);
+
+                var key = $"{meta.Name}/{fileName}";
+                var putRequest = new PutObjectRequest
+                {
+                    BucketName = BucketName,
+                    Key = key,
+                    InputStream = stream,
+                    CannedACL = S3CannedACL.PublicRead,
+                };
+                var response = await this.S3Client.PutObjectAsync(putRequest);
+                Logger.LogInformation($"Uploaded object {key} to bucket {this.BucketName}. Request Id: {response.ResponseMetadata.RequestId}");
+
+                return Ok();
+            }
+            catch (AmazonS3Exception e)
+            {
+                Logger.LogError(e, e.Message);
+                throw;
+            }
+        }
+
     }
 
     public class NewScoreVersion
@@ -230,6 +316,14 @@ namespace PracticeManagerApi.Controllers.v1
 
     public class Score
     {
+        [JsonPropertyName(name: "meta_rul")]
+        public Uri MetaUrl { get; set; }
+    }
+
+    public class ScoreMeta
+    {
+        public const string FileName = "meta.json";
+
         [JsonPropertyName(name: "name")]
         public string Name { get; set; }
 
@@ -238,5 +332,60 @@ namespace PracticeManagerApi.Controllers.v1
 
         [JsonPropertyName(name: "description")]
         public string Description { get; set; }
+
+        [JsonPropertyName(name: "versions")]
+        public ScoreVersionMeta[] Versions { get; set; } = new ScoreVersionMeta[0];
+    }
+
+    public class ScoreVersionMeta
+    {
+        [JsonPropertyName(name: "version")]
+        public int Version { get; set; }
+
+        [JsonPropertyName(name: "description")]
+        public string Description { get; set; }
+
+        [JsonPropertyName(name: "pages")]
+        public ScoreVersionPageMeta[] Pages { get; set; } = new ScoreVersionPageMeta[0];
+    }
+
+    public class ScoreVersionPageMeta
+    {
+        [JsonPropertyName(name: "no")]
+        public double No { get; set; }
+
+        [JsonPropertyName(name: "prefix")]
+        public string Prefix { get; set; }
+
+        [JsonPropertyName(name: "description")]
+        public string Description { get; set; }
+
+        [JsonPropertyName(name: "comment_json")]
+        public string CommentJson { get; set; }
+        
+        [JsonPropertyName(name: "overlay_svg")]
+        public string OverlaySvg { get; set; }
+    }
+
+    public class ScoreMetaConvertor
+    {
+        public ScoreMeta Convert(NewScore newScore)
+        {
+            return new ScoreMeta()
+            {
+                Name = newScore.Name,
+                Title = newScore.Title ?? "",
+                Description = newScore.Description ?? "",
+            };
+        }
+
+        public async Task<Stream> ConvertToUtf(ScoreMeta scoreMeta)
+        {
+            var memStream = new MemoryStream();
+            var option = new JsonSerializerOptions() { };
+            await JsonSerializer.SerializeAsync(memStream, scoreMeta, option);
+            memStream.Position = 0;
+            return memStream;
+        }
     }
 }
