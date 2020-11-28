@@ -9,6 +9,16 @@ export interface ScoreVersion{
 
 }
 
+export interface Socre{
+  meta_url: string;
+}
+
+export interface NewScore{
+  name: string;
+  title: string | null;
+  description: string | null;
+}
+
 export default class PracticeManagerApiClient{
   constructor(private baseUrl: string){
 
@@ -70,14 +80,61 @@ export default class PracticeManagerApiClient{
         body: formData,
       });
 
-      if(response.status === 200){
+      if(response.ok){
         return [];
       }
-      const json = await response.json();
 
-      return json.upload_error_file_list;
+      if(response.status === 500){
+        const json = await response.json();
+        return json.upload_error_file_list;
+      }
+
+      throw new Error(`Score 画像の登録に失敗しました(${response.body})`);
+
     } catch(err){
       throw err;
     }
   }
+
+  async getScores(): Promise<Socre[]> {
+    const url = new URL(`api/v1/score`, this.baseUrl);
+    try{
+      const response = await fetch(url.href, {
+        method: 'GET',
+      });
+
+      if(!response.ok){
+        throw new Error(`Score の取得に失敗しました(${await response.text()})`);
+      }
+      const json = await response.json();
+
+      return json;
+
+    } catch(err){
+      throw err;
+    }
+  }
+
+  async createScore(newScore: NewScore): Promise<void> {
+    const url = new URL(`api/v1/score`, this.baseUrl);
+    try{
+      const response = await fetch(url.href, {
+        method: 'POST',
+        headers:{
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newScore),
+      });
+
+      if(!response.ok){
+        throw new Error(`Score の取得に失敗しました(${await response.text()})`);
+      }
+    } catch(err){
+      throw err;
+    }
+  }
+
+
+
+
 }
