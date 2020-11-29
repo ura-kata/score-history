@@ -9,6 +9,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Amazon.S3.Model.Internal.MarshallTransformations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -222,8 +223,9 @@ namespace PracticeManagerApi.Controllers.v1
             var convertor = new ScoreMetaConvertor();
 
             var meta = convertor.Convert(newScore);
+            var content = meta.GetLastScoreContent();
 
-            var prefix = $"{meta.Name}/{ScoreMeta.FileName}";
+            var prefix = $"{content.Name}/{ScoreMeta.FileName}";
             
 
             try
@@ -239,7 +241,7 @@ namespace PracticeManagerApi.Controllers.v1
 
                 if (response.S3Objects.Any())
                 {
-                    throw new InvalidOperationException($"'{meta.Name}' は存在します");
+                    throw new InvalidOperationException($"'{content.Name}' は存在します");
                 }
             }
             catch (AmazonS3Exception e)
@@ -255,7 +257,7 @@ namespace PracticeManagerApi.Controllers.v1
 
                 var stream = await convertor.ConvertToUtf(meta);
 
-                var key = $"{meta.Name}/{fileName}";
+                var key = $"{content.Name}/{fileName}";
                 var putRequest = new PutObjectRequest
                 {
                     BucketName = BucketName,
@@ -273,6 +275,82 @@ namespace PracticeManagerApi.Controllers.v1
                 Logger.LogError(e, e.Message);
                 throw;
             }
+        }
+
+
+        [HttpPatch]
+        [Route("{score_name}")]
+        public async Task<IActionResult> CreateScoreAsync(
+            [FromRoute(Name = "score_name")] string scoreName,
+            [FromBody] PatchScore patchScore)
+        {
+            var convertor = new ScoreMetaConvertor();
+
+            var key = $"{scoreName}/{ScoreMeta.FileName}";
+
+
+            Stream currentStream;
+            try
+            {
+                var request = new GetObjectRequest
+                {
+                    BucketName = BucketName,
+                    Key = key,
+                };
+
+                var response = await this.S3Client.GetObjectAsync(request);
+                Logger.LogInformation(
+                    $"List object from bucket {this.BucketName}. Key: '{key}', Request Id: {response.ResponseMetadata.RequestId}");
+
+
+                currentStream = response.ResponseStream;
+            }
+            catch (AmazonS3Exception e)
+            {
+                if (e.ErrorCode == "NoSuchKey")
+                {
+                    throw new InvalidOperationException($"'{scoreName}' は存在しません");
+                }
+
+                Logger.LogError(e, e.Message);
+                throw;
+            }
+
+            var scoreMeta = await convertor.ConvertToScoreMeta(currentStream);
+
+            var newCurrentScoreMeta = convertor.ConvertToContent(scoreMeta.GetLastScoreContent(), patchScore);
+
+            scoreMeta[DateTimeOffset.Now.UtcDateTime.ToString("yyyyMMddHHmmssfff")] = newCurrentScoreMeta;
+
+            for (int i = 0; i < 1; i++)
+            {
+                try
+                {
+                    var stream = await convertor.ConvertToUtf(scoreMeta);
+
+                    var putRequest = new PutObjectRequest
+                    {
+                        BucketName = BucketName,
+                        Key = key,
+                        InputStream = stream,
+                        CannedACL = S3CannedACL.PublicRead,
+                    };
+                    var response = await this.S3Client.PutObjectAsync(putRequest);
+                    Logger.LogInformation($"Uploaded object {key} to bucket {this.BucketName}. Request Id: {response.ResponseMetadata.RequestId}");
+
+                    return Ok();
+                }
+                catch (AmazonS3Exception e)
+                {
+                    Logger.LogError(e, e.Message);
+                    throw;
+                }
+
+                // Todo ここに今回のデータがきちんと反映されているか確認するコードを書く
+            }
+
+            
+            return Ok();
         }
 
     }
@@ -314,16 +392,43 @@ namespace PracticeManagerApi.Controllers.v1
         public string Description { get; set; }
     }
 
+    /// <summary>
+    /// 更新
+    /// </summary>
+    public class PatchScore
+    {
+        [JsonPropertyName(name: "title")]
+        public string Title { get; set; }
+
+        [JsonPropertyName(name: "description")]
+        public string Description { get; set; }
+    }
+
     public class Score
     {
         [JsonPropertyName(name: "meta_rul")]
         public Uri MetaUrl { get; set; }
     }
 
-    public class ScoreMeta
+    public class ScoreMeta: Dictionary<string, ScoreContentMeta>
     {
         public const string FileName = "meta.json";
 
+        public ScoreContentMeta GetLastScoreContent()
+        {
+            if(this.Count == 0)
+                throw new InvalidOperationException("Content が存在しません");
+
+            var maxKey = this.Keys.Aggregate(
+                DateTimeOffset.MinValue.UtcDateTime.ToString("yyyyMMddHHmmssfff"),
+                (elm, max) => String.CompareOrdinal(max, elm) < 0 ? elm : max);
+
+            return this[maxKey];
+        }
+    }
+
+    public class ScoreContentMeta
+    {
         [JsonPropertyName(name: "name")]
         public string Name { get; set; }
 
@@ -369,13 +474,31 @@ namespace PracticeManagerApi.Controllers.v1
 
     public class ScoreMetaConvertor
     {
-        public ScoreMeta Convert(NewScore newScore)
+        public ScoreMeta Convert(NewScore newScore) => Convert(newScore, DateTimeOffset.Now);
+
+        public ScoreMeta Convert(NewScore newScore, DateTimeOffset dateTime)
         {
-            return new ScoreMeta()
+            var content = new ScoreContentMeta()
             {
                 Name = newScore.Name,
                 Title = newScore.Title ?? "",
                 Description = newScore.Description ?? "",
+            };
+
+            return new ScoreMeta()
+            {
+                {dateTime.UtcDateTime.ToString("yyyyMMddHHmmssfff"), content}
+            };
+        }
+
+        public ScoreContentMeta ConvertToContent(ScoreContentMeta current, PatchScore patchScore)
+        {
+            return new ScoreContentMeta()
+            {
+                Name = current.Name,
+                Versions = current.Versions,
+                Title = patchScore?.Title ?? current.Title,
+                Description = patchScore?.Description ?? current.Description,
             };
         }
 
@@ -386,6 +509,12 @@ namespace PracticeManagerApi.Controllers.v1
             await JsonSerializer.SerializeAsync(memStream, scoreMeta, option);
             memStream.Position = 0;
             return memStream;
+        }
+
+        public async Task<ScoreMeta> ConvertToScoreMeta(Stream stream)
+        {
+            var option = new JsonSerializerOptions() { };
+            return await JsonSerializer.DeserializeAsync<ScoreMeta>(stream, option);
         }
     }
 }
