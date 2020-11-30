@@ -6,6 +6,7 @@ using System.IO.Enumeration;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -320,9 +321,12 @@ namespace PracticeManagerApi.Controllers.v1
 
             var newCurrentScoreMeta = convertor.ConvertToContent(scoreMeta.GetLastScoreContent(), patchScore);
 
-            scoreMeta[DateTimeOffset.Now.UtcDateTime.ToString("yyyyMMddHHmmssfff")] = newCurrentScoreMeta;
+            var newScoreMetaKey = DateTimeOffset.Now.UtcDateTime.ToString("yyyyMMddHHmmssfff");
 
-            for (int i = 0; i < 1; i++)
+            scoreMeta[newScoreMetaKey] = newCurrentScoreMeta;
+
+            int retryCount = 5;
+            for (int i = 0; i < retryCount; i++)
             {
                 try
                 {
@@ -338,7 +342,6 @@ namespace PracticeManagerApi.Controllers.v1
                     var response = await this.S3Client.PutObjectAsync(putRequest);
                     Logger.LogInformation($"Uploaded object {key} to bucket {this.BucketName}. Request Id: {response.ResponseMetadata.RequestId}");
 
-                    return Ok();
                 }
                 catch (AmazonS3Exception e)
                 {
@@ -346,11 +349,41 @@ namespace PracticeManagerApi.Controllers.v1
                     throw;
                 }
 
-                // Todo ここに今回のデータがきちんと反映されているか確認するコードを書く
+
+                try
+                {
+                    var request = new GetObjectRequest
+                    {
+                        BucketName = BucketName,
+                        Key = key,
+                    };
+
+                    var response = await this.S3Client.GetObjectAsync(request);
+                    Logger.LogInformation(
+                        $"List object from bucket {this.BucketName}. Key: '{key}', Request Id: {response.ResponseMetadata.RequestId}");
+
+
+                    var stream = response.ResponseStream;
+
+                    var checkedMeta = await convertor.ConvertToScoreMeta(stream);
+
+                    // 同一のキーが登録される可能性があるがキーには少数3桁の時間を指定してるので
+                    // ほぼキーが重なる自体はないと考える
+                    // もしキーの重複が問題になる用であれば内容の比較も行う
+                    if (checkedMeta.ContainsKey(newScoreMetaKey))
+                        return Ok();
+
+                }
+                catch (AmazonS3Exception e)
+                {
+                    Logger.LogError(e, e.Message);
+                }
+
+                if(i < (retryCount-1))
+                    Thread.Sleep(2000);
             }
 
-            
-            return Ok();
+            throw new InvalidOperationException("追加に失敗しました");
         }
 
     }
