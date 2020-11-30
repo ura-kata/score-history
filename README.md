@@ -11,3 +11,19 @@
 ## アーキテクチャ
 
 ![architecture.d.svg](./designs/architecture.d.svg)
+
+## S3 の構造
+
+- ${bucket_name}
+  - ${score_name}
+    - meta.json
+    - versions
+      - ${version_number(/\d{5}/)}
+        - ${yyyyMMddHHmmssfff}
+          - version.json
+          - comments
+            - ${page_number}
+              - ${yyyyMMddHHmmssfff}
+                - comment.json
+    - images
+      - ${UUID}.${ext}
