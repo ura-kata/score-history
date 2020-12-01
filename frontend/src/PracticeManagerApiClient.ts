@@ -117,6 +117,13 @@ export default class PracticeManagerApiClient{
 
   async createScore(newScore: NewScore): Promise<void> {
     const url = new URL(`api/v1/score`, this.baseUrl);
+
+    if(newScore.name === ""){
+      throw new Error('Score の名前を入力してください')
+    }
+    if(!newScore.name.match(/^[A-Za-z0-9]+$/)){
+      throw new Error('Score の名前は半角英数字を入力してください')
+    }
     try{
       const response = await fetch(url.href, {
         method: 'POST',
