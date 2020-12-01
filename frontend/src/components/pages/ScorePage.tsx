@@ -1,7 +1,7 @@
 import React, {useCallback} from 'react';
 import GenericTemplate from '../templates/GenericTemplate'
-import { createStyles, FormControl, FormHelperText, Input, Button, InputLabel, makeStyles, Theme, colors, GridList, GridListTile, GridListTileBar, TextField, Grid } from '@material-ui/core'
-import PracticeManagerApiClient from '../../PracticeManagerApiClient'
+import { createStyles, FormControl, FormHelperText, Input, Button, InputLabel, makeStyles, Theme, colors, GridList, GridListTile, GridListTileBar, TextField, Grid, Card, CardContent, Typography } from '@material-ui/core'
+import PracticeManagerApiClient, {Socre} from '../../PracticeManagerApiClient'
 
 const client = new PracticeManagerApiClient("http://localhost:5000/");
 
@@ -31,6 +31,13 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     textField:{
       width: "100%"
+    },
+    scoreCard:{
+      width: "300px",
+      margin: theme.spacing(1)
+    },
+    scoreCardName:{
+      color: colors.grey[400]
     }
   })
 );
@@ -41,6 +48,7 @@ const ScorePage = () => {
   const [scoreName, setScoreName] = React.useState("");
   const [scoreTitle, setScoreTitle] = React.useState("");
   const [scoreDescription, setScoreDescription] = React.useState("");
+  const [scores, setScores] = React.useState([] as Socre[]);
 
 
   const handlerCreate = useCallback(async ()=>{
@@ -103,6 +111,19 @@ const ScorePage = () => {
           <Button variant="outlined" color="primary" onClick={handlerCreate}>作成</Button>
           </Grid>
         </Grid>
+      </div>
+      <div>
+        {
+          [0, 1, 2].map((score, i)=>(
+            <Card key={i.toString()} className={classes.scoreCard}>
+              <CardContent>
+                <Typography variant="h5">スコアのタイトル{score.toString()}</Typography>
+                <Typography variant="caption" className={classes.scoreCardName}>scoreName{score.toString()}</Typography>
+                <Typography variant="subtitle1" gutterBottom>{"スコアの説明。"}</Typography>
+              </CardContent>
+            </Card>
+          ))
+        }
       </div>
 
     </GenericTemplate>
