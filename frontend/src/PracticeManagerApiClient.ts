@@ -70,8 +70,8 @@ export default class PracticeManagerApiClient{
     }
   }
 
-  async postScoreImage(files: File[]): Promise<string[]> {
-    const url = new URL(`api/v1/score/${'test'}/version/${'0'}`, this.baseUrl);
+  async createVersion(name: string, files: File[]): Promise<string> {
+    const url = new URL(`api/v1/score/${name}/version`, this.baseUrl);
 
     const formData = new FormData();
     const nos: {[name: string]: number} = {};
@@ -89,15 +89,14 @@ export default class PracticeManagerApiClient{
       });
 
       if(response.ok){
-        return [];
+        return "";
       }
 
       if(response.status === 500){
-        const json = await response.json();
-        return json.upload_error_file_list;
+        return response.text();
       }
 
-      throw new Error(`Score 画像の登録に失敗しました(${response.body})`);
+      throw new Error(`Score 画像の登録に失敗しました(${response.text()})`);
 
     } catch(err){
       throw err;
