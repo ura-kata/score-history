@@ -10,7 +10,15 @@ export interface ScoreVersion{
 }
 
 export interface Socre{
-  meta_url: string;
+  name: string;
+  title: string;
+  description: string;
+  version_meta_urls: SocreVersionMetaUrl[];
+}
+
+export interface SocreVersionMetaUrl{
+  version: number;
+  url: string;
 }
 
 export interface NewScore{
@@ -106,9 +114,9 @@ export default class PracticeManagerApiClient{
       if(!response.ok){
         throw new Error(`Score の取得に失敗しました(${await response.text()})`);
       }
-      const json = await response.json();
+      const scores = await response.json() as Socre[];
 
-      return json;
+      return scores;
 
     } catch(err){
       throw err;
