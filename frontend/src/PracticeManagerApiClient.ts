@@ -92,10 +92,6 @@ export default class PracticeManagerApiClient{
         return "";
       }
 
-      if(response.status === 500){
-        return response.text();
-      }
-
       throw new Error(`Score 画像の登録に失敗しました(${response.text()})`);
 
     } catch(err){
