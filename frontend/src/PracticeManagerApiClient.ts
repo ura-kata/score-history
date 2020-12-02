@@ -9,7 +9,7 @@ export interface ScoreVersion{
 
 }
 
-export interface Socre{
+export interface Score{
   name: string;
   title: string;
   description: string;
@@ -99,7 +99,7 @@ export default class PracticeManagerApiClient{
     }
   }
 
-  async getScores(): Promise<Socre[]> {
+  async getScores(): Promise<Score[]> {
     const url = new URL(`api/v1/score`, this.baseUrl);
     try{
       const response = await fetch(url.href, {
@@ -109,7 +109,7 @@ export default class PracticeManagerApiClient{
       if(!response.ok){
         throw new Error(`Score の取得に失敗しました(${await response.text()})`);
       }
-      const scores = await response.json() as Socre[];
+      const scores = await response.json() as Score[];
 
       return scores;
 

@@ -1,7 +1,7 @@
 import React, {useCallback} from 'react';
 import GenericTemplate from '../templates/GenericTemplate'
 import { createStyles, FormControl, FormHelperText, Input, Button, InputLabel, makeStyles, Theme, colors, GridList, GridListTile, GridListTileBar, TextField, Grid, Card, CardContent, Typography } from '@material-ui/core'
-import PracticeManagerApiClient, {Socre} from '../../PracticeManagerApiClient'
+import PracticeManagerApiClient, {Score} from '../../PracticeManagerApiClient'
 
 const client = new PracticeManagerApiClient("http://localhost:5000/");
 
@@ -48,7 +48,7 @@ const ScorePage = () => {
   const [scoreName, setScoreName] = React.useState("");
   const [scoreTitle, setScoreTitle] = React.useState("");
   const [scoreDescription, setScoreDescription] = React.useState("");
-  const [scores, setScores] = React.useState([] as Socre[]);
+  const [scores, setScores] = React.useState([] as Score[]);
 
 
   const handlerCreate = useCallback(async ()=>{

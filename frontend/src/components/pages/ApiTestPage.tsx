@@ -15,7 +15,7 @@ import {
   Typography,
   TextField,
 } from "@material-ui/core";
-import PracticeManagerApiClient, { NewScore, Socre } from "../../PracticeManagerApiClient";
+import PracticeManagerApiClient, { NewScore, Score } from "../../PracticeManagerApiClient";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -120,7 +120,7 @@ const ApiTestPage = () => {
 
 
   // getScores
-  const [getScores_scores,setGetScores_scores] = useState<Socre[]>([]);
+  const [getScores_scores,setGetScores_scores] = useState<Score[]>([]);
   const handlerGetScores = useCallback(async () => {
     try{
       const scores = await apiClient.getScores();
