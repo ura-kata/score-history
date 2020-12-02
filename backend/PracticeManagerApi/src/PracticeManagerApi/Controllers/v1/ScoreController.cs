@@ -185,11 +185,33 @@ namespace PracticeManagerApi.Controllers.v1
 
             var urlConvertor = new MinioUrlConvertor(S3Client.Config.ServiceURL, BucketName);
 
+            var tasks = scoreNames.AsParallel()
+                .Select(name => metaFileOperator.GetScoreMetaAsync(name))
+                .ToArray();
 
-            var scores = scoreNames.Select(x => new Score()
+            var scoreMetas = await Task.WhenAll(tasks);
+
+            Uri CreateVersionUrl(string name, int v)
             {
-                MetaUrl = urlConvertor.CreateUri($"{x}/meta.json")
-            });
+                return new Uri($"{Request.Scheme}://{Request.Host}/api/v1/score/{name}/version/{v}");
+            }
+
+            var scores = scoreMetas.Select(metas => metas.GetLastScoreContent())
+                .Select(meta => new Score()
+                {
+                    Name = meta.Name,
+                    Title = meta.Title,
+                    Description = meta.Description,
+                    VersionMetaUrls = meta.VersionFileKeys
+                        .OrderBy(x=>x.Key)
+                        .Select(x=>int.Parse(x.Key))
+                        .Select(version=>new ScoreVersionMetaUrl()
+                    {
+                        Version = version,
+                        Url = CreateVersionUrl(meta.Name, version),
+                    }).ToArray(),
+
+                });
 
             foreach (var score in scores)
             {
@@ -611,9 +633,25 @@ namespace PracticeManagerApi.Controllers.v1
 
     public class Score
     {
-        [JsonPropertyName(name: "meta_rul")]
-        public Uri MetaUrl { get; set; }
+        [JsonPropertyName(name: "name")]
+        public string Name { get; set; }
+        [JsonPropertyName(name: "title")]
+        public string Title { get; set; }
+        [JsonPropertyName(name: "description")]
+        public string Description { get; set; }
+        [JsonPropertyName("version_meta_urls")]
+        public ScoreVersionMetaUrl[] VersionMetaUrls { get; set; } = new ScoreVersionMetaUrl[0];
     }
+
+    public class ScoreVersionMetaUrl
+    {
+        [JsonPropertyName(name: "version")]
+        public int Version { get; set; }
+
+        [JsonPropertyName(name: "url")]
+        public Uri Url { get; set; }
+    }
+
 
     public class ScoreMeta: Dictionary<string, ScoreContentMeta>
     {
