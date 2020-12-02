@@ -1,6 +1,7 @@
 import React, {useCallback} from 'react';
 import GenericTemplate from '../templates/GenericTemplate'
-import { createStyles, FormControl, FormHelperText, Input, Button, InputLabel, makeStyles, Theme, colors, GridList, GridListTile, GridListTileBar, Grid, TextField } from '@material-ui/core'
+import { createStyles, FormControl, FormHelperText, Input, Button, InputLabel, makeStyles, Theme, colors, GridList, GridListTile, GridListTileBar, Grid, TextField, Dialog, DialogTitle, DialogContent, DialogActions } from '@material-ui/core'
+import { DialogProps } from '@material-ui/core/Dialog'
 import { useDropzone } from 'react-dropzone'
 import { readBuilderProgram } from 'typescript';
 import PracticeManagerApiClient from '../../PracticeManagerApiClient'
@@ -41,6 +42,18 @@ const UploadScorePage = () => {
   const [fileDataList, setFileDataList] = React.useState([] as FileData[]);
   const [uploadScoreName, setUploadScoreName] = React.useState("");
 
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [dialogScroll, setDialogScroll] = React.useState<DialogProps['scroll']>('paper');
+
+  const handleDialogOpen = () => {
+    setDialogOpen(true);
+    setDialogScroll('paper');
+  };
+
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+  }
+
   const onDrop = useCallback((acceptedFiles) => {
     setFileDataList([])
     const loadedFileDataList: FileData[] = [];
@@ -70,12 +83,12 @@ const UploadScorePage = () => {
   const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop});
 
   const handlerUpload = useCallback(async ()=>{
-    const error_file_list = await client.createVersion(uploadScoreName, fileDataList.map(x=>x.file));
-    if(0 < error_file_list?.length){
-      alert('ファイルのアップロードに失敗しました');
-    }
-    else{
+    try{
+      await client.createVersion(uploadScoreName, fileDataList.map(x=>x.file));
       alert('画像をアップロードしました');
+      handleDialogClose();
+    } catch(err) {
+      alert('ファイルのアップロードに失敗しました');
     }
   },[fileDataList, uploadScoreName]);
 
@@ -86,40 +99,54 @@ const UploadScorePage = () => {
   return (
     <GenericTemplate title="スコアのアップロード">
       <div>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Button variant="outlined" color="primary" onClick={handlerUpload}>アップロード</Button>
-          </Grid>
-          <Grid item xs={12}>
-          <TextField value={uploadScoreName} onChange={handlerUploadScoreName} label={'スコアの名前'}></TextField>
-          </Grid>
-          <Grid item xs={12}>
-            <div className={classes.imageDropZoneRoot}>
-              <div {...getRootProps()}>
-                <input {...getInputProps()} />
-                <div className={classes.imageDropZone}>
-                  このエリアをクリックするするか画像ドロップしてアップロードしてください
+        <Button variant="outlined" color="primary" onClick={handleDialogOpen}>アップロードする</Button>
+
+        <Dialog
+          open={dialogOpen}
+          onClose={handleDialogClose}
+          scroll={dialogScroll}
+        >
+          <DialogTitle>スコアをアップロードします</DialogTitle>
+          <DialogContent dividers={true}>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+
+              </Grid>
+              <Grid item xs={12}>
+              <TextField value={uploadScoreName} onChange={handlerUploadScoreName} label={'スコアの名前'}></TextField>
+              </Grid>
+              <Grid item xs={12}>
+                <div className={classes.imageDropZoneRoot}>
+                  <div {...getRootProps()}>
+                    <input {...getInputProps()} />
+                    <div className={classes.imageDropZone}>
+                      このエリアをクリックするするか画像ドロップしてアップロードしてください
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </Grid>
-          <Grid item xs={12}>
-            <GridList className={classes.imageList}>
-              {
-                fileDataList.map((fd, i) => (
-                  <GridListTile key={'image' + i.toString()}>
-                    <img src={fd.fileUrl} className={classes.img} alt={fd.file.name}></img>
-                    <GridListTileBar title={fd.file.name}/>
-                  </GridListTile>
-                ))
-              }
-            </GridList>
-          </Grid>
+              </Grid>
+              <Grid item xs={12}>
+                <GridList className={classes.imageList}>
+                  {
+                    fileDataList.map((fd, i) => (
+                      <GridListTile key={'image' + i.toString()}>
+                        <img src={fd.fileUrl} className={classes.img} alt={fd.file.name}></img>
+                        <GridListTileBar title={fd.file.name}/>
+                      </GridListTile>
+                    ))
+                  }
+                </GridList>
+              </Grid>
+            </Grid>
 
-        </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button variant="outlined" color="primary" onClick={handlerUpload}>アップロード</Button>
+            <Button variant="outlined" color="primary" onClick={handleDialogClose}>キャンセル</Button>
+          </DialogActions>
 
 
-
+        </Dialog>
       </div>
     </GenericTemplate>
   )
