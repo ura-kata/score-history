@@ -51,8 +51,8 @@ export default class PracticeManagerApiClient{
     }
   }
 
-  async getScoreVersion(): Promise<ScoreVersion> {
-    const url = new URL(`api/v1/score/${'test'}/version/${'0'}`, this.baseUrl);
+  async getScoreVersion(name: string, version: number): Promise<ScoreVersion> {
+    const url = new URL(`api/v1/score/${name}/version/${version.toString()}`, this.baseUrl);
 
     try{
       const response = await fetch(url.href, {

@@ -45,7 +45,7 @@ const DisplayPage = () => {
   const handlerDownload = async ()=>{
     setImageUrlList([]);
 
-    const scoreVersion = await client.getScoreVersion();
+    const scoreVersion = await client.getScoreVersion('test', 0);
 
     const urlList = scoreVersion.pages.map(page=>page.url);
 
