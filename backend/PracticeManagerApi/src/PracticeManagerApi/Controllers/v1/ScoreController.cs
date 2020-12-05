@@ -102,7 +102,7 @@ namespace PracticeManagerApi.Controllers.v1
             var nextVersion = await metaFileOperator.NewVersionNumber(scoreName);
 
             var versionFileKey = metaFileOperator.CreateVersionFileKey(scoreName, nextVersion, now);
-            
+
             var versionMeta = new ScoreVersionMeta()
             {
                 Version = int.Parse(nextVersion),
@@ -218,7 +218,43 @@ namespace PracticeManagerApi.Controllers.v1
                 yield return score;
             }
         }
-        
+
+
+        [HttpGet]
+        [Route("{score_name}")]
+        public async Task<Score> GetScore(
+            [FromRoute(Name = "score_name")] string scoreName)
+        {
+            var metaFileOperator = new MetaFileOperator(S3Client, BucketName);
+
+            var urlConvertor = new MinioUrlConvertor(S3Client.Config.ServiceURL, BucketName);
+            var metas = await metaFileOperator.GetScoreMetaAsync(scoreName);
+
+            Uri CreateVersionUrl(string name, int v)
+            {
+                return new Uri($"{Request.Scheme}://{Request.Host}/api/v1/score/{name}/version/{v}");
+            }
+
+            var meta = metas.GetLastScoreContent();
+
+            var score = new Score()
+            {
+                Name = meta.Name,
+                Title = meta.Title,
+                Description = meta.Description,
+                VersionMetaUrls = meta.VersionFileKeys
+                    .OrderBy(x=>x.Key)
+                    .Select(x=>int.Parse(x.Key))
+                    .Select(version=>new ScoreVersionMetaUrl()
+                    {
+                        Version = version,
+                        Url = CreateVersionUrl(meta.Name, version),
+                    }).ToArray(),
+            };
+
+            return score;
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateScoreAsync([FromBody] NewScore newScore)
         {
@@ -228,7 +264,7 @@ namespace PracticeManagerApi.Controllers.v1
             var content = meta.GetLastScoreContent();
 
             var prefix = $"{content.Name}/{ScoreMeta.FileName}";
-            
+
 
             try
             {
@@ -456,7 +492,7 @@ namespace PracticeManagerApi.Controllers.v1
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="scoreName"></param>
         /// <param name="image"></param>
@@ -723,7 +759,7 @@ namespace PracticeManagerApi.Controllers.v1
 
         [JsonPropertyName(name: "comment_prefix")]
         public string CommentPrefix { get; set; }
-        
+
         [JsonPropertyName(name: "overlay_svg_key")]
         public string OverlaySvgKey { get; set; }
     }

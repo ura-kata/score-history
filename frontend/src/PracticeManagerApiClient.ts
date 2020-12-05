@@ -118,6 +118,25 @@ export default class PracticeManagerApiClient{
     }
   }
 
+  async getScore(scoreName: string): Promise<Score> {
+    const url = new URL(`api/v1/score/${scoreName}`, this.baseUrl);
+    try{
+      const response = await fetch(url.href, {
+        method: 'GET',
+      });
+
+      if(!response.ok){
+        throw new Error(`Score の取得に失敗しました(${await response.text()})`);
+      }
+      const score = await response.json() as Score;
+
+      return score;
+
+    } catch(err){
+      throw err;
+    }
+  }
+
   async createScore(newScore: NewScore): Promise<void> {
     const url = new URL(`api/v1/score`, this.baseUrl);
 
