@@ -7,6 +7,7 @@ import { useDropzone } from 'react-dropzone'
 import { readBuilderProgram } from 'typescript';
 import PracticeManagerApiClient, {Score, SocreVersionMetaUrl} from '../../PracticeManagerApiClient'
 import { Alarm } from '@material-ui/icons';
+import UploadDialog from '../organisms/UploadDialog';
 
 import ScoreViewr from '../atoms/ScoreViewer'
 
@@ -58,89 +59,15 @@ interface Row{
 
 const UploadScorePage = () => {
   const classes = useStyles();
-  const [fileDataList, setFileDataList] = React.useState([] as FileData[]);
-  const [uploadScoreName, setUploadScoreName] = React.useState("");
-  const [uploadScoreTitle, setUploadScoreTitle] = React.useState("");
-  const [uploadScoreDescription, setUploadScoreDescription] = React.useState("");
 
   const [uploadDialogOpen, setDialogOpen] = React.useState(false);
-  const [uploadDialogScroll, setDialogScroll] = React.useState<DialogProps['scroll']>('paper');
 
   const [rows, setRows] = React.useState([] as Row[])
 
   const handleUploadDialogOpen = () => {
     setDialogOpen(true);
-    setDialogScroll('paper');
   };
 
-  const handleUploadDialogClose = () => {
-    setDialogOpen(false);
-  }
-
-  const onDrop = useCallback((acceptedFiles) => {
-    setFileDataList([])
-    const loadedFileDataList: FileData[] = [];
-    console.log("onDrop");
-
-    acceptedFiles.forEach((f: File) => {
-      console.log(f);
-      const reader = new FileReader();
-
-      reader.onabort = () => console.log('ファイルの読み込み中断');
-      reader.onerror = () => console.log('ファイルの読み込みエラー');
-      reader.onload = (e) => {
-        // 正常に読み込みが完了した
-
-          loadedFileDataList.push({
-            fileUrl: e.target?.result as string,
-            file: f
-          });
-          setFileDataList([...loadedFileDataList]);
-
-      };
-
-      reader.readAsDataURL(f);
-    })
-
-  },[]);
-  const uploadDrop = useDropzone({onDrop:onDrop});
-
-  const handlerUpload = useCallback(async ()=>{
-    try{
-      await client.createScore({
-        name: uploadScoreName,
-        title: uploadScoreTitle,
-        description: uploadScoreDescription
-      });
-      await client.createVersion(uploadScoreName, fileDataList.map(x=>x.file));
-      alert('画像をアップロードしました');
-      handleUploadDialogClose();
-
-      setUploadScoreName("");
-      setUploadScoreTitle("");
-      setUploadScoreDescription("");
-      setFileDataList([]);
-    } catch(err) {
-      alert('ファイルのアップロードに失敗しました');
-      return;
-    }
-
-    try{
-      await updateTable();
-    } catch (err){
-      alert('更新に失敗しました');
-    }
-  },[fileDataList, uploadScoreName, uploadScoreTitle, uploadScoreDescription]);
-
-  const handlerUploadScoreName = useCallback(async (event)=>{
-    setUploadScoreName(event.target.value);
-  }, []);
-  const handlerUploadScoreTitle = useCallback(async (event)=>{
-    setUploadScoreTitle(event.target.value);
-  }, []);
-  const handlerUploadScoreDescription = useCallback(async (event)=>{
-    setUploadScoreDescription(event.target.value);
-  }, []);
 
   const updateTable = async ()=>{
     const scores = await client.getScores();
@@ -170,57 +97,6 @@ const UploadScorePage = () => {
       alert('更新に失敗しました');
     }
   },[]);
-
-
-  const uploadDialog = (
-    <Dialog
-      open={uploadDialogOpen}
-      onClose={handleUploadDialogClose}
-      scroll={uploadDialogScroll}
-    >
-      <DialogTitle>スコアをアップロードします</DialogTitle>
-      <DialogContent dividers={true}>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <TextField value={uploadScoreName} onChange={handlerUploadScoreName} label={'スコアの名前'}></TextField>
-          </Grid>
-          <Grid item xs={12}>
-            <TextField value={uploadScoreTitle} onChange={handlerUploadScoreTitle} label={'スコアのタイトル'}></TextField>
-          </Grid>
-          <Grid item xs={12}>
-            <TextField value={uploadScoreDescription} onChange={handlerUploadScoreDescription} label={'スコアの説明'}></TextField>
-          </Grid>
-          <Grid item xs={12}>
-            <div className={classes.imageDropZoneRoot}>
-              <div {...uploadDrop.getRootProps()}>
-                <input {...uploadDrop.getInputProps()} />
-                <div className={classes.imageDropZone}>
-                  このエリアをクリックするするか画像ドロップしてアップロードしてください
-                </div>
-              </div>
-            </div>
-          </Grid>
-          <Grid item xs={12}>
-            <GridList className={classes.imageList}>
-              {
-                fileDataList.map((fd, i) => (
-                  <GridListTile key={'image' + i.toString()}>
-                    <img src={fd.fileUrl} className={classes.img} alt={fd.file.name}></img>
-                    <GridListTileBar title={fd.file.name}/>
-                  </GridListTile>
-                ))
-              }
-            </GridList>
-          </Grid>
-        </Grid>
-
-      </DialogContent>
-      <DialogActions>
-        <Button variant="outlined" color="primary" onClick={handlerUpload}>アップロード</Button>
-        <Button variant="outlined" color="primary" onClick={handleUploadDialogClose}>キャンセル</Button>
-      </DialogActions>
-    </Dialog>
-  );
 
   // ----------------------------------------------------------------------------------------------------------------
 
@@ -258,6 +134,18 @@ const UploadScorePage = () => {
       alert('更新に失敗しました');
     }
   },[updateFileDataList, updateScoreName]);
+
+  const handlerUploaded = useCallback(async ()=>{
+    try{
+      await updateTable();
+    } catch (err){
+      alert('更新に失敗しました');
+    }
+  }, []);
+
+  const handlerUploadCanceled = useCallback(async ()=>{
+    setDialogOpen(false);
+  }, []);
 
   const onUpdateDrop = useCallback((acceptedFiles) => {
     setUpdateFileDataList([])
@@ -488,7 +376,7 @@ const UploadScorePage = () => {
           </Grid>
         </Grid>
 
-        {uploadDialog}
+        <UploadDialog onUploaded={handlerUploaded} onCanceled={handlerUploadCanceled} open={uploadDialogOpen}/>
 
         {versionDialog}
 
