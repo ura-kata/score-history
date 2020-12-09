@@ -8,6 +8,7 @@ import { readBuilderProgram } from 'typescript';
 import PracticeManagerApiClient, {Score, SocreVersionMetaUrl} from '../../PracticeManagerApiClient'
 import { Alarm } from '@material-ui/icons';
 import UploadDialog from '../organisms/UploadDialog';
+import VersionDisplayDialog from '../organisms/VersionDisplayDialog'
 
 import ScoreViewr from '../atoms/ScoreViewer'
 
@@ -106,11 +107,6 @@ const UploadScorePage = () => {
   const [updateDialogOpen, setUpdateDialogOpen] = React.useState(false);
   const [updateDialogScroll, setUpdateDialogScroll] = React.useState<DialogProps['scroll']>('paper');
 
-  const handleUpdateDialogOpen = () => {
-    setUpdateDialogOpen(true);
-    setUpdateDialogScroll('paper');
-  };
-
   const handleUpdateDialogClose = () => {
     setUpdateDialogOpen(false);
   };
@@ -150,10 +146,8 @@ const UploadScorePage = () => {
   const onUpdateDrop = useCallback((acceptedFiles) => {
     setUpdateFileDataList([])
     const loadedFileDataList: FileData[] = [];
-    console.log("onDrop");
 
     acceptedFiles.forEach((f: File) => {
-      console.log(f);
       const reader = new FileReader();
 
       reader.onabort = () => console.log('ファイルの読み込み中断');
@@ -224,30 +218,13 @@ const UploadScorePage = () => {
 
 
   const [versionDialogOpen, setVersionDialogOpen] = React.useState(false);
-  const [versionDialogScroll, setVersionDialogScroll] = React.useState<DialogProps['scroll']>('paper');
-  const [imageUrls, setImageUrls] = React.useState([] as string[]);
 
   const handleVersionDialogClose = useCallback(async ()=>{
     setVersionDialogOpen(false);
   },[]);
 
   const [displayScoreName, setDisplayScoreName] = React.useState('');
-  const [displayScoreVersion, setDisplayScoreVersion] = React.useState(-1);
   const [displayScoreVersionList, setDisplayScoreVersionList] = React.useState([] as number[]);
-
-
-  const changeImageUrls = async (name: string, version: number) => {
-    console.log(`changeImageUrls ${name}:${version}`);
-    if(name === ''){
-      return;
-    }
-    if(version < 0){
-      return;
-    }
-    console.log(`${name}:${version}`);
-    const scoreVersion = await client.getScoreVersion(name, version);
-    setImageUrls(scoreVersion.pages.map(x=>x.url));
-  };
 
 
 
@@ -257,7 +234,6 @@ const UploadScorePage = () => {
       headerName: ' ',
       renderCell: (params: ValueFormatterParams) => {
         const item = (params.value as {name: string, versionMetas: SocreVersionMetaUrl[]});
-        console.log(item.name);
 
 
 
@@ -265,11 +241,7 @@ const UploadScorePage = () => {
           setDisplayScoreName(item.name);
           const versionList = item.versionMetas.map(x=>x.version);
           setDisplayScoreVersionList(versionList);
-          const version = versionList.slice(-1)[0];
-          setDisplayScoreVersion(version);
-          changeImageUrls(item.name, version);
           setVersionDialogOpen(true);
-
         };
 
         return (
@@ -290,7 +262,6 @@ const UploadScorePage = () => {
       headerName: '  ',
       renderCell: (params: ValueFormatterParams) => {
         const name = (params.value as {name: string}).name;
-        console.log(name);
         const handleUpdateDialogOpenRowButton = async ()=>{
           setUpdateScoreName(name);
 
@@ -316,49 +287,6 @@ const UploadScorePage = () => {
     {field: 'description', headerName: '説明', width: 500},
   ];
 
-  const handleDisplayChange = useCallback(async (event)=>{
-    const version = event.target.value as number;
-    console.log(version);
-    setDisplayScoreVersion(version);
-    await changeImageUrls(displayScoreName, version);
-  }, [displayScoreName]);
-
-  const versionDialog = (
-    <Dialog
-      fullScreen
-      open={versionDialogOpen}
-      onClose={handleVersionDialogClose}
-      scroll={versionDialogScroll}
-    >
-      <DialogTitle>バージョン表示</DialogTitle>
-      <DialogContent dividers={true}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} style={{textAlign: "center"}}>
-            <Select
-              onChange={handleDisplayChange}
-              value={displayScoreVersion}
-            >
-              {
-                displayScoreVersionList.map((x,i)=>(
-                <MenuItem value={x} key={i.toString()}>{x.toString()}</MenuItem>
-                ))
-              }
-            </Select>
-          </Grid>
-          <Grid item xs={12} style={{textAlign: "center"}}>
-            <div style={{width: "90vw", height: "80vh", display: "inline-block"}} >
-              <ScoreViewr imageUrls={imageUrls}></ScoreViewr>
-            </div>
-          </Grid>
-        </Grid>
-
-      </DialogContent>
-      <DialogActions>
-        <Button variant="outlined" color="primary" onClick={handleVersionDialogClose}>閉じる</Button>
-      </DialogActions>
-    </Dialog>
-  );
-
   return (
     <GenericTemplate title="スコアの一覧">
       <div>
@@ -378,7 +306,12 @@ const UploadScorePage = () => {
 
         <UploadDialog onUploaded={handlerUploaded} onCanceled={handlerUploadCanceled} open={uploadDialogOpen}/>
 
-        {versionDialog}
+        <VersionDisplayDialog
+          open={versionDialogOpen}
+          scoreName={displayScoreName}
+          versions={displayScoreVersionList}
+          onCloseClicked={handleVersionDialogClose}
+        />
 
         {updateDialog}
 
