@@ -6,14 +6,12 @@ import ScoreViewr from "../atoms/ScoreViewer";
 const client = new PracticeManagerApiClient("http://localhost:5000/");
 
 const downloadImageUrls = async (name: string, version: number): Promise<string[]> => {
-  console.log(`changeImageUrls ${name}:${version}`);
   if(name === ''){
     return [];
   }
   if(version < 0){
     return [];
   }
-  console.log(`${name}:${version}`);
   const scoreVersion = await client.getScoreVersion(name, version);
   return scoreVersion.pages.map(x=>x.url);
 };
