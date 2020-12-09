@@ -1,8 +1,7 @@
-import React, {useCallback} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import GenericTemplate from '../templates/GenericTemplate'
 import { createStyles, FormControl, FormHelperText, Input, Button, InputLabel, makeStyles, Theme, colors, GridList, GridListTile, GridListTileBar, Grid, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Select, MenuItem } from '@material-ui/core'
 import { DialogProps } from '@material-ui/core/Dialog'
-import { DataGrid, ColDef, ValueGetterParams, Row, ValueFormatterParams } from '@material-ui/data-grid';
 import { useDropzone } from 'react-dropzone'
 import { readBuilderProgram } from 'typescript';
 import PracticeManagerApiClient, {Score, SocreVersionMetaUrl} from '../../PracticeManagerApiClient'
@@ -10,7 +9,7 @@ import { Alarm } from '@material-ui/icons';
 import UploadDialog from '../organisms/UploadDialog';
 import VersionDisplayDialog from '../organisms/VersionDisplayDialog'
 
-import ScoreViewr from '../atoms/ScoreViewer'
+import ScoreTable, {ScoreTableData} from '../organisms/ScoreTable';
 
 const client = new PracticeManagerApiClient("http://localhost:5000/");
 
@@ -37,7 +36,7 @@ const useStyles = makeStyles((theme: Theme) =>
       backgroundColor: colors.grey[100],
     },
     table: {
-      height: 400,
+      height: "auto",
       width: '100%'
     }
   })
@@ -48,47 +47,36 @@ interface FileData{
   file: File;
 }
 
-interface Row{
-  id: number;
-  open: {name: string, versionMetas: SocreVersionMetaUrl[]};
-  update: {name: string};
-  name: string;
-  title: string;
-  lastVersion: number;
-  description: string;
-}
 
 const UploadScorePage = () => {
   const classes = useStyles();
 
   const [uploadDialogOpen, setDialogOpen] = React.useState(false);
 
-  const [rows, setRows] = React.useState([] as Row[])
+  const [socreTableDatas, setSocreTableDatas] = React.useState([] as ScoreTableData[])
 
   const handleUploadDialogOpen = () => {
     setDialogOpen(true);
   };
 
+  const [versionMetaUrlsSet, setVersionMetaUrlsSet] = React.useState<{[scoreName: string]: SocreVersionMetaUrl[]}>({})
 
   const updateTable = async ()=>{
     const scores = await client.getScores();
 
       const r = scores.map((x,i)=>({
-        id: i,
-        open: {
-          name: x.name,
-          versionMetas: x.version_meta_urls
-        },
-        update:{
-          name: x.name
-        },
+        open: x.name,
+        update:x.name,
         name: x.name,
         title: x.title,
         lastVersion: x.version_meta_urls.slice(-1)[0].version,
         description: x.description
-      }));
+      } as ScoreTableData));
+      setSocreTableDatas(r);
 
-      setRows(r);
+      const urlsSet = {} as {[scoreName: string]: SocreVersionMetaUrl[]};
+      scores.forEach(x=>{urlsSet[x.name] = x.version_meta_urls})
+      setVersionMetaUrlsSet(urlsSet);
   };
 
   const handleUpdateTable = useCallback(async (event)=>{
@@ -228,79 +216,70 @@ const UploadScorePage = () => {
 
 
 
-  const columns: ColDef[] = [
-    {
-      field: 'open',
-      headerName: ' ',
-      renderCell: (params: ValueFormatterParams) => {
-        const item = (params.value as {name: string, versionMetas: SocreVersionMetaUrl[]});
+  const handleTableSelectedChangeRow = useCallback((scoreName: string)=>{
+    setUpdateScoreName(scoreName);
 
+    setDisplayScoreName(scoreName);
+  },[]);
 
+  const handleOpen = useCallback(()=>{
 
-        const handleVersionDialogOpenRowButton = ()=>{
-          setDisplayScoreName(item.name);
-          const versionList = item.versionMetas.map(x=>x.version);
-          setDisplayScoreVersionList(versionList);
-          setVersionDialogOpen(true);
-        };
+    if(displayScoreName === ""){
+      alert('スコアを選択してください')
+      return;
+    }
+    const urls = versionMetaUrlsSet[displayScoreName];
+    if(!urls) return;
+    const versionList = urls.map(x=>x.version);
+    setDisplayScoreVersionList(versionList);
 
-        return (
-          <strong>
-            <Button
-              variant="contained"
-              color="primary"
-              size="small"
-              style={{margin: 8}}
-              onClick={handleVersionDialogOpenRowButton}
-            >Open</Button>
-          </strong>
-        )
-      }
-    },
-    {
-      field: 'update',
-      headerName: '  ',
-      renderCell: (params: ValueFormatterParams) => {
-        const name = (params.value as {name: string}).name;
-        const handleUpdateDialogOpenRowButton = async ()=>{
-          setUpdateScoreName(name);
+    setVersionDialogOpen(true);
+  },[displayScoreName, versionMetaUrlsSet]);
 
-          setUpdateDialogOpen(true);
-        };
+  const handleUpdate = useCallback(()=>{
+    if(updateScoreName === ""){
+      alert('スコアを選択してください')
+      return;
+    }
 
-        return (
-          <strong>
-            <Button
-              variant="contained"
-              color="primary"
-              size="small"
-              style={{margin: 8}}
-              onClick={handleUpdateDialogOpenRowButton}
-            >更新</Button>
-          </strong>
-        )
-      }
-    },
-    {field: 'name', headerName: '名前', width: 200},
-    {field: 'title', headerName: 'タイトル', width: 200},
-    {field: 'lastVersion', headerName: '最新バージョン', width: 200},
-    {field: 'description', headerName: '説明', width: 500},
-  ];
+    setUpdateDialogOpen(true);
+  },[updateScoreName]);
+
+  const scoreTableElement = useMemo(()=>(
+    <ScoreTable
+      title={""}
+      data={socreTableDatas}
+      onSelectedChangeRow={handleTableSelectedChangeRow}
+    />
+  ),[socreTableDatas, handleTableSelectedChangeRow]);
 
   return (
     <GenericTemplate title="スコアの一覧">
       <div>
         <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Button variant="outlined" color="primary" onClick={handleUpdateTable}>更新</Button>
+          <Grid item xs={3}>
+            <Button variant="outlined" color="primary" onClick={handleUpdateTable}>スコアの取得</Button>
           </Grid>
-          <Grid item xs={12}>
-            <div className={classes.table}>
-              <DataGrid rows={rows} columns={columns} pageSize={10} />
-            </div>
-          </Grid>
-          <Grid item xs={12}>
+          <Grid item xs={3}>
             <Button variant="outlined" color="primary" onClick={handleUploadDialogOpen}>アップロードする</Button>
+          </Grid>
+          <Grid item xs={6} />
+          {/*--------------------------------------------------*/}
+          <Grid item xs={2}>
+            <Button variant="outlined" color="primary" onClick={handleOpen}>表示</Button>
+          </Grid>
+          <Grid item xs={2}>
+            <Button variant="outlined" color="primary" onClick={handleUpdate}>更新</Button>
+          </Grid>
+          <Grid item xs={8} />
+          {/*--------------------------------------------------*/}
+          <Grid item xs={12}>
+            {/* <div className={classes.table}>
+              <DataGrid rows={rows} columns={columns} pageSize={10} />
+            </div> */}
+            <div className={classes.table}>
+              {scoreTableElement}
+            </div>
           </Grid>
         </Grid>
 
