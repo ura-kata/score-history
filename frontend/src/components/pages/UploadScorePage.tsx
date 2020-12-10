@@ -1,15 +1,20 @@
 import React, {useCallback, useMemo} from 'react';
 import GenericTemplate from '../templates/GenericTemplate'
-import { createStyles, FormControl, FormHelperText, Input, Button, InputLabel, makeStyles, Theme, colors, GridList, GridListTile, GridListTileBar, Grid, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Select, MenuItem } from '@material-ui/core'
-import { DialogProps } from '@material-ui/core/Dialog'
-import { useDropzone } from 'react-dropzone'
-import { readBuilderProgram } from 'typescript';
-import PracticeManagerApiClient, {Score, SocreVersionMetaUrl} from '../../PracticeManagerApiClient'
+import {
+  createStyles,
+  Button,
+  makeStyles,
+  Theme,
+  colors,
+  Grid,
+} from '@material-ui/core'
+import PracticeManagerApiClient, { SocreVersionMetaUrl} from '../../PracticeManagerApiClient'
 import { Alarm } from '@material-ui/icons';
 import UploadDialog from '../organisms/UploadDialog';
 import VersionDisplayDialog from '../organisms/VersionDisplayDialog'
 
 import ScoreTable, {ScoreTableData} from '../organisms/ScoreTable';
+import UpdateDialog from '../organisms/UpdateDialog';
 
 const client = new PracticeManagerApiClient("http://localhost:5000/");
 
@@ -42,14 +47,10 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-interface FileData{
-  fileUrl: string;
-  file: File;
-}
-
-
 const UploadScorePage = () => {
   const classes = useStyles();
+
+  const [selectedScoreName, setSelectedScoreName] = React.useState("");
 
   const [uploadDialogOpen, setDialogOpen] = React.useState(false);
 
@@ -89,35 +90,9 @@ const UploadScorePage = () => {
 
   // ----------------------------------------------------------------------------------------------------------------
 
-  const [updateFileDataList, setUpdateFileDataList] = React.useState([] as FileData[]);
-  const [updateScoreName, setUpdateScoreName] = React.useState('');
 
   const [updateDialogOpen, setUpdateDialogOpen] = React.useState(false);
-  const [updateDialogScroll, setUpdateDialogScroll] = React.useState<DialogProps['scroll']>('paper');
 
-  const handleUpdateDialogClose = () => {
-    setUpdateDialogOpen(false);
-  };
-
-
-  const handlerUpdate = useCallback(async ()=>{
-    try{
-      await client.createVersion(updateScoreName, updateFileDataList.map(x=>x.file));
-      alert('スコアを更新しました');
-      handleUpdateDialogClose();
-
-      setUpdateFileDataList([]);
-    } catch(err) {
-      alert('スコアの更新に失敗しました');
-      return;
-    }
-
-    try{
-      await updateTable();
-    } catch (err){
-      alert('更新に失敗しました');
-    }
-  },[updateFileDataList, updateScoreName]);
 
   const handlerUploaded = useCallback(async ()=>{
     try{
@@ -130,77 +105,8 @@ const UploadScorePage = () => {
   const handlerUploadCanceled = useCallback(async ()=>{
     setDialogOpen(false);
   }, []);
+;
 
-  const onUpdateDrop = useCallback((acceptedFiles) => {
-    setUpdateFileDataList([])
-    const loadedFileDataList: FileData[] = [];
-
-    acceptedFiles.forEach((f: File) => {
-      const reader = new FileReader();
-
-      reader.onabort = () => console.log('ファイルの読み込み中断');
-      reader.onerror = () => console.log('ファイルの読み込みエラー');
-      reader.onload = (e) => {
-        // 正常に読み込みが完了した
-
-          loadedFileDataList.push({
-            fileUrl: e.target?.result as string,
-            file: f
-          });
-          setUpdateFileDataList([...loadedFileDataList]);
-
-      };
-
-      reader.readAsDataURL(f);
-    })
-
-  },[]);
-  const updateDrop = useDropzone({onDrop:onUpdateDrop});
-
-
-  const updateDialog = (
-    <Dialog
-      open={updateDialogOpen}
-      onClose={handleUpdateDialogClose}
-      scroll={updateDialogScroll}
-    >
-      <DialogTitle>新しいバージョン</DialogTitle>
-      <DialogContent dividers={true}>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Typography>{updateScoreName}</Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <div className={classes.imageDropZoneRoot}>
-              <div {...updateDrop.getRootProps()}>
-                <input {...updateDrop.getInputProps()} />
-                <div className={classes.imageDropZone}>
-                  このエリアをクリックするするか画像ドロップしてアップロードしてください
-                </div>
-              </div>
-            </div>
-          </Grid>
-          <Grid item xs={12}>
-            <GridList className={classes.imageList}>
-              {
-                updateFileDataList.map((fd, i) => (
-                  <GridListTile key={'image' + i.toString()}>
-                    <img src={fd.fileUrl} className={classes.img} alt={fd.file.name}></img>
-                    <GridListTileBar title={fd.file.name}/>
-                  </GridListTile>
-                ))
-              }
-            </GridList>
-          </Grid>
-        </Grid>
-
-      </DialogContent>
-      <DialogActions>
-        <Button variant="outlined" color="primary" onClick={handlerUpdate}>更新</Button>
-        <Button variant="outlined" color="primary" onClick={handleUpdateDialogClose}>キャンセル</Button>
-      </DialogActions>
-    </Dialog>
-  );
 
   // ----------------------------------------------------------------------------------------------------------------
 
@@ -211,39 +117,36 @@ const UploadScorePage = () => {
     setVersionDialogOpen(false);
   },[]);
 
-  const [displayScoreName, setDisplayScoreName] = React.useState('');
   const [displayScoreVersionList, setDisplayScoreVersionList] = React.useState([] as number[]);
 
 
 
   const handleTableSelectedChangeRow = useCallback((scoreName: string)=>{
-    setUpdateScoreName(scoreName);
-
-    setDisplayScoreName(scoreName);
+    setSelectedScoreName(scoreName);
   },[]);
 
   const handleOpen = useCallback(()=>{
 
-    if(displayScoreName === ""){
+    if(selectedScoreName === ""){
       alert('スコアを選択してください')
       return;
     }
-    const urls = versionMetaUrlsSet[displayScoreName];
+    const urls = versionMetaUrlsSet[selectedScoreName];
     if(!urls) return;
     const versionList = urls.map(x=>x.version);
     setDisplayScoreVersionList(versionList);
 
     setVersionDialogOpen(true);
-  },[displayScoreName, versionMetaUrlsSet]);
+  },[selectedScoreName, versionMetaUrlsSet]);
 
   const handleUpdate = useCallback(()=>{
-    if(updateScoreName === ""){
+    if(selectedScoreName === ""){
       alert('スコアを選択してください')
       return;
     }
 
     setUpdateDialogOpen(true);
-  },[updateScoreName]);
+  },[selectedScoreName]);
 
   const scoreTableElement = useMemo(()=>(
     <ScoreTable
@@ -252,6 +155,14 @@ const UploadScorePage = () => {
       onSelectedChangeRow={handleTableSelectedChangeRow}
     />
   ),[socreTableDatas, handleTableSelectedChangeRow]);
+
+  const handleUpdated = useCallback( async ()=>{
+    await updateTable();
+    setUpdateDialogOpen(false);
+  },[]);
+  const handleUpdateCancled = useCallback(()=>{
+    setUpdateDialogOpen(false);
+  },[]);
 
   return (
     <GenericTemplate title="スコアの一覧">
@@ -287,12 +198,20 @@ const UploadScorePage = () => {
 
         <VersionDisplayDialog
           open={versionDialogOpen}
-          scoreName={displayScoreName}
+          scoreName={selectedScoreName}
           versions={displayScoreVersionList}
           onCloseClicked={handleVersionDialogClose}
         />
 
-        {updateDialog}
+        <UpdateDialog
+          open={updateDialogOpen}
+          scoreName={selectedScoreName}
+          onUploaded={handleUpdated}
+          onCanceled={handleUpdateCancled}
+
+        />
+
+        {/* {updateDialog} */}
 
       </div>
     </GenericTemplate>
