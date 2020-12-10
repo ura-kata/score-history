@@ -52,15 +52,21 @@ const UploadScorePage = () => {
 
   const [selectedScoreName, setSelectedScoreName] = React.useState("");
 
-  const [uploadDialogOpen, setDialogOpen] = React.useState(false);
+  const [uploadDialogOpen, setUploadDialogOpen] = React.useState(false);
+  const [updateDialogOpen, setUpdateDialogOpen] = React.useState(false);
+  const [versionDialogOpen, setVersionDialogOpen] = React.useState(false);
+
+  const [versionMetaUrlsSet, setVersionMetaUrlsSet] = React.useState<{[scoreName: string]: SocreVersionMetaUrl[]}>({})
+  const [displayScoreVersionList, setDisplayScoreVersionList] = React.useState([] as number[]);
 
   const [socreTableDatas, setSocreTableDatas] = React.useState([] as ScoreTableData[])
 
-  const handleUploadDialogOpen = () => {
-    setDialogOpen(true);
+
+
+  const handleUploadDialogOpenClick = () => {
+    setUploadDialogOpen(true);
   };
 
-  const [versionMetaUrlsSet, setVersionMetaUrlsSet] = React.useState<{[scoreName: string]: SocreVersionMetaUrl[]}>({})
 
   const updateTable = async ()=>{
     const scores = await client.getScores();
@@ -88,12 +94,6 @@ const UploadScorePage = () => {
     }
   },[]);
 
-  // ----------------------------------------------------------------------------------------------------------------
-
-
-  const [updateDialogOpen, setUpdateDialogOpen] = React.useState(false);
-
-
   const handlerUploaded = useCallback(async ()=>{
     try{
       await updateTable();
@@ -103,29 +103,20 @@ const UploadScorePage = () => {
   }, []);
 
   const handlerUploadCanceled = useCallback(async ()=>{
-    setDialogOpen(false);
+    setUploadDialogOpen(false);
   }, []);
-;
 
 
-  // ----------------------------------------------------------------------------------------------------------------
-
-
-  const [versionDialogOpen, setVersionDialogOpen] = React.useState(false);
-
-  const handleVersionDialogClose = useCallback(async ()=>{
+  const handleVersionDialogCloseClicked = useCallback(async ()=>{
     setVersionDialogOpen(false);
   },[]);
-
-  const [displayScoreVersionList, setDisplayScoreVersionList] = React.useState([] as number[]);
-
 
 
   const handleTableSelectedChangeRow = useCallback((scoreName: string)=>{
     setSelectedScoreName(scoreName);
   },[]);
 
-  const handleOpen = useCallback(()=>{
+  const handleVersionDialogOpenClick = useCallback(()=>{
 
     if(selectedScoreName === ""){
       alert('スコアを選択してください')
@@ -139,7 +130,7 @@ const UploadScorePage = () => {
     setVersionDialogOpen(true);
   },[selectedScoreName, versionMetaUrlsSet]);
 
-  const handleUpdate = useCallback(()=>{
+  const handleUpdateDialogOpenClick = useCallback(()=>{
     if(selectedScoreName === ""){
       alert('スコアを選択してください')
       return;
@@ -147,6 +138,21 @@ const UploadScorePage = () => {
 
     setUpdateDialogOpen(true);
   },[selectedScoreName]);
+
+
+  const handleUpdated = useCallback( async ()=>{
+    setUpdateDialogOpen(false);
+
+    try{
+      await updateTable();
+    }
+    catch(err){
+
+    }
+  },[]);
+  const handleUpdateCancled = useCallback(()=>{
+    setUpdateDialogOpen(false);
+  },[]);
 
   const scoreTableElement = useMemo(()=>(
     <ScoreTable
@@ -156,13 +162,6 @@ const UploadScorePage = () => {
     />
   ),[socreTableDatas, handleTableSelectedChangeRow]);
 
-  const handleUpdated = useCallback( async ()=>{
-    await updateTable();
-    setUpdateDialogOpen(false);
-  },[]);
-  const handleUpdateCancled = useCallback(()=>{
-    setUpdateDialogOpen(false);
-  },[]);
 
   return (
     <GenericTemplate title="スコアの一覧">
@@ -172,35 +171,36 @@ const UploadScorePage = () => {
             <Button variant="outlined" color="primary" onClick={handleUpdateTable}>スコアの取得</Button>
           </Grid>
           <Grid item xs={3}>
-            <Button variant="outlined" color="primary" onClick={handleUploadDialogOpen}>アップロードする</Button>
+            <Button variant="outlined" color="primary" onClick={handleUploadDialogOpenClick}>アップロードする</Button>
           </Grid>
           <Grid item xs={6} />
           {/*--------------------------------------------------*/}
           <Grid item xs={2}>
-            <Button variant="outlined" color="primary" onClick={handleOpen}>表示</Button>
+            <Button variant="outlined" color="primary" onClick={handleVersionDialogOpenClick}>表示</Button>
           </Grid>
           <Grid item xs={2}>
-            <Button variant="outlined" color="primary" onClick={handleUpdate}>更新</Button>
+            <Button variant="outlined" color="primary" onClick={handleUpdateDialogOpenClick}>更新</Button>
           </Grid>
           <Grid item xs={8} />
           {/*--------------------------------------------------*/}
           <Grid item xs={12}>
-            {/* <div className={classes.table}>
-              <DataGrid rows={rows} columns={columns} pageSize={10} />
-            </div> */}
             <div className={classes.table}>
               {scoreTableElement}
             </div>
           </Grid>
         </Grid>
 
-        <UploadDialog onUploaded={handlerUploaded} onCanceled={handlerUploadCanceled} open={uploadDialogOpen}/>
+        <UploadDialog
+          open={uploadDialogOpen}
+          onUploaded={handlerUploaded}
+          onCanceled={handlerUploadCanceled}
+        />
 
         <VersionDisplayDialog
           open={versionDialogOpen}
           scoreName={selectedScoreName}
           versions={displayScoreVersionList}
-          onCloseClicked={handleVersionDialogClose}
+          onCloseClicked={handleVersionDialogCloseClicked}
         />
 
         <UpdateDialog
@@ -208,10 +208,7 @@ const UploadScorePage = () => {
           scoreName={selectedScoreName}
           onUploaded={handleUpdated}
           onCanceled={handleUpdateCancled}
-
         />
-
-        {/* {updateDialog} */}
 
       </div>
     </GenericTemplate>
