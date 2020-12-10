@@ -18,6 +18,7 @@ import VersionDisplayDialog from '../organisms/VersionDisplayDialog'
 import ScoreTable, {ScoreTableData} from '../organisms/ScoreTable';
 import UpdateDialog from '../organisms/UpdateDialog';
 import { CloseIcon } from '@material-ui/data-grid';
+import AlertArea from '../organisms/AlertArea';
 
 const client = new PracticeManagerApiClient("http://localhost:5000/");
 
@@ -168,106 +169,39 @@ const UploadScorePage = () => {
     />
   ),[socreTableDatas, handleTableSelectedChangeRow]);
 
-  const [alertErrorOpen, setAlertErrorOpen] = React.useState(false);
-  const [alertWarningOpen, setAlertWarningOpen] = React.useState(false);
-  const [alertSuccessOpen, setAlertSuccessOpen] = React.useState(false);
-
   const [alertErrorText, setAlertErrorText] = React.useState("");
   const [alertWarningText, setAlertWarningText] = React.useState("");
   const [alertSuccessText, setAlertSuccessText] = React.useState("");
 
   const writeError = (text: string) => {
     setAlertErrorText(text);
-    setAlertErrorOpen(true);
   };
   const writeWarning = (text: string) => {
     setAlertWarningText(text);
-    setAlertWarningOpen(true);
   };
   const writeSuccess = (text: string) => {
     setAlertSuccessText(text);
-    setAlertSuccessOpen(true);
   };
 
-  useEffect(()=>{
-    if(!alertSuccessOpen) return;
-
-    const timerId = setTimeout(()=>{
-      setAlertSuccessOpen(false);
-    },5000);
-    return ()=>{clearTimeout(timerId)};
-  },[alertSuccessOpen, alertSuccessText]);
-
-  useEffect(()=>{
-    if(!alertWarningOpen) return;
-
-    const timerId = setTimeout(()=>{
-      setAlertWarningOpen(false);
-    },5000);
-    return ()=>{clearTimeout(timerId)};
-  },[alertWarningOpen, alertWarningText]);
-
+  const handleOnHideErrorText = useCallback(()=>{
+    setAlertErrorText("");
+  },[]);
+  const handleOnHideWarningText = useCallback(()=>{
+    setAlertWarningText("");
+  },[]);
+  const handleOnHideSuccessText = useCallback(()=>{
+    setAlertSuccessText("");
+  },[]);
   return (
     <GenericTemplate title="スコアの一覧">
-      <div style={{marginTop:'5px', marginBottom:'5px'}}>
-        <Collapse in={alertErrorOpen}>
-          <Alert
-            severity="error"
-            action={
-              <IconButton
-                aria-label="close"
-                color="inherit"
-                size="small"
-                onClick={() => {
-                  setAlertErrorOpen(false);
-                }}
-              >
-                <CloseIcon fontSize="inherit" />
-              </IconButton>
-            }
-          >
-            {alertErrorText}
-          </Alert>
-        </Collapse>
-        <Collapse in={alertWarningOpen}>
-          <Alert
-            severity="warning"
-            action={
-              <IconButton
-                aria-label="close"
-                color="inherit"
-                size="small"
-                onClick={() => {
-                  setAlertWarningOpen(false);
-                }}
-              >
-                <CloseIcon fontSize="inherit" />
-              </IconButton>
-            }
-          >
-            {alertWarningText}
-          </Alert>
-        </Collapse>
-        <Collapse in={alertSuccessOpen}>
-          <Alert
-            severity="success"
-            action={
-              <IconButton
-                aria-label="close"
-                color="inherit"
-                size="small"
-                onClick={() => {
-                  setAlertSuccessOpen(false);
-                }}
-              >
-                <CloseIcon fontSize="inherit" />
-              </IconButton>
-            }
-          >
-            {alertSuccessText}
-          </Alert>
-        </Collapse>
-      </div>
+      <AlertArea
+        successText={alertSuccessText}
+        warningText={alertWarningText}
+        errorText={alertErrorText}
+        onHideErrorText={handleOnHideErrorText}
+        onHideWarningText={handleOnHideWarningText}
+        onHideSuccessText={handleOnHideSuccessText}
+      />
       <div>
         <Grid container spacing={3}>
           <Grid item xs={3}>
