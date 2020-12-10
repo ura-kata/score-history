@@ -144,6 +144,14 @@ const GenericTemplate: React.FC<GenericTemplateProps> = ({
                 <ListItemIcon>
                   <CloudUploadIcon />
                 </ListItemIcon>
+                <ListItemText primary="スコアの作成" />
+              </ListItem>
+            </Link>
+            <Link to="/upload" className={classes.link}>
+              <ListItem button>
+                <ListItemIcon>
+                  <CloudUploadIcon />
+                </ListItemIcon>
                 <ListItemText primary="スコアのアップロード" />
               </ListItem>
             </Link>
