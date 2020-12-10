@@ -101,8 +101,6 @@ const UpdateDialog = (props: UpdateDialogProps)=>{
   const handlerUpdate = useCallback(async ()=>{
     try{
       await client.createVersion(_scoreName, updateFileDataList.map(x=>x.file));
-      alert('スコアを更新しました');
-
       setUpdateFileDataList([]);
     } catch(err) {
       alert('スコアの更新に失敗しました');

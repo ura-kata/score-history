@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useEffect, useMemo} from 'react';
 import GenericTemplate from '../templates/GenericTemplate'
 import {
   createStyles,
@@ -7,14 +7,17 @@ import {
   Theme,
   colors,
   Grid,
+  Collapse,
+  IconButton,
 } from '@material-ui/core'
 import PracticeManagerApiClient, { SocreVersionMetaUrl} from '../../PracticeManagerApiClient'
-import { Alarm } from '@material-ui/icons';
+import Alert from '@material-ui/lab/Alert';
 import UploadDialog from '../organisms/UploadDialog';
 import VersionDisplayDialog from '../organisms/VersionDisplayDialog'
 
 import ScoreTable, {ScoreTableData} from '../organisms/ScoreTable';
 import UpdateDialog from '../organisms/UpdateDialog';
+import { CloseIcon } from '@material-ui/data-grid';
 
 const client = new PracticeManagerApiClient("http://localhost:5000/");
 
@@ -90,15 +93,17 @@ const UploadScorePage = () => {
     try{
       await updateTable();
     } catch (err){
-      alert('更新に失敗しました');
+      writeError('テーブルの更新に失敗しました');
     }
   },[]);
 
   const handlerUploaded = useCallback(async ()=>{
+    setUploadDialogOpen(false);
+    writeSuccess('スコアをアップロードしました');
     try{
       await updateTable();
     } catch (err){
-      alert('更新に失敗しました');
+      writeError('テーブルの更新に失敗しました');
     }
   }, []);
 
@@ -119,7 +124,7 @@ const UploadScorePage = () => {
   const handleVersionDialogOpenClick = useCallback(()=>{
 
     if(selectedScoreName === ""){
-      alert('スコアを選択してください')
+      writeWarning('スコアを選択してください');
       return;
     }
     const urls = versionMetaUrlsSet[selectedScoreName];
@@ -132,7 +137,7 @@ const UploadScorePage = () => {
 
   const handleUpdateDialogOpenClick = useCallback(()=>{
     if(selectedScoreName === ""){
-      alert('スコアを選択してください')
+      writeWarning('スコアを選択してください')
       return;
     }
 
@@ -142,12 +147,13 @@ const UploadScorePage = () => {
 
   const handleUpdated = useCallback( async ()=>{
     setUpdateDialogOpen(false);
+    writeSuccess('スコアを更新しました');
 
     try{
       await updateTable();
     }
     catch(err){
-
+      writeError('テーブルの更新に失敗しました');
     }
   },[]);
   const handleUpdateCancled = useCallback(()=>{
@@ -162,9 +168,106 @@ const UploadScorePage = () => {
     />
   ),[socreTableDatas, handleTableSelectedChangeRow]);
 
+  const [alertErrorOpen, setAlertErrorOpen] = React.useState(false);
+  const [alertWarningOpen, setAlertWarningOpen] = React.useState(false);
+  const [alertSuccessOpen, setAlertSuccessOpen] = React.useState(false);
+
+  const [alertErrorText, setAlertErrorText] = React.useState("");
+  const [alertWarningText, setAlertWarningText] = React.useState("");
+  const [alertSuccessText, setAlertSuccessText] = React.useState("");
+
+  const writeError = (text: string) => {
+    setAlertErrorText(text);
+    setAlertErrorOpen(true);
+  };
+  const writeWarning = (text: string) => {
+    setAlertWarningText(text);
+    setAlertWarningOpen(true);
+  };
+  const writeSuccess = (text: string) => {
+    setAlertSuccessText(text);
+    setAlertSuccessOpen(true);
+  };
+
+  useEffect(()=>{
+    if(!alertSuccessOpen) return;
+
+    const timerId = setTimeout(()=>{
+      setAlertSuccessOpen(false);
+    },5000);
+    return ()=>{clearTimeout(timerId)};
+  },[alertSuccessOpen, alertSuccessText]);
+
+  useEffect(()=>{
+    if(!alertWarningOpen) return;
+
+    const timerId = setTimeout(()=>{
+      setAlertWarningOpen(false);
+    },5000);
+    return ()=>{clearTimeout(timerId)};
+  },[alertWarningOpen, alertWarningText]);
 
   return (
     <GenericTemplate title="スコアの一覧">
+      <div style={{marginTop:'5px', marginBottom:'5px'}}>
+        <Collapse in={alertErrorOpen}>
+          <Alert
+            severity="error"
+            action={
+              <IconButton
+                aria-label="close"
+                color="inherit"
+                size="small"
+                onClick={() => {
+                  setAlertErrorOpen(false);
+                }}
+              >
+                <CloseIcon fontSize="inherit" />
+              </IconButton>
+            }
+          >
+            {alertErrorText}
+          </Alert>
+        </Collapse>
+        <Collapse in={alertWarningOpen}>
+          <Alert
+            severity="warning"
+            action={
+              <IconButton
+                aria-label="close"
+                color="inherit"
+                size="small"
+                onClick={() => {
+                  setAlertWarningOpen(false);
+                }}
+              >
+                <CloseIcon fontSize="inherit" />
+              </IconButton>
+            }
+          >
+            {alertWarningText}
+          </Alert>
+        </Collapse>
+        <Collapse in={alertSuccessOpen}>
+          <Alert
+            severity="success"
+            action={
+              <IconButton
+                aria-label="close"
+                color="inherit"
+                size="small"
+                onClick={() => {
+                  setAlertSuccessOpen(false);
+                }}
+              >
+                <CloseIcon fontSize="inherit" />
+              </IconButton>
+            }
+          >
+            {alertSuccessText}
+          </Alert>
+        </Collapse>
+      </div>
       <div>
         <Grid container spacing={3}>
           <Grid item xs={3}>

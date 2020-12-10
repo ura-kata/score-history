@@ -110,7 +110,6 @@ const UploadDialog = (props: UploadDialogProps)=>{
         description: uploadScoreDescription
       });
       await client.createVersion(uploadScoreName, fileDataList.map(x=>x.file));
-      alert('画像をアップロードしました');
       handleUploadDialogClose();
 
       setUploadScoreName("");
