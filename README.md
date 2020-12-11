@@ -27,3 +27,20 @@
                 - comment.json
     - images
       - ${UUID}.${ext}
+
+## dotnet lambda を使用したデプロイ
+
+以下のコマンドでデプロイを実施する
+
+```bash
+cd ./backend/PracticeManagerApi/src/PracticeManagerApi
+dotnet lambda deploy-serverless
+```
+
+この時クラウドフォーメーションのスタック名とクラウドビルドしたバイナリなどを保管する S3 Bucket の名前を聞かれるので入力して実行する。
+
+## Lambda のテスト
+
+Lambda のテストを実行する場合は入力に API Gateway のテンプレートを使用する。
+また、 Header で `{"Content-Type": "application/json"}` を指定する必要がある。
+
