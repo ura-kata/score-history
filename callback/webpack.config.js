@@ -16,6 +16,9 @@ module.exports = {
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
+    modules: [
+      "node_modules"
+    ]
   },
   output: {
     filename: 'index.js',
@@ -26,5 +29,12 @@ module.exports = {
       template: './src/template.html',
       filename: 'index.html'
     })
-  ]
+  ],
+  devServer: {
+    contentBase: path.join(__dirname, 'build'),
+    // publicPath: path.resolve(__dirname, 'build'),
+    // hot: true,
+    index: 'index.html',
+    open: true,
+  }
 };
