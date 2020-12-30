@@ -1,20 +1,19 @@
 // import UUID from "uuid";
-import {v4 as uuid} from 'uuid'
-import CryptoJS from 'crypto-js'
+import { v4 as uuid } from "uuid";
+import CryptoJS from "crypto-js";
 
 const cognitoDomain = "pm-uttne.auth.us-east-1.amazoncognito.com";
 const clientId = "1aealljop75snqvo6sq29h9g02";
 const redirectUri = "http://localhost:8080/";
 
 const base64URLEncode = (base64: string): string => {
-  return base64
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
+  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 };
 
 const createVerifier = () => {
-  const base64 = CryptoJS.lib.WordArray.random(32).toString(CryptoJS.enc.Base64);
+  const base64 = CryptoJS.lib.WordArray.random(32).toString(
+    CryptoJS.enc.Base64
+  );
   return base64URLEncode(base64);
 };
 
@@ -52,7 +51,6 @@ const redirectAuth = () => {
   location.href = url;
 };
 
-
 const checkState = (state: string): boolean => {
   const savedState = window.sessionStorage.getItem("state");
 
@@ -83,26 +81,24 @@ const getCodeAndState = (): { code: string; state: string } | undefined => {
   return undefined;
 };
 
-interface Token{
-  "access_token": string;
-  "refresh_token": string;
-  "id_token": string;
-  "token_type": string;
-  "expires_in": number;
+interface Token {
+  access_token: string;
+  refresh_token: string;
+  id_token: string;
+  token_type: string;
+  expires_in: number;
 }
 
 const getToken = async (code: string): Promise<Token | undefined> => {
-
   const verifier = window.sessionStorage.getItem("verifier");
-  if(!verifier){
-    console.log('verifier is not found.');
-    return undefined
+  if (!verifier) {
+    console.log("verifier is not found.");
+    return undefined;
   }
 
   const url = `https://${cognitoDomain}/oauth2/token`;
 
-  const body =
-    [
+  const body = [
       "grant_type=authorization_code",
       "client_id=" + clientId,
       "code=" + code,
@@ -111,26 +107,26 @@ const getToken = async (code: string): Promise<Token | undefined> => {
       "code_verifier=" + verifier,
     ].join("&");
   const headers = {
-    "Content-Type": "application/x-www-form-urlencoded"
+    "Content-Type": "application/x-www-form-urlencoded",
   };
 
-  try{
+  try {
     const response = await fetch(url, {
       method: "POST",
       headers: headers,
-      body: body
+      body: body,
     });
 
-    if(!response.ok){
-      console.log(response.status)
-      console.log(await response.text())
+    if (!response.ok) {
+      console.log(response.status);
+      console.log(await response.text());
       return undefined;
     }
 
     const json = await response.json();
 
     return json as Token;
-  } catch(err){
+  } catch (err) {
     console.log(err);
     return undefined;
   }
