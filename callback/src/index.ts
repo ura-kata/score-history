@@ -2,9 +2,13 @@
 import { v4 as uuid } from "uuid";
 import CryptoJS from "crypto-js";
 
-const cognitoDomain = "pm-uttne.auth.us-east-1.amazoncognito.com";
-const clientId = "1aealljop75snqvo6sq29h9g02";
-const redirectUri = "http://localhost:8080/";
+const cognitoDomain = process.env.COGNITO_DOMAIN as string;
+const clientId = process.env.CLIENT_ID as string;
+const redirectUri = process.env.REDIRECT_URI as string;
+
+const settingCookieUri = process.env.SETTING_COOKIE_URI as string;
+
+const appUri = process.env.APP_URI as string;
 
 const base64URLEncode = (base64: string): string => {
   return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
@@ -99,13 +103,13 @@ const getToken = async (code: string): Promise<Token | undefined> => {
   const url = `https://${cognitoDomain}/oauth2/token`;
 
   const body = [
-      "grant_type=authorization_code",
-      "client_id=" + clientId,
-      "code=" + code,
-      "redirect_uri=" + redirectUri,
-      "scope=openid+email",
-      "code_verifier=" + verifier,
-    ].join("&");
+    "grant_type=authorization_code",
+    "client_id=" + clientId,
+    "code=" + code,
+    "redirect_uri=" + redirectUri,
+    "scope=openid+email",
+    "code_verifier=" + verifier,
+  ].join("&");
   const headers = {
     "Content-Type": "application/x-www-form-urlencoded",
   };
@@ -132,10 +136,52 @@ const getToken = async (code: string): Promise<Token | undefined> => {
   }
 };
 
+const setTokenToCookie = async (token: Token): Promise<boolean> => {
+  const url = settingCookieUri;
+
+  const headers = {
+    "Content-Type": "application/json",
+  };
+
+  const body = JSON.stringify({
+    accessToken: token.access_token,
+    refreshToken: token.refresh_token,
+  });
+
+  try {
+    // https://stackoverflow.com/questions/42710057/fetch-cannot-set-cookies-received-from-the-server
+    const response = await fetch(url, {
+      method: "POST",
+      headers: headers,
+      body: body,
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      console.log(response.status);
+      console.log(await response.text());
+      return false;
+    }
+
+    return true;
+
+  } catch (err) {
+    console.log(err);
+  }
+
+  return false;
+};
+
+const redirectApp = () => {
+  console.log("redirectApp");
+
+  const url = appUri;
+
+  console.log(url);
+  location.href = url;
+};
+
 window.onload = async () => {
-  console.log("hello world.");
-  alert(location.pathname);
-  alert(location.search);
 
   const codeAndState = getCodeAndState();
 
@@ -145,10 +191,20 @@ window.onload = async () => {
     const token = await getToken(codeAndState.code);
 
     console.log(token);
+
+    if(!token){
+      redirectAuth();
+      return;
+    }
+
+    await setTokenToCookie(token);
+    redirectApp();
+
   } else {
     // redirect oauth2/authorize
     console.log("redirect oauth2/authorize");
     redirectAuth();
+    return;
   }
 };
 
