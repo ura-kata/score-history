@@ -72,7 +72,7 @@ exports.handler = async (event, context) => {
                     multiValueHeaders["Set-Cookie"] = [
                         `access_token=deleted; expires=Thu, 01-Jan-1970 00:00:01 GMT; Path=/; Domain=${cookieDomain}; HttpOnly; Secure`,
                         `refresh_token=deleted; expires=Thu, 01-Jan-1970 00:00:01 GMT; Path=/; Domain=${cookieDomain}; HttpOnly; Secure`,
-                        `id_token=deleted; expires=Thu, 01-Jan-1970 00:00:01 GMT; Path=/; Domain=${cookieDomain}; HttpOnly; Secure`,
+                        `id_token=deleted; expires=Thu, 01-Jan-1970 00:00:01 GMT; Path=/; Domain=${cookieDomain}; Secure`,
                         `date=${(new Date()).toISOString()}; Path=/; Domain=${cookieDomain}; HttpOnly; Secure`
                     ];
                     responseBody = {"method": "delete"};
@@ -103,7 +103,7 @@ exports.handler = async (event, context) => {
                         `date=${(new Date()).toISOString()}; Domain=.${cookieDomain}; Path=/; HttpOnly; Secure`
                     ];
                     if(idToken){
-                      setCookies.push(`id_token=${idToken}; Domain=${cookieDomain}; Path=/; HttpOnly; Secure`);
+                      setCookies.push(`id_token=${idToken}; Domain=${cookieDomain}; Path=/; Secure`);
                     }
 
                     multiValueHeaders["Set-Cookie"] = setCookies;
