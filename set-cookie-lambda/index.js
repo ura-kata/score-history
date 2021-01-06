@@ -94,8 +94,7 @@ exports.handler = async (event, context) => {
                     }
 
                     responseBody = {"method": "post"};
-                    multiValueHeaders["Set-Cookie"] = [
-                        `access_token=${accessToken}; Domain=${cookieDomain}; Path=/; HttpOnly; Secure,`,
+                        `access_token=${accessToken}; Domain=${cookieDomain}; Path=/; HttpOnly; Secure`,
                         `refresh_token=${refreshToken}; Domain=${cookieDomain}; Path=/; HttpOnly; Secure`,
                         `date=${(new Date()).toISOString()}; Domain=.${cookieDomain}; Path=/; HttpOnly; Secure`
                     ];
