@@ -72,6 +72,7 @@ exports.handler = async (event, context) => {
                     multiValueHeaders["Set-Cookie"] = [
                         `access_token=deleted; expires=Thu, 01-Jan-1970 00:00:01 GMT; Path=/; Domain=${cookieDomain}; HttpOnly; Secure`,
                         `refresh_token=deleted; expires=Thu, 01-Jan-1970 00:00:01 GMT; Path=/; Domain=${cookieDomain}; HttpOnly; Secure`,
+                        `id_token=deleted; expires=Thu, 01-Jan-1970 00:00:01 GMT; Path=/; Domain=${cookieDomain}; HttpOnly; Secure`,
                         `date=${(new Date()).toISOString()}; Path=/; Domain=${cookieDomain}; HttpOnly; Secure`
                     ];
                     responseBody = {"method": "delete"};
@@ -88,16 +89,24 @@ exports.handler = async (event, context) => {
 
                     const accessToken = requestBody['accessToken'];
                     const refreshToken = requestBody['refreshToken'];
+                    const idToken = requestBody['idToken'];
+                    const expiresIn = requestBody['expiresIn'];
 
                     if(!accessToken || !refreshToken){
                         throw new Error(`token not found`);
                     }
 
                     responseBody = {"method": "post"};
+                    const setCookies = [
                         `access_token=${accessToken}; Domain=${cookieDomain}; Path=/; HttpOnly; Secure`,
                         `refresh_token=${refreshToken}; Domain=${cookieDomain}; Path=/; HttpOnly; Secure`,
                         `date=${(new Date()).toISOString()}; Domain=.${cookieDomain}; Path=/; HttpOnly; Secure`
                     ];
+                    if(idToken){
+                      setCookies.push(`id_token=${idToken}; Domain=${cookieDomain}; Path=/; HttpOnly; Secure`);
+                    }
+
+                    multiValueHeaders["Set-Cookie"] = setCookies;
                     break;
                 }
                 throw new Error(`Unsupported method "${event.httpMethod}"`);
