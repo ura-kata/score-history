@@ -19,37 +19,6 @@ if (!cookieDomain) {
   );
 }
 
-const getCookieToken = (cookie) => {
-
-    if(!cookie){
-        return undefined;
-    }
-    if(!cookie.length){
-        return undefined;
-    }
-    let accessToken = undefined;
-    let refreshToken = undefined;
-
-    cookie.forEach((c) => {
-        c.split(';').forEach(item=>{
-            const l = item.trim();
-            if (!accessToken && l.startsWith("access_token=")) {
-                accessToken = l.substring(13);
-            } else if (!refreshToken && l.startsWith("refresh_token=")) {
-                refreshToken = l.substring(14);
-            }
-        });
-    });
-
-    if (accessToken && refreshToken) {
-        return {
-            accessToken: accessToken,
-            refreshToken: refreshToken,
-        };
-    }
-    return undefined;
-};
-
 const getRequestBody = (event) => {
     const body = event.body ? JSON.parse(event.body) : {};
 
@@ -74,11 +43,6 @@ exports.handler = async (event, context) => {
 
     console.log("request cookie");
     console.log(requestCookie);
-
-    const cookieToken = getCookieToken(requestCookie);
-
-    console.log("cookie token");
-    console.log(cookieToken);
 
     const queryStringParameters = event.queryStringParameters;
 
@@ -111,26 +75,6 @@ exports.handler = async (event, context) => {
                         `date=${(new Date()).toISOString()}; Path=/; Domain=${cookieDomain}; HttpOnly; Secure`
                     ];
                     responseBody = {"method": "delete"};
-                    break;
-                }
-                throw new Error(`Unsupported method "${event.httpMethod}"`);
-            case 'GET':
-                if(requestPath.startsWith('/token')){
-                    //responseHeaders = {};
-
-                    const accessToken = queryStringParameters['access_token'];
-                    const refreshToken = queryStringParameters['refresh_token'];
-
-                    if(!accessToken || !refreshToken){
-                        throw new Error(`token not found`);
-                    }
-
-                    responseBody = {"method": "get"};
-                    multiValueHeaders["Set-Cookie"] = [
-                        `access_token=${accessToken}; Domain=${cookieDomain}; Path=/; HttpOnly; Secure`,
-                        `refresh_token=${refreshToken}; Domain=${cookieDomain}; Path=/; HttpOnly; Secure`,
-                        `date=${(new Date()).toISOString()}; Domain=.${cookieDomain}; Path=/; HttpOnly; Secure`
-                    ];
                     break;
                 }
                 throw new Error(`Unsupported method "${event.httpMethod}"`);
