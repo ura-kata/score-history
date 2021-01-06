@@ -146,6 +146,8 @@ const setTokenToCookie = async (token: Token): Promise<boolean> => {
   const body = JSON.stringify({
     accessToken: token.access_token,
     refreshToken: token.refresh_token,
+    idToken: token.id_token,
+    expiresIn: token.expires_in,
   });
 
   try {
