@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace PracticeManagerApi
@@ -47,6 +48,10 @@ namespace PracticeManagerApi
         /// <param name="builder"></param>
         protected override void Init(IHostBuilder builder)
         {
+            builder.ConfigureAppConfiguration((hostingContext, config) =>
+            {
+                config.AddEnvironmentVariables(prefix: "PmLambda_");
+            });
         }
     }
 }

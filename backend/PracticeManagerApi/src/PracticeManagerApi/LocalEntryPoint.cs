@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -24,6 +25,10 @@ namespace PracticeManagerApi
                     config.ClearProviders();
                     config.AddConsole();
                     config.SetMinimumLevel(LogLevel.Trace);
+                })
+                .ConfigureAppConfiguration((hostingContext, config) =>
+                {
+                    config.AddEnvironmentVariables(prefix: "PmLambda_");
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
