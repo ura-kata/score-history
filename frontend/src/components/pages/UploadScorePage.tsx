@@ -20,7 +20,7 @@ import UpdateDialog from '../organisms/UpdateDialog';
 import { CloseIcon } from '@material-ui/data-grid';
 import AlertArea from '../organisms/AlertArea';
 
-const client = new PracticeManagerApiClient("http://localhost:5000/");
+const client = new PracticeManagerApiClient(process.env.REACT_APP_API_URI_BASE as string);
 
 
 const useStyles = makeStyles((theme: Theme) =>

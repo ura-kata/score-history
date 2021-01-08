@@ -3,7 +3,7 @@ import React, { useCallback, useEffect } from "react";
 import PracticeManagerApiClient from "../../PracticeManagerApiClient";
 import ScoreViewr from "../atoms/ScoreViewer";
 
-const client = new PracticeManagerApiClient("http://localhost:5000/");
+const client = new PracticeManagerApiClient(process.env.REACT_APP_API_URI_BASE as string);
 
 const downloadImageUrls = async (name: string, version: number): Promise<string[]> => {
   if(name === ''){

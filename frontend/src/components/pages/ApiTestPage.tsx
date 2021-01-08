@@ -33,7 +33,7 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-const apiClient = new PracticeManagerApiClient("http://localhost:5000/");
+const apiClient = new PracticeManagerApiClient(process.env.REACT_APP_API_URI_BASE as string);
 
 const ApiTestPage = () => {
   const classes = useStyles();
