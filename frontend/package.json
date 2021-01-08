@@ -49,6 +49,8 @@
   },
   "devDependencies": {
     "@types/mui-datatables": "^3.7.0",
-    "@types/react-router-dom": "^5.1.6"
+    "@types/react-router-dom": "^5.1.6",
+    "env-cmd": "^10.1.0",
+    "serve": "^11.3.2"
   }
 }
