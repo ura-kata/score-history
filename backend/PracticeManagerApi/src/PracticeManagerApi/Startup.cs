@@ -44,7 +44,7 @@ namespace PracticeManagerApi
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
         {
             if (env.IsDevelopment())
             {
@@ -58,13 +58,41 @@ namespace PracticeManagerApi
 
             app.UseCors(config=>
             {
-                // Todo 将来的にきちんと Cors を設定する
-                config.AllowAnyOrigin();
-                config.AllowAnyHeader();
-                config.AllowAnyMethod();
+                var corsOrigins = Configuration["CorsOrigins"];
+                logger.LogDebug("CORS Origins :{origins}", corsOrigins);
+                if (string.IsNullOrWhiteSpace(corsOrigins))
+                {
+                    config.AllowAnyOrigin();
+                }
+                else
+                {
+                    config.WithOrigins(corsOrigins.Split(','));
+                }
+
+                var corsHeaders = Configuration["CorsHeaders"];
+                logger.LogDebug("CORS Headers :{headers}", corsHeaders);
+                if (string.IsNullOrWhiteSpace(corsHeaders))
+                {
+                    config.AllowAnyHeader();
+                }
+                else
+                {
+                    config.WithHeaders(corsHeaders.Split(','));
+                }
+
+                var corsMethods = Configuration["CorsMethods"];
+                logger.LogDebug("CORS Methods :{methods}", corsMethods);
+                if (string.IsNullOrWhiteSpace(corsHeaders))
+                {
+                    config.AllowAnyMethod();
+                }
+                else
+                {
+                    config.WithMethods(corsMethods.Split(','));
+                }
             });
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
             app.UseRouting();
 

@@ -6,7 +6,7 @@ import { readBuilderProgram } from 'typescript';
 import PracticeManagerApiClient from '../../PracticeManagerApiClient'
 import ScoreViewer from '../atoms/ScoreViewer';
 
-const client = new PracticeManagerApiClient("http://localhost:5000/");
+const client = new PracticeManagerApiClient(process.env.REACT_APP_API_URI_BASE as string);
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

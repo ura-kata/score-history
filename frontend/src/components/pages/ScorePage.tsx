@@ -3,7 +3,7 @@ import GenericTemplate from '../templates/GenericTemplate'
 import { createStyles, FormControl, FormHelperText, Input, Button, InputLabel, makeStyles, Theme, colors, GridList, GridListTile, GridListTileBar, TextField, Grid, Card, CardContent, Typography } from '@material-ui/core'
 import PracticeManagerApiClient, {Score} from '../../PracticeManagerApiClient'
 
-const client = new PracticeManagerApiClient("http://localhost:5000/");
+const client = new PracticeManagerApiClient(process.env.REACT_APP_API_URI_BASE as string);
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -80,6 +80,12 @@ const ScorePage = () => {
 
   return (
     <GenericTemplate title='スコア'>
+      <div>
+        <p>test env2: {process.env.REACT_APP_PM_TEST}</p>
+        <p>test env prod: {process.env.REACT_APP_PM_TEST_PROD}</p>
+
+      </div>
+
       <div>
         <Grid container spacing={3} className={classes.gredRoot}>
           <Grid item xs={12}>

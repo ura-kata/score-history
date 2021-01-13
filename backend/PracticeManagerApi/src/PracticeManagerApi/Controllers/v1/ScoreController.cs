@@ -37,15 +37,16 @@ namespace PracticeManagerApi.Controllers.v1
 
             var s3Config = (AmazonS3Config)this.S3Client.Config;
 
-            if (bool.TryParse(appUseMinioText, out var appUseMinio))
-            {
-                s3Config.ForcePathStyle = appUseMinio;
-            }
+            // if (bool.TryParse(appUseMinioText, out var appUseMinio))
+            // {
+            //     s3Config.ForcePathStyle = appUseMinio;
+            // }
 
             s3Config.Timeout = TimeSpan.FromSeconds(10);
             s3Config.ReadWriteTimeout = TimeSpan.FromSeconds(10);
             s3Config.RetryMode = Amazon.Runtime.RequestRetryMode.Standard;
-            s3Config.MaxErrorRetry = 3;
+            s3Config.MaxErrorRetry = 1;
+
 
             if (string.IsNullOrEmpty(this.BucketName))
             {
@@ -287,6 +288,11 @@ namespace PracticeManagerApi.Controllers.v1
                 Logger.LogError(e, e.Message);
                 throw;
             }
+            catch (Exception e)
+            {
+                Logger.LogError(e, e.Message);
+                throw;
+            }
 
 
             try
@@ -309,6 +315,11 @@ namespace PracticeManagerApi.Controllers.v1
                 return Ok();
             }
             catch (AmazonS3Exception e)
+            {
+                Logger.LogError(e, e.Message);
+                throw;
+            }
+            catch (Exception e)
             {
                 Logger.LogError(e, e.Message);
                 throw;
