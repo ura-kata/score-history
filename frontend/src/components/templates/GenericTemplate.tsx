@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import clsx from "clsx";
 import Button from '@material-ui/core/Button';
-import { colors, createMuiTheme, createStyles, CssBaseline, makeStyles, Theme, ThemeProvider, Typography, AppBar, Toolbar, IconButton, Drawer, Divider, List, ListItem, ListItemIcon, ListItemText, Container, Box } from '@material-ui/core';
+import { colors, createMuiTheme, createStyles, CssBaseline, makeStyles, Theme, ThemeProvider, Typography, AppBar, Toolbar, IconButton, Drawer, Divider, List, ListItem, ListItemIcon, ListItemText, Container, Box, Badge } from '@material-ui/core';
 import MenuIcon from "@material-ui/icons/Menu"
 import ChevronLeftIcon  from "@material-ui/icons/ChevronLeft"
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
@@ -9,7 +9,10 @@ import ViewCarouselIcon from '@material-ui/icons/ViewCarousel';
 import ExtensionIcon from '@material-ui/icons/Extension';
 import { Link, } from "react-router-dom";
 import  Copyright from '../atoms/Copyright'
+import AppBarIcons from '../molecules/AppBarIcons';
+import PracticeManagerApiClient, { UserMe } from '../../PracticeManagerApiClient';
 
+const apiClient = new PracticeManagerApiClient(process.env.REACT_APP_API_URI_BASE as string);
 
 const drawerWidth = 240;
 
@@ -95,7 +98,9 @@ const useStyles = makeStyles((theme: Theme) =>
     pageTitle: {
       marginBottom: theme.spacing(1),
     },
-
+    grow: {
+      flexGrow: 1,
+    },
   })
 );
 
@@ -118,6 +123,22 @@ const GenericTemplate: React.FC<GenericTemplateProps> = ({
     setOpen(false);
   }
 
+  const [userMe, setUserMe] = useState<UserMe | undefined>(undefined);
+  useEffect(()=>{
+    const f = async ()=>{
+      try{
+        const userMe = await apiClient.getUserMe();
+        setUserMe(userMe);
+      } catch(err){
+      }
+    };
+
+    f();
+
+  },[]);
+
+
+
 
   return (
     <ThemeProvider theme={theme}>
@@ -129,8 +150,17 @@ const GenericTemplate: React.FC<GenericTemplateProps> = ({
               <MenuIcon />
             </IconButton>
             <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>Practice Manager</Typography>
+
+            <div className={classes.grow} />
+
+            <AppBarIcons
+              userMe={userMe}
+            />
+
           </Toolbar>
         </AppBar>
+
+
         <Drawer variant="permanent" classes={{paper: clsx(classes.drawerPaper, !open && classes.drawerPaperClose),}} open={open}>
           <div className={classes.toolbarIcon}>
             <IconButton onClick={handleDrawerClose}>
