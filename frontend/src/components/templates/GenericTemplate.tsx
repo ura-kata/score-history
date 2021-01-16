@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import clsx from "clsx";
-import Button from '@material-ui/core/Button';
 import { colors, createMuiTheme, createStyles, CssBaseline, makeStyles, Theme, ThemeProvider, Typography, AppBar, Toolbar, IconButton, Drawer, Divider, List, ListItem, ListItemIcon, ListItemText, Container, Box, Badge } from '@material-ui/core';
 import MenuIcon from "@material-ui/icons/Menu"
 import ChevronLeftIcon  from "@material-ui/icons/ChevronLeft"
@@ -10,9 +9,9 @@ import ExtensionIcon from '@material-ui/icons/Extension';
 import { Link, } from "react-router-dom";
 import  Copyright from '../atoms/Copyright'
 import AppBarIcons from '../molecules/AppBarIcons';
-import PracticeManagerApiClient, { UserMe } from '../../PracticeManagerApiClient';
+import { AppContext, AppContextDispatch } from '../../AppContext';
 
-const apiClient = new PracticeManagerApiClient(process.env.REACT_APP_API_URI_BASE as string);
+
 
 const drawerWidth = 240;
 
@@ -109,33 +108,26 @@ export interface GenericTemplateProps {
   title: string;
 }
 
-const GenericTemplate: React.FC<GenericTemplateProps> = ({
-  children,
-  title,
-}) => {
+const GenericTemplate = (props: GenericTemplateProps) => {
+
+  const _children = props.children;
+  const _title = props.title;
+
+  const appContext = React.useContext(AppContext);
+  const appContextDispatch = React.useContext(AppContextDispatch);
+
+  const _navigationOpen = appContext.navigationOpen;
+  const _userMe = appContext.userMe;
+
   const classes = useStyles();
-  const [open, setOpen] = React.useState(true);
 
   const handleDrawerOpen = () => {
-    setOpen(true);
+    appContextDispatch({type: "openNavi"});
   };
   const handleDrawerClose = () => {
-    setOpen(false);
+    appContextDispatch({type: "closeNavi"});
   }
 
-  const [userMe, setUserMe] = useState<UserMe | undefined>(undefined);
-  useEffect(()=>{
-    const f = async ()=>{
-      try{
-        const userMe = await apiClient.getUserMe();
-        setUserMe(userMe);
-      } catch(err){
-      }
-    };
-
-    f();
-
-  },[]);
 
 
 
@@ -144,9 +136,9 @@ const GenericTemplate: React.FC<GenericTemplateProps> = ({
     <ThemeProvider theme={theme}>
       <div className={classes.root}>
         <CssBaseline />
-        <AppBar position="absolute" className={clsx(classes.appBar, open && classes.appBarShift)}>
+        <AppBar position="absolute" className={clsx(classes.appBar, _navigationOpen && classes.appBarShift)}>
           <Toolbar className={classes.toolbar}>
-            <IconButton edge="start" color="inherit" aria-label="open drawer" onClick={handleDrawerOpen} className={clsx(classes.menuButton, open && classes.menuButtonHidden)}>
+            <IconButton edge="start" color="inherit" aria-label="open drawer" onClick={handleDrawerOpen} className={clsx(classes.menuButton, _navigationOpen && classes.menuButtonHidden)}>
               <MenuIcon />
             </IconButton>
             <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>Practice Manager</Typography>
@@ -154,14 +146,14 @@ const GenericTemplate: React.FC<GenericTemplateProps> = ({
             <div className={classes.grow} />
 
             <AppBarIcons
-              userMe={userMe}
+              userMe={_userMe}
             />
 
           </Toolbar>
         </AppBar>
 
 
-        <Drawer variant="permanent" classes={{paper: clsx(classes.drawerPaper, !open && classes.drawerPaperClose),}} open={open}>
+        <Drawer variant="permanent" classes={{paper: clsx(classes.drawerPaper, !_navigationOpen && classes.drawerPaperClose),}} open={_navigationOpen}>
           <div className={classes.toolbarIcon}>
             <IconButton onClick={handleDrawerClose}>
               <ChevronLeftIcon />
@@ -207,8 +199,8 @@ const GenericTemplate: React.FC<GenericTemplateProps> = ({
         <main className={classes.content}>
           <div className={classes.appBarSpacer} />
           <Container maxWidth="lg" className={classes.container}>
-            <Typography component="h2" variant="h5" color="inherit" noWrap className={classes.pageTitle}>{title}</Typography>
-            {children}
+            <Typography component="h2" variant="h5" color="inherit" noWrap className={classes.pageTitle}>{_title}</Typography>
+            {_children}
             <Box pt={4}>
               <Copyright />
             </Box>
