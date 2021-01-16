@@ -26,7 +26,7 @@ namespace PracticeManagerApi.Mock.Controllers.v1
         [HttpGet]
         public async Task<UserMe> GetMe()
         {
-            var stream = System.IO.File.OpenRead("./MockResponses/v1-UserController-me-Get.json");
+            await using var stream = System.IO.File.OpenRead("./MockResponses/v1-UserController-me-Get.json");
             var response = await JsonSerializer.DeserializeAsync<UserMe>(stream);
 
             return response;
