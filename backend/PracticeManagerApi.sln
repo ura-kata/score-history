@@ -1,17 +1,21 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PracticeManagerApi", "PracticeManagerApi", "{A20BEDAD-B912-43D2-A671-6521611D3AC6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{63EEC811-B052-4267-B7D6-FEB489D099A2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PracticeManagerApi", "PracticeManagerApi\src\PracticeManagerApi\PracticeManagerApi.csproj", "{B3A57477-847B-4FA1-8076-E813866063AE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PracticeManagerApi", "PracticeManagerApi\src\PracticeManagerApi\PracticeManagerApi.csproj", "{B3A57477-847B-4FA1-8076-E813866063AE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{BDC8B7A1-0D22-4F80-AC68-90A8E7C37F4F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PracticeManagerApi.Tests", "PracticeManagerApi\test\PracticeManagerApi.Tests\PracticeManagerApi.Tests.csproj", "{26B87786-85E7-42BB-A0FA-140C4E592CAA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PracticeManagerApi.Tests", "PracticeManagerApi\test\PracticeManagerApi.Tests\PracticeManagerApi.Tests.csproj", "{26B87786-85E7-42BB-A0FA-140C4E592CAA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PracticeManagerApi.Mock", "PracticeManagerApi\src\PracticeManagerApi.Mock\PracticeManagerApi.Mock.csproj", "{1646688E-63AE-4096-9991-32BCC6DA00A6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PracticeManagerApi.Services", "PracticeManagerApi.Services\PracticeManagerApi.Services.csproj", "{E97AE47D-CE95-4B3E-9688-BCEC4D5875EE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,9 +25,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{B3A57477-847B-4FA1-8076-E813866063AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -50,11 +51,43 @@ Global
 		{26B87786-85E7-42BB-A0FA-140C4E592CAA}.Release|x64.Build.0 = Release|Any CPU
 		{26B87786-85E7-42BB-A0FA-140C4E592CAA}.Release|x86.ActiveCfg = Release|Any CPU
 		{26B87786-85E7-42BB-A0FA-140C4E592CAA}.Release|x86.Build.0 = Release|Any CPU
+		{1646688E-63AE-4096-9991-32BCC6DA00A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1646688E-63AE-4096-9991-32BCC6DA00A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1646688E-63AE-4096-9991-32BCC6DA00A6}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1646688E-63AE-4096-9991-32BCC6DA00A6}.Debug|x64.Build.0 = Debug|Any CPU
+		{1646688E-63AE-4096-9991-32BCC6DA00A6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1646688E-63AE-4096-9991-32BCC6DA00A6}.Debug|x86.Build.0 = Debug|Any CPU
+		{1646688E-63AE-4096-9991-32BCC6DA00A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1646688E-63AE-4096-9991-32BCC6DA00A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1646688E-63AE-4096-9991-32BCC6DA00A6}.Release|x64.ActiveCfg = Release|Any CPU
+		{1646688E-63AE-4096-9991-32BCC6DA00A6}.Release|x64.Build.0 = Release|Any CPU
+		{1646688E-63AE-4096-9991-32BCC6DA00A6}.Release|x86.ActiveCfg = Release|Any CPU
+		{1646688E-63AE-4096-9991-32BCC6DA00A6}.Release|x86.Build.0 = Release|Any CPU
+		{E97AE47D-CE95-4B3E-9688-BCEC4D5875EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E97AE47D-CE95-4B3E-9688-BCEC4D5875EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E97AE47D-CE95-4B3E-9688-BCEC4D5875EE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E97AE47D-CE95-4B3E-9688-BCEC4D5875EE}.Debug|x64.Build.0 = Debug|Any CPU
+		{E97AE47D-CE95-4B3E-9688-BCEC4D5875EE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E97AE47D-CE95-4B3E-9688-BCEC4D5875EE}.Debug|x86.Build.0 = Debug|Any CPU
+		{E97AE47D-CE95-4B3E-9688-BCEC4D5875EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E97AE47D-CE95-4B3E-9688-BCEC4D5875EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E97AE47D-CE95-4B3E-9688-BCEC4D5875EE}.Release|x64.ActiveCfg = Release|Any CPU
+		{E97AE47D-CE95-4B3E-9688-BCEC4D5875EE}.Release|x64.Build.0 = Release|Any CPU
+		{E97AE47D-CE95-4B3E-9688-BCEC4D5875EE}.Release|x86.ActiveCfg = Release|Any CPU
+		{E97AE47D-CE95-4B3E-9688-BCEC4D5875EE}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{63EEC811-B052-4267-B7D6-FEB489D099A2} = {A20BEDAD-B912-43D2-A671-6521611D3AC6}
 		{B3A57477-847B-4FA1-8076-E813866063AE} = {63EEC811-B052-4267-B7D6-FEB489D099A2}
 		{BDC8B7A1-0D22-4F80-AC68-90A8E7C37F4F} = {A20BEDAD-B912-43D2-A671-6521611D3AC6}
 		{26B87786-85E7-42BB-A0FA-140C4E592CAA} = {BDC8B7A1-0D22-4F80-AC68-90A8E7C37F4F}
+		{1646688E-63AE-4096-9991-32BCC6DA00A6} = {63EEC811-B052-4267-B7D6-FEB489D099A2}
+		{E97AE47D-CE95-4B3E-9688-BCEC4D5875EE} = {63EEC811-B052-4267-B7D6-FEB489D099A2}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B003BCDF-131B-4AE8-AFE3-3290FC5B6D18}
 	EndGlobalSection
 EndGlobal

@@ -1,0 +1,96 @@
+{
+  "resource": "/{proxy+}",
+  "path": "/api/sample",
+  "httpMethod": "GET",
+  "headers": {
+    "Accept": "*/*",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Cache-Control": "no-cache",
+    "Cookie": "access_token=eyJraWQiOiJwMWUrUXhnOTNDQzZDTEFaRWlkYVdoR0JmN2pqQUZramVYcFVGM0NEd2FRPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiI5ZjFmMGE0MS1mNzJhLTRlZmItOWNhMS01OTA0Mzk4OWFlMWIiLCJldmVudF9pZCI6IjIwYjQxOWVkLWI1MTAtNGRmNS1iMGI1LTYyOTlkYjQ1NTczNyIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoib3BlbmlkIGVtYWlsIiwiYXV0aF90aW1lIjoxNjEwNTUyNTU3LCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtZWFzdC0xLmFtYXpvbmF3cy5jb21cL3VzLWVhc3QtMV9jcDB1TGd1M3MiLCJleHAiOjE2MTA1NTYxNTcsImlhdCI6MTYxMDU1MjU1NywidmVyc2lvbiI6MiwianRpIjoiNzVhZDIxZTAtNjAyYy00YTdkLThjNjEtNGU3MGU2YTFiMWEwIiwiY2xpZW50X2lkIjoiMWFlYWxsam9wNzVzbnF2bzZzcTI5aDlnMDIiLCJ1c2VybmFtZSI6InV0dG5lIn0.hmBEr4VvZI55dZK0Lw9WcE87Wn0URHvAr5REB25sK7BJzyZXjEqb06-Sxs6iSoliM5cDFh17l2mznf2V36KJYLpc8eZapKlPtjeQgEY1A0Kj2fqjY17E6IcQuQkuQwROvsNG8xTpzOIm8q7N_h0QA1fBtHvLvYsseYJ2p8zdj2IM7ubjDM6XZ70O09M_ClJ5_8ssMI0bc8oMJSN1qCkDUQMDdSuextNjXJR5D91vHuuJsKJj6wIUyxeRfEypApT1e83WxpUspjBM89zZ6I7ODf3NxlYx_Gw3o-Y7jJR8DVoNaiQTghM20CejDHAN6LG3rhCNdpMvdLjjsn1cKGEenA; refresh_token=eyJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAifQ.lm4Bnw5HK9cvr_D7JVF5vS3QeOG2jGPN1Zsgwynncwi7PjqJQro02KpfKoAb0mD9uOod63uYbCJi7Z-6QF2_Uz1dc-sac70ZUJQyk0DaLhNEYTKzxM8Hi-qLM0-EZy1n_6CGVzuFlV_RYW5DvBDgMeHd8CiAgTwrFf4zMwT1dDdn1MfjXbb-nlIOn75NtEQVVjtVOZ6WCd6oLfHRvTaCVDO1lHO3B_jJqd0UFtNksfw6zsOKvPWGwSxV9DVjqpe3wEeCclL5NuBoRwBOQIf_ljFWpcwUyRmJkwdeA6gqJuZxZ39QPYhaVJKZx2DRSCu6SjNEUIvESKO3SlB5VPNWew.JWRGm1HmW8iDMM9v.YePyGDFMYv1CHqvzpWEx63LiUNGmNXlnre1AGlftr5NKylDOfs3MGv2GlLvPWaQ_PBzzXcxkLJfWD-dlMDMmBHRRyzrBhErjY-Z3fnKRseQGQ0ZPzWpEJtNf0zHxU8_lO-FZx10CZaSujQBXPEPjUHmHGhjfNMU8oTeFRNTILWKBJHUu0y-3nJWA6zj82SucuxUW4ZPL-y37sF0qHp5w3gfEDsLwI1nxopKedkHs9VvCYcW0jmXoJNfteonjIad43OPTrxP17dgysRE5c1xFN83m92NEnoFkiozd0IqjpalXzqv_S3XIR1YPtXweAl4_vKvizsK8yAfru2Mg5UdTiyzP7j7597_dHiGgrvTn0DVRsedBtaZT_7ygCmRf14IrcrCaNIn5KwxyIysd3yf3yWWAQamvTTydYQ6vWY-mIebglEwh3M703pzMDFy0gHmUJBEyvHUdeWJZeV-RFxQDxmKiuCkmGSGbFAfJW2g0W72JZPq2mojmyRgRKbi0EON3KpZfECxso5NTX9cLIqlLWJDAzqpHItxRuztcgNgbN25IyqOiBi-1z77WfLn_ACl6joA3s9I0CIOK6yj0mivHrmcNBHqrb93glOZ54s7vbjj51pE5qnpuTUl5hMtwCuMp0s599gPFJZVnzuU-9NM35_tnt1Lvab0toT3nfItI4DRpwbrMJCnyPD3WCA-RCQH1dpb5tOg8l9gbHnBH4oY7oRwBXioNVGVAX-b6y9aZ9Jgfk_Klpw9xcmdRPQE72AQHGXqm977Y1_2pb3iKcJRCF3JtdlKqXRz7SRalkIc0iF_gX0CB43zRieEPtGpDeWM-nYqxF1yoWfR5bA-qwsXZrrLR4M4gj-J8nrwViPlijjMFDRRLEOj_TX-sYhoDIjH75vjoX6axSemyWdGb6CaW-_EpzqXjTyc9TmfK-E3w3Ny9qr4nxOQJ1dBPdOGbKfjpO_XcfLtKSRjP7H6hZEFkDl3UC2dJDkQnpUV3Tn_XHf3uBDN_3TFBCqJYrFmIILma1C4m--6WFgl1POL7f6uF4ovk6r3equcRNSvaBdvd6lFsbe-nFe8RQgNiBfew0bW0JV9UYAOZqdUnB5u01GqjaoJkhMw9bkAKUvEsc4PgDpc5uoz3-MlIOdchMr3KA9VylFHTQhzmO-XM_mKk_YFcvS6GfwRl5I9i9sB9St-Dctpy9bSyXPqNMbhoyH0ayfhoqbmrjOH3dZJRsaoMCJl5zBGISdOJPdFHqBJxW2a0lQmt9pUA-HPgqs0_fNFBLd4.-ftlcmYajT0-49uJYLXpzA; date=2021-01-13T15:42:38.820Z; id_token=eyJraWQiOiI1MUE4WXFFYmdidEhOSkJlWWt3Q2NBMkQzQXNod2ZSc2haRHdiYmRrak1VPSIsImFsZyI6IlJTMjU2In0.eyJhdF9oYXNoIjoiLVdkT3BaemE2dzRqTG9jUVFMNUNOdyIsInN1YiI6IjlmMWYwYTQxLWY3MmEtNGVmYi05Y2ExLTU5MDQzOTg5YWUxYiIsImF1ZCI6IjFhZWFsbGpvcDc1c25xdm82c3EyOWg5ZzAyIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImV2ZW50X2lkIjoiMjBiNDE5ZWQtYjUxMC00ZGY1LWIwYjUtNjI5OWRiNDU1NzM3IiwidG9rZW5fdXNlIjoiaWQiLCJhdXRoX3RpbWUiOjE2MTA1NTI1NTcsImlzcyI6Imh0dHBzOlwvXC9jb2duaXRvLWlkcC51cy1lYXN0LTEuYW1hem9uYXdzLmNvbVwvdXMtZWFzdC0xX2NwMHVMZ3UzcyIsImNvZ25pdG86dXNlcm5hbWUiOiJ1dHRuZSIsImV4cCI6MTYxMDU1NjE1NywiaWF0IjoxNjEwNTUyNTU3LCJlbWFpbCI6InV0dG5lLm1rckBnbWFpbC5jb20ifQ.nTw54iDcvIBsUkXcN6yQ-d3pdqVV-P6uuI97OyhnJQr02Rhb26Z259nRSJSuvi8RHxEu4x0D5eA4eVQelP7u9tvGONe9rNpUh7ZKWMPjLcPb99o207znFvTQpJ0l1z59SQ8hCSAQ9fOoRxaobf3RDBnxFF5kcwETtgHgdvWFffToXUVontTktvNx7yycjzfIk8JL3zzIOdBv7mkut0MoZh96wFTqeXtVHyiNSeAltUSPDqBEkbWQujq2Sd064urX-Zy6ELDNNd5KmLNVDCRPT-AmQYqam3Xhqv9t2xoVq3xqxoAaqMg13q5DtyL4Ip_CgDDXEy5iNE2JXvAMw-RipA",
+    "Host": "1hmlcf07al.execute-api.ap-northeast-1.amazonaws.com",
+    "Postman-Token": "f9777fcc-0535-4167-b419-ddec1410f809",
+    "User-Agent": "PostmanRuntime/7.26.8",
+    "X-Amzn-Trace-Id": "Root=1-5fff163f-5f6aa2e5167034482b4fd14c",
+    "X-Forwarded-For": "106.180.13.14",
+    "X-Forwarded-Port": "443",
+    "X-Forwarded-Proto": "https"
+  },
+  "multiValueHeaders": {
+    "Accept": [
+      "*/*"
+    ],
+    "Accept-Encoding": [
+      "gzip, deflate, br"
+    ],
+    "Cache-Control": [
+      "no-cache"
+    ],
+    "Cookie": [
+      "access_token=eyJraWQiOiJwMWUrUXhnOTNDQzZDTEFaRWlkYVdoR0JmN2pqQUZramVYcFVGM0NEd2FRPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiI5ZjFmMGE0MS1mNzJhLTRlZmItOWNhMS01OTA0Mzk4OWFlMWIiLCJldmVudF9pZCI6IjIwYjQxOWVkLWI1MTAtNGRmNS1iMGI1LTYyOTlkYjQ1NTczNyIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoib3BlbmlkIGVtYWlsIiwiYXV0aF90aW1lIjoxNjEwNTUyNTU3LCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtZWFzdC0xLmFtYXpvbmF3cy5jb21cL3VzLWVhc3QtMV9jcDB1TGd1M3MiLCJleHAiOjE2MTA1NTYxNTcsImlhdCI6MTYxMDU1MjU1NywidmVyc2lvbiI6MiwianRpIjoiNzVhZDIxZTAtNjAyYy00YTdkLThjNjEtNGU3MGU2YTFiMWEwIiwiY2xpZW50X2lkIjoiMWFlYWxsam9wNzVzbnF2bzZzcTI5aDlnMDIiLCJ1c2VybmFtZSI6InV0dG5lIn0.hmBEr4VvZI55dZK0Lw9WcE87Wn0URHvAr5REB25sK7BJzyZXjEqb06-Sxs6iSoliM5cDFh17l2mznf2V36KJYLpc8eZapKlPtjeQgEY1A0Kj2fqjY17E6IcQuQkuQwROvsNG8xTpzOIm8q7N_h0QA1fBtHvLvYsseYJ2p8zdj2IM7ubjDM6XZ70O09M_ClJ5_8ssMI0bc8oMJSN1qCkDUQMDdSuextNjXJR5D91vHuuJsKJj6wIUyxeRfEypApT1e83WxpUspjBM89zZ6I7ODf3NxlYx_Gw3o-Y7jJR8DVoNaiQTghM20CejDHAN6LG3rhCNdpMvdLjjsn1cKGEenA; refresh_token=eyJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAifQ.lm4Bnw5HK9cvr_D7JVF5vS3QeOG2jGPN1Zsgwynncwi7PjqJQro02KpfKoAb0mD9uOod63uYbCJi7Z-6QF2_Uz1dc-sac70ZUJQyk0DaLhNEYTKzxM8Hi-qLM0-EZy1n_6CGVzuFlV_RYW5DvBDgMeHd8CiAgTwrFf4zMwT1dDdn1MfjXbb-nlIOn75NtEQVVjtVOZ6WCd6oLfHRvTaCVDO1lHO3B_jJqd0UFtNksfw6zsOKvPWGwSxV9DVjqpe3wEeCclL5NuBoRwBOQIf_ljFWpcwUyRmJkwdeA6gqJuZxZ39QPYhaVJKZx2DRSCu6SjNEUIvESKO3SlB5VPNWew.JWRGm1HmW8iDMM9v.YePyGDFMYv1CHqvzpWEx63LiUNGmNXlnre1AGlftr5NKylDOfs3MGv2GlLvPWaQ_PBzzXcxkLJfWD-dlMDMmBHRRyzrBhErjY-Z3fnKRseQGQ0ZPzWpEJtNf0zHxU8_lO-FZx10CZaSujQBXPEPjUHmHGhjfNMU8oTeFRNTILWKBJHUu0y-3nJWA6zj82SucuxUW4ZPL-y37sF0qHp5w3gfEDsLwI1nxopKedkHs9VvCYcW0jmXoJNfteonjIad43OPTrxP17dgysRE5c1xFN83m92NEnoFkiozd0IqjpalXzqv_S3XIR1YPtXweAl4_vKvizsK8yAfru2Mg5UdTiyzP7j7597_dHiGgrvTn0DVRsedBtaZT_7ygCmRf14IrcrCaNIn5KwxyIysd3yf3yWWAQamvTTydYQ6vWY-mIebglEwh3M703pzMDFy0gHmUJBEyvHUdeWJZeV-RFxQDxmKiuCkmGSGbFAfJW2g0W72JZPq2mojmyRgRKbi0EON3KpZfECxso5NTX9cLIqlLWJDAzqpHItxRuztcgNgbN25IyqOiBi-1z77WfLn_ACl6joA3s9I0CIOK6yj0mivHrmcNBHqrb93glOZ54s7vbjj51pE5qnpuTUl5hMtwCuMp0s599gPFJZVnzuU-9NM35_tnt1Lvab0toT3nfItI4DRpwbrMJCnyPD3WCA-RCQH1dpb5tOg8l9gbHnBH4oY7oRwBXioNVGVAX-b6y9aZ9Jgfk_Klpw9xcmdRPQE72AQHGXqm977Y1_2pb3iKcJRCF3JtdlKqXRz7SRalkIc0iF_gX0CB43zRieEPtGpDeWM-nYqxF1yoWfR5bA-qwsXZrrLR4M4gj-J8nrwViPlijjMFDRRLEOj_TX-sYhoDIjH75vjoX6axSemyWdGb6CaW-_EpzqXjTyc9TmfK-E3w3Ny9qr4nxOQJ1dBPdOGbKfjpO_XcfLtKSRjP7H6hZEFkDl3UC2dJDkQnpUV3Tn_XHf3uBDN_3TFBCqJYrFmIILma1C4m--6WFgl1POL7f6uF4ovk6r3equcRNSvaBdvd6lFsbe-nFe8RQgNiBfew0bW0JV9UYAOZqdUnB5u01GqjaoJkhMw9bkAKUvEsc4PgDpc5uoz3-MlIOdchMr3KA9VylFHTQhzmO-XM_mKk_YFcvS6GfwRl5I9i9sB9St-Dctpy9bSyXPqNMbhoyH0ayfhoqbmrjOH3dZJRsaoMCJl5zBGISdOJPdFHqBJxW2a0lQmt9pUA-HPgqs0_fNFBLd4.-ftlcmYajT0-49uJYLXpzA; date=2021-01-13T15:42:38.820Z; id_token=eyJraWQiOiI1MUE4WXFFYmdidEhOSkJlWWt3Q2NBMkQzQXNod2ZSc2haRHdiYmRrak1VPSIsImFsZyI6IlJTMjU2In0.eyJhdF9oYXNoIjoiLVdkT3BaemE2dzRqTG9jUVFMNUNOdyIsInN1YiI6IjlmMWYwYTQxLWY3MmEtNGVmYi05Y2ExLTU5MDQzOTg5YWUxYiIsImF1ZCI6IjFhZWFsbGpvcDc1c25xdm82c3EyOWg5ZzAyIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImV2ZW50X2lkIjoiMjBiNDE5ZWQtYjUxMC00ZGY1LWIwYjUtNjI5OWRiNDU1NzM3IiwidG9rZW5fdXNlIjoiaWQiLCJhdXRoX3RpbWUiOjE2MTA1NTI1NTcsImlzcyI6Imh0dHBzOlwvXC9jb2duaXRvLWlkcC51cy1lYXN0LTEuYW1hem9uYXdzLmNvbVwvdXMtZWFzdC0xX2NwMHVMZ3UzcyIsImNvZ25pdG86dXNlcm5hbWUiOiJ1dHRuZSIsImV4cCI6MTYxMDU1NjE1NywiaWF0IjoxNjEwNTUyNTU3LCJlbWFpbCI6InV0dG5lLm1rckBnbWFpbC5jb20ifQ.nTw54iDcvIBsUkXcN6yQ-d3pdqVV-P6uuI97OyhnJQr02Rhb26Z259nRSJSuvi8RHxEu4x0D5eA4eVQelP7u9tvGONe9rNpUh7ZKWMPjLcPb99o207znFvTQpJ0l1z59SQ8hCSAQ9fOoRxaobf3RDBnxFF5kcwETtgHgdvWFffToXUVontTktvNx7yycjzfIk8JL3zzIOdBv7mkut0MoZh96wFTqeXtVHyiNSeAltUSPDqBEkbWQujq2Sd064urX-Zy6ELDNNd5KmLNVDCRPT-AmQYqam3Xhqv9t2xoVq3xqxoAaqMg13q5DtyL4Ip_CgDDXEy5iNE2JXvAMw-RipA"
+    ],
+    "Host": [
+      "1hmlcf07al.execute-api.ap-northeast-1.amazonaws.com"
+    ],
+    "Postman-Token": [
+      "f9777fcc-0535-4167-b419-ddec1410f809"
+    ],
+    "User-Agent": [
+      "PostmanRuntime/7.26.8"
+    ],
+    "X-Amzn-Trace-Id": [
+      "Root=1-5fff163f-5f6aa2e5167034482b4fd14c"
+    ],
+    "X-Forwarded-For": [
+      "106.180.13.14"
+    ],
+    "X-Forwarded-Port": [
+      "443"
+    ],
+    "X-Forwarded-Proto": [
+      "https"
+    ]
+  },
+  "queryStringParameters": null,
+  "multiValueQueryStringParameters": null,
+  "pathParameters": null,
+  "stageVariables": null,
+  "requestContext": {
+    "resourceId": "a6v9sd",
+    "authorizer": {
+      "sub": "9f1f0a41-f72a-4efb-9ca1-59043989ae1b",
+      "principalId": "9f1f0a41-f72a-4efb-9ca1-59043989ae1b",
+      "cognito:username": "uttne",
+      "integrationLatency": 28,
+      "email": "uttne.mkr@gmail.com"
+    },
+    "resourcePath": "/{proxy+}",
+    "httpMethod": "GET",
+    "extendedRequestId": "ZGBp-EUYNjMFZYg=",
+    "requestTime": "13/Jan/2021:15:48:15 +0000",
+    "path": "/api/sample",
+    "accountId": "690654328212",
+    "protocol": "HTTP/1.1",
+    "stage": "default",
+    "domainPrefix": "1hmlcf07al",
+    "requestTimeEpoch": 1610552895756,
+    "requestId": "ce2f57dd-5087-4466-b9e7-32c134aaadc3",
+    "identity": {
+      "cognitoIdentityPoolId": null,
+      "accountId": null,
+      "cognitoIdentityId": null,
+      "caller": null,
+      "sourceIp": "106.180.13.14",
+      "principalOrgId": null,
+      "accessKey": null,
+      "cognitoAuthenticationType": null,
+      "cognitoAuthenticationProvider": null,
+      "userArn": null,
+      "userAgent": "PostmanRuntime/7.26.8",
+      "user": null
+    },
+    "domainName": "1hmlcf07al.execute-api.ap-northeast-1.amazonaws.com",
+    "apiId": "1hmlcf07al"
+  },
+  "body": null,
+  "isBase64Encoded": false
+}

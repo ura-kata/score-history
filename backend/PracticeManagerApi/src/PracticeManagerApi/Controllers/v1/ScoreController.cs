@@ -5,7 +5,6 @@ using System.IO;
 using System.IO.Enumeration;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Amazon.S3;
@@ -15,6 +14,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using PracticeManagerApi.Services.Models;
 
 namespace PracticeManagerApi.Controllers.v1
 {
@@ -629,76 +629,6 @@ namespace PracticeManagerApi.Controllers.v1
             => $"{scoreName}/versions/{version}/{dateTime:yyyyMMddHHmmssfff}/version.json";
     }
 
-    public class NewScoreVersion
-    {
-        public IFormFileCollection Images { get; set; }
-        public string Nos { get; set; }
-    }
-
-    public class ScoreVersion
-    {
-        [JsonPropertyName(name: "version")]
-        public int Version { get; set; }
-        [JsonPropertyName(name: "pages")]
-        public ScoreVersionPage[] Pages { get; set; }
-    }
-
-    public class ScoreVersionPage
-    {
-        [JsonPropertyName(name: "url")]
-        public Uri Url { get; set; }
-        [JsonPropertyName(name: "no")]
-        public double No { get; set; }
-    }
-
-    /// <summary>
-    /// 新しい Score
-    /// </summary>
-    public class NewScore
-    {
-        [JsonPropertyName(name: "name")]
-        public string Name { get; set; }
-
-        [JsonPropertyName(name: "title")]
-        public string Title { get; set; }
-
-        [JsonPropertyName(name: "description")]
-        public string Description { get; set; }
-    }
-
-    /// <summary>
-    /// 更新
-    /// </summary>
-    public class PatchScore
-    {
-        [JsonPropertyName(name: "title")]
-        public string Title { get; set; }
-
-        [JsonPropertyName(name: "description")]
-        public string Description { get; set; }
-    }
-
-    public class Score
-    {
-        [JsonPropertyName(name: "name")]
-        public string Name { get; set; }
-        [JsonPropertyName(name: "title")]
-        public string Title { get; set; }
-        [JsonPropertyName(name: "description")]
-        public string Description { get; set; }
-        [JsonPropertyName("version_meta_urls")]
-        public ScoreVersionMetaUrl[] VersionMetaUrls { get; set; } = new ScoreVersionMetaUrl[0];
-    }
-
-    public class ScoreVersionMetaUrl
-    {
-        [JsonPropertyName(name: "version")]
-        public int Version { get; set; }
-
-        [JsonPropertyName(name: "url")]
-        public Uri Url { get; set; }
-    }
-
 
     public class ScoreMeta: Dictionary<string, ScoreContentMeta>
     {
@@ -717,62 +647,6 @@ namespace PracticeManagerApi.Controllers.v1
         }
 
         public static string CreateKey() => DateTimeOffset.Now.UtcDateTime.ToString("yyyyMMddHHmmssfff");
-    }
-
-    public class ScoreContentMeta
-    {
-        [JsonPropertyName(name: "name")]
-        public string Name { get; set; }
-
-        [JsonPropertyName(name: "title")]
-        public string Title { get; set; }
-
-        [JsonPropertyName(name: "description")]
-        public string Description { get; set; }
-
-        [JsonPropertyName(name: "version_file_keys")]
-        public Dictionary<string,string> VersionFileKeys { get; set; } = new Dictionary<string, string>();
-
-        public async Task<ScoreContentMeta> DeepCopyAsync()
-        {
-            using var mem = new MemoryStream();
-            var options = new JsonSerializerOptions();
-            await JsonSerializer.SerializeAsync(mem, this, options);
-
-            mem.Position = 0;
-
-            return await JsonSerializer.DeserializeAsync<ScoreContentMeta>(mem, options);
-        }
-    }
-
-    public class ScoreVersionMeta
-    {
-        [JsonPropertyName(name: "version")]
-        public int Version { get; set; }
-
-        [JsonPropertyName(name: "description")]
-        public string Description { get; set; }
-
-        [JsonPropertyName(name: "pages")]
-        public Dictionary<string,ScoreVersionPageMeta> Pages { get; set; } = new Dictionary<string, ScoreVersionPageMeta>();
-    }
-
-    public class ScoreVersionPageMeta
-    {
-        [JsonPropertyName(name: "no")]
-        public string No { get; set; }
-
-        [JsonPropertyName(name: "image_file_key")]
-        public string ImageFileKey { get; set; }
-
-        [JsonPropertyName(name: "description")]
-        public string Description { get; set; }
-
-        [JsonPropertyName(name: "comment_prefix")]
-        public string CommentPrefix { get; set; }
-
-        [JsonPropertyName(name: "overlay_svg_key")]
-        public string OverlaySvgKey { get; set; }
     }
 
     public class ScoreMetaConvertor

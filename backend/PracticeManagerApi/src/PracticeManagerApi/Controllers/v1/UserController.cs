@@ -2,16 +2,13 @@ using System.Dynamic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using PracticeManagerApi.Services.Models;
 
 namespace PracticeManagerApi.Controllers.v1
 {
-    public class UserMe
-    {
-        public string Name { get; set; }
-        public string Email { get; set; }
-        public string Id { get; set; }
-    }
-
+    /// <summary>
+    /// ユーザー情報関連
+    /// </summary>
     [Route("api/v1/user")]
     public class UserController : ControllerBase
     {
