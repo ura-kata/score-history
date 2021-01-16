@@ -9,9 +9,13 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <None Remove="SampleRequests\SampleController-Get.json" />
+  </ItemGroup>
+  <ItemGroup>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="SampleRequests\SampleController-Get.json" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Amazon.Lambda.Core" Version="1.1.0" />
