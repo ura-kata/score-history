@@ -27,9 +27,34 @@ export interface NewScore{
   description: string | null;
 }
 
+export interface UserMe{
+  name: string;
+  email: string;
+  id: string;
+}
+
 export default class PracticeManagerApiClient{
   constructor(private baseUrl: string){
 
+  }
+
+  async getUserMe(): Promise<UserMe> {
+    const url = new URL('api/v1/user/me', this.baseUrl);
+
+    try{
+      const response = await fetch(url.href, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const json = await response.json();
+
+      return json;
+    } catch(err){
+      throw err;
+    }
   }
 
   async getVersion(): Promise<string> {

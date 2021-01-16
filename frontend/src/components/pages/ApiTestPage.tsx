@@ -15,7 +15,7 @@ import {
   Typography,
   TextField,
 } from "@material-ui/core";
-import PracticeManagerApiClient, { NewScore, Score } from "../../PracticeManagerApiClient";
+import PracticeManagerApiClient, { NewScore, Score, UserMe } from "../../PracticeManagerApiClient";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -68,6 +68,38 @@ const ApiTestPage = () => {
       </Paper>
     </Grid>
   );
+
+  const [userMe, setUserMe] = useState({} as UserMe);
+
+  const handlerGetUserMe = useCallback(async () => {
+    try{
+      const userMe = await apiClient.getUserMe();
+      setUserMe(userMe);
+      alert("Success");
+    } catch(err) {
+      alert(err);
+    }
+
+  },[]);
+
+  const getUserMe = (
+    <Grid item xs={12}>
+      <Paper className={classes.paper}>
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <Typography>getVersion</Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Button variant="outlined" color="primary" onClick={handlerGetUserMe}>Exec</Button>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography>{JSON.stringify(userMe)}</Typography>
+          </Grid>
+        </Grid>
+      </Paper>
+    </Grid>
+  );
+
 
 
   // createScore
@@ -162,6 +194,7 @@ const ApiTestPage = () => {
           {getVersionTag}
           {createScoreTag}
           {getScoresTag}
+          {getUserMe}
         </Grid>
       </div>
     </GenericTemplate>
