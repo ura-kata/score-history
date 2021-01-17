@@ -6,6 +6,7 @@ import ChevronLeftIcon  from "@material-ui/icons/ChevronLeft"
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 import ViewCarouselIcon from '@material-ui/icons/ViewCarousel';
 import ExtensionIcon from '@material-ui/icons/Extension';
+import HomeIcon from '@material-ui/icons/Home';
 import { Link, } from "react-router-dom";
 import  Copyright from '../atoms/Copyright'
 import AppBarIcons from '../molecules/AppBarIcons';
@@ -105,7 +106,7 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export interface GenericTemplateProps {
   children: React.ReactNode;
-  title: string;
+  title?: string;
 }
 
 const GenericTemplate = (props: GenericTemplateProps) => {
@@ -164,6 +165,14 @@ const GenericTemplate = (props: GenericTemplateProps) => {
             <Link to="/" className={classes.link}>
               <ListItem button>
                 <ListItemIcon>
+                  <HomeIcon />
+                </ListItemIcon>
+                <ListItemText primary="ホーム" />
+              </ListItem>
+            </Link>
+            <Link to="/score" className={classes.link}>
+              <ListItem button>
+                <ListItemIcon>
                   <CloudUploadIcon />
                 </ListItemIcon>
                 <ListItemText primary="スコアの作成" />
@@ -199,7 +208,7 @@ const GenericTemplate = (props: GenericTemplateProps) => {
         <main className={classes.content}>
           <div className={classes.appBarSpacer} />
           <Container maxWidth="lg" className={classes.container}>
-            <Typography component="h2" variant="h5" color="inherit" noWrap className={classes.pageTitle}>{_title}</Typography>
+            {_title ? (<Typography variant="h5" color="inherit" noWrap className={classes.pageTitle}>{_title}</Typography>) : (<></>)}
             {_children}
             <Box pt={4}>
               <Copyright />

@@ -7,6 +7,7 @@ import ScorePage from './components/pages/ScorePage'
 
 import useAppReducer, { AppContextDispatch, AppContext } from './AppContext'
 import PracticeManagerApiClient from './PracticeManagerApiClient';
+import HomePage from './components/pages/HomePage';
 
 const apiClient = new PracticeManagerApiClient(process.env.REACT_APP_API_URI_BASE as string);
 
@@ -35,7 +36,8 @@ const App = () => {
       <AppContextDispatch.Provider value={dispatch}>
         <Router>
           <Switch>
-            <Route path="/" component={ScorePage} exact />
+            <Route path="/" component={HomePage} exact />
+            <Route path="/score" component={ScorePage} exact />
             <Route path="/upload" component={UploadScorePage} />
             <Route path="/display" component={DisplayPage} />
             <Route path="/api-test" component={ApiTestPage} />
