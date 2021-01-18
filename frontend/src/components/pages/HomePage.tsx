@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import GenericTemplate from '../templates/GenericTemplate'
 import {
   createStyles,
@@ -10,6 +10,9 @@ import {
   CardContent,
   Typography,
   CardActionArea,
+  Divider,
+  ButtonGroup,
+  Button,
 } from '@material-ui/core'
 import PracticeManagerApiClient, { Score } from '../../PracticeManagerApiClient'
 import ScoreDialog from '../molecules/ScoreDialog';
@@ -35,24 +38,43 @@ const useStyles = makeStyles((theme: Theme) =>
 const HomePage = () => {
   const classes = useStyles();
 
-  const [selectedScore, setSelectedScore] = useState<Score | undefined>(undefined);
+  const [selectedScoreIndex, setSelectedScoreIndex] = useState<number | undefined>(undefined);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const [scores, setScores] = useState<Score[]>([]);
+
+  useEffect(()=>{
+    const s = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map<Score>((i, _)=>({
+      name: `scoreName${i}`,
+      title: `スコアのタイトル${i}`,
+      description: `スコアの説明。`,
+      version_meta_urls: []
+    }));
+    setScores(s);
+  },[]);
 
   return (
     <GenericTemplate>
 
-      <Typography variant="h4">スコア一覧</Typography>
+      <Grid container>
+        <Grid item xs>
+          <Typography variant="h4">スコア一覧</Typography>
+        </Grid>
+        <Grid item xs>
+          <ButtonGroup color="primary" style={{float: "right"}}>
+            <Button>新規</Button>
+          </ButtonGroup>
+        </Grid>
+
+      </Grid>
+
+      <Divider/>
 
       <Grid container className={classes.scoreCardContainer}>
         {
-          [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map<Score>((i, _)=>({
-            name: `scoreName${i}`,
-            title: `スコアのタイトル${i}`,
-            description: `スコアの説明。`,
-            version_meta_urls: []
-          })).map((score, i)=>(
+          scores.map((score, i)=>(
             <Card key={i.toString()} className={classes.scoreCard}>
-              <CardActionArea onClick={()=>{setSelectedScore(score); setDialogOpen(true);}}>
+              <CardActionArea onClick={()=>{setSelectedScoreIndex(i); setDialogOpen(true);}}>
                 <CardContent>
                   <Typography variant="h5">{score.title}</Typography>
                   <Typography variant="caption" className={classes.scoreCardName}>{score.name}</Typography>
@@ -63,7 +85,21 @@ const HomePage = () => {
           ))
         }
       </Grid>
-      <ScoreDialog open={dialogOpen} score={selectedScore} onClose={()=>{setDialogOpen(false);}}/>
+      <ScoreDialog
+        open={dialogOpen}
+        score={ selectedScoreIndex === undefined ? undefined : scores[selectedScoreIndex]}
+        onClose={()=>{setDialogOpen(false);}}
+        onNext={()=>{
+          if(selectedScoreIndex === undefined || !scores) return;
+
+          setSelectedScoreIndex(Math.min(scores.length - 1, selectedScoreIndex + 1));
+        }}
+        onPrev={()=>{
+          if(selectedScoreIndex === undefined || !scores) return;
+
+          setSelectedScoreIndex(Math.max(0, selectedScoreIndex - 1));
+        }}
+      />
 
     </GenericTemplate>
   );
