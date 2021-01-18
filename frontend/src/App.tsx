@@ -29,7 +29,7 @@ const App = () => {
 
     f();
 
-  });
+  },[]);
 
   return (
     <AppContext.Provider value={state}>
