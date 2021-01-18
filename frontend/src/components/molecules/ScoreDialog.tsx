@@ -11,9 +11,11 @@ import {
   Grid,
   IconButton,
   makeStyles,
-  Theme
+  Theme,
+  Typography
 } from "@material-ui/core";
-import { AddIcon } from "@material-ui/data-grid";
+import MuiDialogTitle from '@material-ui/core/DialogTitle';
+import { AddIcon, CloseIcon } from "@material-ui/data-grid";
 import React from "react";
 import { Score } from "../../PracticeManagerApiClient";
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
@@ -25,12 +27,22 @@ const useStyles = makeStyles((theme: Theme) =>
       minWidth: "500px",
       margin: theme.spacing(1)
     },
+    dialogTitleRoot: {
+      margin: 0,
+      padding: theme.spacing(2),
+    },
+    dialogCloseButton: {
+      position: 'absolute',
+      right: theme.spacing(1),
+      top: theme.spacing(1),
+      color: theme.palette.grey[500],
+    },
   })
 );
 
 interface ScoreDialogProps{
   open: boolean;
-  onClose?: (value: string) => void;
+  onClose?: () => void;
   score?: Score;
   onPrev?: ()=> void;
   onNext?: ()=> void;
@@ -58,9 +70,20 @@ const ScoreDialog = (props: ScoreDialogProps) => {
 
   };
 
+  const CustomDialogTitle = (
+    <MuiDialogTitle disableTypography className={classes.dialogTitleRoot}>
+      <Typography variant="h6">{_score?.title}</Typography>
+      {_onClose ? (
+        <IconButton aria-label="close" onClick={_onClose} className={classes.dialogCloseButton}>
+          <CloseIcon />
+        </IconButton>
+      ) : null}
+    </MuiDialogTitle>
+  );
+
   return (
     <Dialog onClose={_onClose} open={_open}>
-      <DialogTitle>{_score?.title}</DialogTitle>
+      {CustomDialogTitle}
       <DialogContent className={classes.dialogContent}>
         <DialogContentText>
           {_score?.description}
