@@ -44,13 +44,20 @@ const HomePage = () => {
   const [scores, setScores] = useState<Score[]>([]);
 
   useEffect(()=>{
-    const s = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map<Score>((i, _)=>({
-      name: `scoreName${i}`,
-      title: `スコアのタイトル${i}`,
-      description: `スコアの説明。`,
-      version_meta_urls: []
-    }));
-    setScores(s);
+    const f = async ()=>{
+
+      try{
+        const s = await client.getScores();
+        setScores(s);
+      }
+      catch(err){
+        console.log(err);
+        setScores([]);
+      }
+    };
+
+    f();
+
   },[]);
 
   return (
