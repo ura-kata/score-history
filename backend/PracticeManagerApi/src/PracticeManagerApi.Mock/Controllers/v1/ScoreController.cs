@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -11,10 +12,12 @@ namespace PracticeManagerApi.Mock.Controllers.v1
     [Route("api/v1/score")]
     public class ScoreController : ControllerBase
     {
+        private readonly IConfiguration _configuration;
         private ILogger _logger;
 
         public ScoreController(IConfiguration configuration, ILogger<ScoreController> logger)
         {
+            _configuration = configuration;
             this._logger = logger;
         }
 
@@ -41,9 +44,21 @@ namespace PracticeManagerApi.Mock.Controllers.v1
         [HttpGet]
         public async IAsyncEnumerable<Score> GetScores()
         {
-            
-            throw new NotImplementedException();
-            yield break;
+
+            var fileName = _configuration["Response:v1:score:GET"];
+            if(string.IsNullOrWhiteSpace(fileName))
+                yield break;
+
+            var stream = System.IO.File.OpenRead(fileName);
+            var request = await JsonSerializer.DeserializeAsync<Score[]>(stream);
+
+            if(request == null)
+                yield break;
+
+            foreach (var score in request)
+            {
+                yield return score;
+            }
         }
 
 
