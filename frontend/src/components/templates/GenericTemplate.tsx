@@ -130,8 +130,7 @@ const GenericTemplate = (props: GenericTemplateProps) => {
   }
 
 
-
-
+  const selectedPage = (window.location.pathname + "/").split('/').slice(1)[0].toLowerCase();
 
   return (
     <ThemeProvider theme={theme}>
@@ -163,15 +162,15 @@ const GenericTemplate = (props: GenericTemplateProps) => {
           <Divider />
           <List>
             <Link to="/" className={classes.link}>
-              <ListItem button>
+              <ListItem button selected={selectedPage===""}>
                 <ListItemIcon>
                   <HomeIcon />
                 </ListItemIcon>
                 <ListItemText primary="ホーム" />
               </ListItem>
             </Link>
-            <Link to="/score" className={classes.link}>
-              <ListItem button>
+            <Link to="/new" className={classes.link}>
+              <ListItem button selected={selectedPage==="new"}>
                 <ListItemIcon>
                   <CloudUploadIcon />
                 </ListItemIcon>
@@ -179,7 +178,7 @@ const GenericTemplate = (props: GenericTemplateProps) => {
               </ListItem>
             </Link>
             <Link to="/upload" className={classes.link}>
-              <ListItem button>
+              <ListItem button selected={selectedPage==="upload"}>
                 <ListItemIcon>
                   <CloudUploadIcon />
                 </ListItemIcon>
@@ -187,7 +186,7 @@ const GenericTemplate = (props: GenericTemplateProps) => {
               </ListItem>
             </Link>
             <Link to="/display" className={classes.link}>
-              <ListItem button>
+              <ListItem button selected={selectedPage==="display"}>
                 <ListItemIcon>
                   <ViewCarouselIcon />
                 </ListItemIcon>
@@ -195,7 +194,7 @@ const GenericTemplate = (props: GenericTemplateProps) => {
               </ListItem>
             </Link>
             <Link to="/api-test" className={classes.link}>
-              <ListItem button>
+              <ListItem button selected={selectedPage==="api-test"}>
                 <ListItemIcon>
                   <ExtensionIcon />
                 </ListItemIcon>
