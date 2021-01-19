@@ -16,6 +16,7 @@ import {
 } from '@material-ui/core'
 import PracticeManagerApiClient, { Score } from '../../PracticeManagerApiClient'
 import ScoreDialog from '../molecules/ScoreDialog';
+import { Link } from "react-router-dom";
 
 const client = new PracticeManagerApiClient(process.env.REACT_APP_API_URI_BASE as string);
 
@@ -69,7 +70,7 @@ const HomePage = () => {
         </Grid>
         <Grid item xs>
           <ButtonGroup color="primary" style={{float: "right"}}>
-            <Button>新規</Button>
+            <Button component={Link} to="/new">新規</Button>
           </ButtonGroup>
         </Grid>
 
