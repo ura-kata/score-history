@@ -162,7 +162,7 @@ const GenericTemplate = (props: GenericTemplateProps) => {
           <Divider />
           <List>
             <Link to="/" className={classes.link}>
-              <ListItem button selected={selectedPage===""}>
+              <ListItem button selected={selectedPage==="" || selectedPage==="home"}>
                 <ListItemIcon>
                   <HomeIcon />
                 </ListItemIcon>
