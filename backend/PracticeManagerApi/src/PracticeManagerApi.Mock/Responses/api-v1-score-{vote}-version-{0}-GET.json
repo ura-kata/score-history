@@ -1,0 +1,33 @@
+{
+  "version": 0,
+  "pages": [
+    {
+      "no": 1,
+      "url": "${ContentsUrlBase}/IMSLP01502-Pachelbel_-_Canon_in_D_page-0001.jpg"
+    },
+    {
+      "no": 2,
+      "url": "${ContentsUrlBase}/IMSLP01502-Pachelbel_-_Canon_in_D_page-0002.jpg"
+    },
+    {
+      "no": 3,
+      "url": "${ContentsUrlBase}/IMSLP01502-Pachelbel_-_Canon_in_D_page-0003.jpg"
+    },
+    {
+      "no": 4,
+      "url": "${ContentsUrlBase}/IMSLP01502-Pachelbel_-_Canon_in_D_page-0004.jpg"
+    },
+    {
+      "no": 5,
+      "url": "${ContentsUrlBase}/IMSLP01502-Pachelbel_-_Canon_in_D_page-0005.jpg"
+    },
+    {
+      "no": 6,
+      "url": "${ContentsUrlBase}/IMSLP01502-Pachelbel_-_Canon_in_D_page-0006.jpg"
+    },
+    {
+      "no": 7,
+      "url": "${ContentsUrlBase}/IMSLP01502-Pachelbel_-_Canon_in_D_page-0007.jpg"
+    }
+  ] 
+}
