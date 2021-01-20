@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -38,7 +40,32 @@ namespace PracticeManagerApi.Mock.Controllers.v1
             [FromRoute(Name = "score_name")] string scoreName,
             [FromRoute(Name = "version")] int version)
         {
-            throw new NotImplementedException();
+            var responseFilePathTemplate = _configuration["Response:v1:score:score_name:version:version:GET_template"];
+            var contentsUrlBase = _configuration["ContentsUrlBase"].TrimEnd('/');
+
+            var filePath = responseFilePathTemplate
+                .Replace("${score_name}", scoreName)
+                .Replace("${version}", $"{version}");
+
+            if (System.IO.File.Exists(filePath) == false)
+            {
+                throw new InvalidOperationException($"score_name: '{scoreName}', version: {version} は存在しません");
+            }
+
+            var jsonText = await System.IO.File.ReadAllTextAsync(filePath, Encoding.UTF8);
+            var jsonTextResult = jsonText.Replace("${ContentsUrlBase}", contentsUrlBase);
+
+            await using var memoryStream = new MemoryStream();
+            await using var sw = new StreamWriter(memoryStream, Encoding.UTF8, leaveOpen: true);
+
+            await sw.WriteAsync(jsonTextResult);
+            await sw.FlushAsync();
+
+            memoryStream.Seek(0, SeekOrigin.Begin);
+
+            var scoreVersion = await JsonSerializer.DeserializeAsync<ScoreVersion>(memoryStream);
+
+            return scoreVersion;
         }
 
         [HttpGet]
