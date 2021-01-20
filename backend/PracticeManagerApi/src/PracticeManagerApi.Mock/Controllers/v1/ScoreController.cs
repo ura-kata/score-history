@@ -71,15 +71,26 @@ namespace PracticeManagerApi.Mock.Controllers.v1
         [HttpGet]
         public async IAsyncEnumerable<Score> GetScores()
         {
-
-            var fileName = _configuration["Response:v1:score:GET"];
-            if(string.IsNullOrWhiteSpace(fileName))
+            var contentsUrlBase = _configuration["ContentsUrlBase"].TrimEnd('/');
+            var filePath = _configuration["Response:v1:score:GET"];
+            if(string.IsNullOrWhiteSpace(filePath))
                 yield break;
 
-            var stream = System.IO.File.OpenRead(fileName);
-            var request = await JsonSerializer.DeserializeAsync<Score[]>(stream);
 
-            if(request == null)
+            var jsonText = await System.IO.File.ReadAllTextAsync(filePath, Encoding.UTF8);
+            var jsonTextResult = jsonText.Replace("${ContentsUrlBase}", contentsUrlBase);
+
+            await using var memoryStream = new MemoryStream();
+            await using var sw = new StreamWriter(memoryStream, Encoding.UTF8, leaveOpen: true);
+
+            await sw.WriteAsync(jsonTextResult);
+            await sw.FlushAsync();
+
+            memoryStream.Seek(0, SeekOrigin.Begin);
+
+            var request = await JsonSerializer.DeserializeAsync<Score[]>(memoryStream);
+
+            if (request == null)
                 yield break;
 
             foreach (var score in request)
