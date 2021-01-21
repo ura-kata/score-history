@@ -15,11 +15,15 @@ import {
   Button,
   Breadcrumbs,
   Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@material-ui/core'
-import PracticeManagerApiClient, { Score } from '../../PracticeManagerApiClient'
+import PracticeManagerApiClient, { Score, ScoreVersion, ScoreVersionPage } from '../../PracticeManagerApiClient'
 import ScoreDialog from '../molecules/ScoreDialog';
 import { Link, useHistory, useRouteMatch } from "react-router-dom";
-import { Timeline, TimelineConnector, TimelineContent, TimelineDot, TimelineItem, TimelineOppositeContent, TimelineSeparator } from '@material-ui/lab';
+import { Skeleton, Timeline, TimelineConnector, TimelineContent, TimelineDot, TimelineItem, TimelineOppositeContent, TimelineSeparator } from '@material-ui/lab';
 
 const client = new PracticeManagerApiClient(process.env.REACT_APP_API_URI_BASE as string);
 
@@ -78,11 +82,27 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
 
   useEffect(()=>{
     const f = async ()=>{
-
+      if(!_socre) return;
     };
     f();
   },[_socre]);
 
+  const timelineItems = !_socre ? [] : [..._socre.versions].reverse().map((version, index)=>{
+
+    return (
+      <TimelineItem>
+        <TimelineSeparator>
+          <TimelineDot>
+            {/* Todo チェックしたかどうかをアイコンで表示する */}
+          </TimelineDot>
+          {index !== (_socre.versions.length - 1) ? (<TimelineConnector />) : (<></>)}
+        </TimelineSeparator>
+        <TimelineContent>
+          <Button component={Link} to={`/home/${_socre?.name}/${version.version}`}>{version.version}</Button>
+        </TimelineContent>
+      </TimelineItem>
+    );
+  });
 
   return (
     <>
@@ -95,45 +115,11 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
       <Divider/>
 
       <Grid container>
-        <Grid xs={4} container justify="flex-start">
+        <Grid xs={4} container justify="center">
+          <Typography variant="h5">バージョン</Typography>
+          {/* Todo バージョンは長くなることが良そうされるのでスクロールできるようにする */}
           <Timeline align="left">
-            <TimelineItem>
-              <TimelineSeparator>
-                <TimelineDot>
-
-                </TimelineDot>
-                <TimelineConnector />
-              </TimelineSeparator>
-              <TimelineContent>
-                aaaaa
-              </TimelineContent>
-            </TimelineItem>
-            {/***********************************************/}
-            <TimelineItem>
-              <TimelineSeparator>
-                <TimelineDot>
-
-                </TimelineDot>
-                <TimelineConnector />
-              </TimelineSeparator>
-              <TimelineContent>
-                aaaaa
-              </TimelineContent>
-            </TimelineItem>
-            {/***********************************************/}
-            <TimelineItem>
-              <TimelineSeparator>
-                <TimelineDot>
-
-                </TimelineDot>
-              </TimelineSeparator>
-              <TimelineContent>
-                <Paper elevation={3} style={{width:"70px"}}>
-                  aaaaa bbbbb
-                </Paper>
-              </TimelineContent>
-            </TimelineItem>
-            {/***********************************************/}
+            {timelineItems}
           </Timeline>
 
         </Grid>
@@ -143,6 +129,131 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
         </Grid>
       </Grid>
 
+    </>
+  );
+}
+
+// ------------------------------------------------------------------------------------------
+
+interface PageDialogProps{
+  page?: ScoreVersionPage;
+  open: boolean;
+  onClose?: ()=>void;
+}
+const PageDialog = (props: PageDialogProps) =>{
+  const _page = props.page;
+  const _open = props.open;
+  const _onClose = props.onClose;
+
+  return (
+  <Dialog onClose={_onClose} open={_open}>
+    <DialogTitle>
+      <Typography align="center">{_page?.no}</Typography>
+    </DialogTitle>
+    <DialogContent dividers>
+      <img src={_page?.image_url} alt={_page?.no.toString()} style={{height: "70vh"}}/>
+    </DialogContent>
+    <DialogActions>
+      <Button autoFocus onClick={_onClose} color="primary">
+        Close
+      </Button>
+    </DialogActions>
+  </Dialog>
+  );
+};
+
+// ------------------------------------------------------------------------------------------
+
+interface ScoreVersionDetailContentProps{
+  score?: Score;
+  version?: number;
+  pageNo?: number;
+}
+
+const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
+  const _socre = props.score;
+  const _version = props.version;
+  const _pageNo = props.pageNo;
+
+  const [scoreVersion, setScoreVersion] = useState<ScoreVersion | undefined>(undefined);
+  const history = useHistory();
+
+  let scoreVersionPage: ScoreVersionPage | undefined = undefined;
+
+  useEffect(()=>{
+    if(!_socre) return;
+    if(_version === undefined) return;
+
+    const f = async ()=>{
+      try{
+        const sv = await client.getScoreVersion(_socre.name, _version);
+        setScoreVersion(sv);
+      }
+      catch(err){
+        console.log(err);
+      }
+    };
+    f();
+  },[_socre, _version]);
+
+  if(scoreVersion){
+    scoreVersionPage = scoreVersion.pages.find((page)=>page.no === _pageNo);
+  }
+
+  const thumbnailContents = !scoreVersion ? [] : scoreVersion.pages.map((page, index)=>{
+    return (
+      <Grid item>
+        <Button component={Link} to={`/home/${_socre?.name}/${_version}/${page.no}`}>
+          <Paper>
+            <Grid container>
+              <Grid direction="row" xs={12} justify="center">
+                <img src={page.thumbnail_url ?? page.image_url} height={"200px"} alt={page.no.toString()}/>
+              </Grid>
+              <Grid direction="row" xs={12}>
+                <Typography align="center">{page.no}</Typography>
+              </Grid>
+            </Grid>
+          </Paper>
+        </Button>
+      </Grid>
+    );
+  });
+
+  const handleOnClose = ()=>{
+    if(!_socre) return;
+    history.push(`/home/${_socre.name}/${_version}/`);
+  };
+
+  return (
+    <>
+      <Grid container>
+        <Grid item xs>
+          <Typography variant="h4">{_socre?.title}</Typography>
+        </Grid>
+      </Grid>
+
+      <Divider/>
+
+      <Grid container>
+        <Grid container xs={4}>
+          <Grid direction="row" container>
+            <Typography variant="h5">バージョン {_version}</Typography>
+          </Grid>
+          <Grid direction="row" container>
+            <Typography variant="h5">説明</Typography>
+            {scoreVersion?.description?.split('\n').map(t=>(<Typography>{t}</Typography>))}
+          </Grid>
+        </Grid>
+        <Grid container xs alignItems="flex-start" justify="flex-start" alignContent="flex-start">
+          {thumbnailContents}
+        </Grid>
+      </Grid>
+
+      <PageDialog
+        open={scoreVersionPage !== undefined}
+        page={scoreVersionPage}
+        onClose={handleOnClose}
+      />
     </>
   );
 }
@@ -167,12 +278,17 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
+type HomeContentType = "home" | "detail" | "version" | "page";
+
 const HomePage = () => {
   const classes = useStyles();
 
   const [scores, setScores] = useState<{[name: string]:Score}>({});
   const history = useHistory();
-  const scoreNameMatch = useRouteMatch<{scoreName: string}>("/home/:scoreName");
+  const urlMatch = useRouteMatch<{
+    scoreName?: string,
+    version?: string,
+    pageNo?: string}>("/home/:scoreName?/:version?/:pageNo?");
 
   useEffect(()=>{
     const f = async ()=>{
@@ -194,22 +310,42 @@ const HomePage = () => {
 
   },[]);
 
-  let contentType: "home" | "detail" = "home";
+  let contentType: HomeContentType = "home";
 
-  let score = undefined;
-  if(scoreNameMatch){
-    const scoreName = scoreNameMatch.params.scoreName;
-    score = scores[scoreName];
+  let score: undefined | Score = undefined;
+  if(urlMatch){
+    const scoreName = urlMatch.params.scoreName;
+    if(scoreName){
+      score = scores[scoreName];
 
-    if(score){
-      contentType = "detail";
+      if(score){
+        contentType = "detail";
+      }
+    }
+  }
+
+  let version: undefined | number = undefined;
+  if(urlMatch){
+    const versinText = urlMatch.params.version;
+    version = versinText !== undefined ? parseInt(versinText) : undefined;
+    if(version !== undefined){
+      contentType = "version";
+    }
+  }
+
+  let pageNo: undefined | number = undefined;
+  if(urlMatch){
+    const pageNoText = urlMatch.params.pageNo;
+    pageNo = pageNoText !== undefined ? parseInt(pageNoText) : undefined;
+    if(pageNo){
+      contentType = "page";
     }
   }
 
   const handleScoreOnClick = (key: string, socre: Score) => {
     history.push(`/home/${key}/`);
   };
-  const content = ((type: "home" | "detail")=>{
+  const content = ((type: HomeContentType)=>{
     switch(type){
       case "home": {
         return (
@@ -238,11 +374,33 @@ const HomePage = () => {
           />
         );
       }
+      case "version":{
+        return (
+          <ScoreVersionDetailContent
+            score={score}
+            version={version}
+          />
+        );
+      }
+      case "page":{
+        return (
+          <ScoreVersionDetailContent
+            score={score}
+            version={version}
+            pageNo={pageNo}
+          />
+        );
+      }
+      default: return (<></>)
   }})(contentType);
 
   const breadcrumbList = [(<Button component={Link} to="/">Home</Button>)];
   if(score){
     breadcrumbList.push((<Button component={Link} to={`/home/${score.name}/`}>{score.name}</Button>));
+
+    if(version){
+      breadcrumbList.push((<Button component={Link} to={`/home/${score.name}/${version}`}>version {version}</Button>));
+    }
   }
 
   return (
