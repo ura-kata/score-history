@@ -37,9 +37,8 @@ const App = () => {
         <Router>
           <Switch>
             <Route path="/" component={HomePage} exact />
-            <Route path="/home" component={HomePage} exact />
-            <Route path="/home/:scoreName" component={HomePage} exact />
-            <Route path="/new" component={ScorePage} exact />
+            <Route path="/home/:scoreName?/:version?/:pageNo?" component={HomePage} />
+            <Route path="/new" component={ScorePage} />
             <Route path="/upload" component={UploadScorePage} />
             <Route path="/display" component={DisplayPage} />
             <Route path="/api-test" component={ApiTestPage} />
