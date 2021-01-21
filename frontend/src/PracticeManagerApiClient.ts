@@ -1,19 +1,30 @@
 
 export interface ScoreVersionPage{
-  url: string;
+  image_url: string;
+  thumbnail_url: string;
   no: number;
+  description: string;
 }
 export interface ScoreVersion{
   version: number;
+  description: string;
+  create_at: Date;
+  update_at: Date;
   pages: ScoreVersionPage[];
 
 }
 
+export interface SummaryScoreVersion{
+  version: number;
+  description: string;
+  page_count: number;
+}
 export interface Score{
   name: string;
   title: string;
   description: string;
   version_meta_urls: SocreVersionMetaUrl[];
+  versions: SummaryScoreVersion[];
 }
 
 export interface SocreVersionMetaUrl{

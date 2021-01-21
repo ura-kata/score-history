@@ -13,7 +13,7 @@ const downloadImageUrls = async (name: string, version: number): Promise<string[
     return [];
   }
   const scoreVersion = await client.getScoreVersion(name, version);
-  return scoreVersion.pages.map(x=>x.url);
+  return scoreVersion.pages.map(x=>x.image_url);
 };
 
 export interface VersionDisplayDialogProps{

@@ -12,5 +12,7 @@ namespace PracticeManagerApi.Services.Models
         public string Description { get; set; }
         [JsonPropertyName("version_meta_urls")]
         public ScoreVersionMetaUrl[] VersionMetaUrls { get; set; } = new ScoreVersionMetaUrl[0];
+        [JsonPropertyName("versions")]
+        public SummaryScoreVersion[] Versions { get; set; }
     }
 }

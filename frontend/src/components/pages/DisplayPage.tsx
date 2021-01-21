@@ -47,7 +47,7 @@ const DisplayPage = () => {
 
     const scoreVersion = await client.getScoreVersion('test', 0);
 
-    const urlList = scoreVersion.pages.map(page=>page.url);
+    const urlList = scoreVersion.pages.map(page=>page.image_url);
 
     setImageUrlList(urlList);
   };
