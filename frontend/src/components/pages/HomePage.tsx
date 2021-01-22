@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import GenericTemplate from '../templates/GenericTemplate'
 import {
   createStyles,
@@ -19,11 +19,14 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  IconButton,
 } from '@material-ui/core'
 import PracticeManagerApiClient, { Score, ScoreVersion, ScoreVersionPage } from '../../PracticeManagerApiClient'
 import ScoreDialog from '../molecules/ScoreDialog';
 import { Link, useHistory, useRouteMatch } from "react-router-dom";
 import { Skeleton, Timeline, TimelineConnector, TimelineContent, TimelineDot, TimelineItem, TimelineOppositeContent, TimelineSeparator } from '@material-ui/lab';
+import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 
 const client = new PracticeManagerApiClient(process.env.REACT_APP_API_URI_BASE as string);
 
@@ -139,24 +142,70 @@ interface PageDialogProps{
   page?: ScoreVersionPage;
   open: boolean;
   onClose?: ()=>void;
+  onPrev?: ()=>void;
+  onNext?: ()=>void;
 }
 const PageDialog = (props: PageDialogProps) =>{
   const _page = props.page;
   const _open = props.open;
   const _onClose = props.onClose;
+  const _onPrev = props.onPrev;
+  const _onNext = props.onNext;
+
+  const dialogContentRef = useRef();
+  const onDrag = (event : React.DragEvent<HTMLImageElement>)=>{
+    console.log(event);
+  };
+
+  const [zoomEnable, setZoomEnable] = useState(false);
+
+  const zoomOnClick = ()=>{
+    setZoomEnable(!zoomEnable);
+  };
+
+  const onPrev = ()=>{
+    setZoomEnable(false);
+    if(_onPrev) _onPrev();
+  };
+  const onNext = ()=>{
+    setZoomEnable(false);
+    if(_onNext) _onNext();
+  };
 
   return (
   <Dialog onClose={_onClose} open={_open}>
     <DialogTitle>
       <Typography align="center">{_page?.no}</Typography>
     </DialogTitle>
-    <DialogContent dividers>
-      <img src={_page?.image_url} alt={_page?.no.toString()} style={{height: "70vh"}}/>
+    <DialogContent dividers ref={dialogContentRef}>
+      <Grid style={{height: "70vh", display:zoomEnable ? "inline" : "none"}} >
+        <img src={_page?.image_url} alt={_page?.no.toString()} onDrag={onDrag} onClick={zoomOnClick}/>
+      </Grid>
+      <img src={_page?.image_url} alt={_page?.no.toString()} onDrag={onDrag} style={{height: "70vh", display:zoomEnable ? "none" : "inline"}} onClick={zoomOnClick}/>
     </DialogContent>
     <DialogActions>
-      <Button autoFocus onClick={_onClose} color="primary">
+      <Grid container>
+        <Grid container xs>
+          <Grid item>
+            <IconButton onClick={onPrev} color="primary" disabled={_onPrev === undefined}>
+              <ChevronLeftIcon />
+            </IconButton>
+          </Grid>
+          <Grid item>
+            <IconButton onClick={onNext} color="primary" disabled={_onNext === undefined}>
+              <ChevronRightIcon />
+            </IconButton>
+          </Grid>
+        </Grid>
+        <Grid container xs justify="flex-end">
+          <Grid item>
+            <Button onClick={_onClose} color="primary">
         Close
       </Button>
+          </Grid>
+        </Grid>
+      </Grid>
+
     </DialogActions>
   </Dialog>
   );
@@ -178,8 +227,6 @@ const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
   const [scoreVersion, setScoreVersion] = useState<ScoreVersion | undefined>(undefined);
   const history = useHistory();
 
-  let scoreVersionPage: ScoreVersionPage | undefined = undefined;
-
   useEffect(()=>{
     if(!_socre) return;
     if(_version === undefined) return;
@@ -196,9 +243,28 @@ const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
     f();
   },[_socre, _version]);
 
-  if(scoreVersion){
-    scoreVersionPage = scoreVersion.pages.find((page)=>page.no === _pageNo);
+  const actionsAndPageSet = useMemo(()=>{
+
+    const ret = {} as {[no: number]: {page: ScoreVersionPage, onPrev?: ()=>void, onNext?: ()=>void}};
+
+    scoreVersion?.pages.forEach((page, index)=>{
+      const prevUrl = (index === 0 || _socre === undefined || _version === undefined) ? undefined :
+        `/home/${_socre.name}/${_version}/${scoreVersion.pages[index - 1].no}/`;
+
+      const nextUrl = (index === (scoreVersion.pages.length - 1) || _socre === undefined || _version === undefined) ? undefined :
+      `/home/${_socre.name}/${_version}/${scoreVersion.pages[index + 1].no}/`;
+      ret[page.no] = {
+        page: page,
+        onPrev: prevUrl ? ()=>history.push(prevUrl) : undefined,
+        onNext: nextUrl ? ()=>history.push(nextUrl) : undefined,
   }
+    });
+
+    return ret;
+
+  },[_socre, _version, history, scoreVersion]);
+
+  const actionsAndPage = _pageNo === undefined ? undefined : actionsAndPageSet[_pageNo];
 
   const thumbnailContents = !scoreVersion ? [] : scoreVersion.pages.map((page, index)=>{
     return (
@@ -250,9 +316,11 @@ const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
       </Grid>
 
       <PageDialog
-        open={scoreVersionPage !== undefined}
-        page={scoreVersionPage}
+        open={actionsAndPage !== undefined}
+        page={actionsAndPage?.page}
         onClose={handleOnClose}
+        onPrev={actionsAndPage?.onPrev}
+        onNext={actionsAndPage?.onNext}
       />
     </>
   );
