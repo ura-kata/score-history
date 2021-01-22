@@ -179,9 +179,9 @@ const PageDialog = (props: PageDialogProps) =>{
     </DialogTitle>
     <DialogContent dividers ref={dialogContentRef}>
       <Grid style={{height: "70vh", display:zoomEnable ? "inline" : "none"}} >
-        <img src={_page?.image_url} alt={_page?.no.toString()} onDrag={onDrag} onClick={zoomOnClick}/>
+        <img src={_page?.image_url} alt={_page?.no.toString()} onDrag={onDrag} onClick={zoomOnClick} style={{userSelect: "none"}}/>
       </Grid>
-      <img src={_page?.image_url} alt={_page?.no.toString()} onDrag={onDrag} style={{height: "70vh", display:zoomEnable ? "none" : "inline"}} onClick={zoomOnClick}/>
+      <img src={_page?.image_url} alt={_page?.no.toString()} onDrag={onDrag} style={{height: "70vh", userSelect: "none", display:zoomEnable ? "none" : "inline"}} onClick={zoomOnClick}/>
     </DialogContent>
     <DialogActions>
       <Grid container>
@@ -273,7 +273,7 @@ const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
           <Paper>
             <Grid container>
               <Grid direction="row" xs={12} justify="center">
-                <img src={page.thumbnail_url ?? page.image_url} height={"200px"} alt={page.no.toString()}/>
+                <img src={page.thumbnail_url ?? page.image_url} height={"200px"} alt={page.no.toString()} style={{userSelect: "none"}}/>
               </Grid>
               <Grid direction="row" xs={12}>
                 <Typography align="center">{page.no}</Typography>
