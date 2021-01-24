@@ -130,7 +130,7 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
         <Grid item xs={5}>
           <Grid container justify="center" spacing={3}>
             <Grid item xs={12}>
-              <Typography variant="h5">バージョン</Typography>
+              <Typography variant="h5" style={{textAlign: "center"}}>バージョン</Typography>
             </Grid>
             <Grid item xs={12}>
               {/* Todo バージョンは長くなることが良そうされるのでスクロールできるようにする */}
