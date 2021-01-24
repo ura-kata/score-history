@@ -268,14 +268,14 @@ const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
 
   const thumbnailContents = !scoreVersion ? [] : scoreVersion.pages.map((page, index)=>{
     return (
-      <Grid item>
+      <Grid item key={page.no}>
         <Button component={Link} to={`/home/${_socre?.name}/${_version}/${page.no}`}>
           <Paper>
-            <Grid container>
-              <Grid direction="row" xs={12} justify="center">
+            <Grid container justify="center">
+              <Grid item xs={12}>
                 <img src={page.thumbnail_url ?? page.image_url} height={"200px"} alt={page.no.toString()} style={{userSelect: "none"}}/>
               </Grid>
-              <Grid direction="row" xs={12}>
+              <Grid item xs={12}>
                 <Typography align="center">{page.no}</Typography>
               </Grid>
             </Grid>
@@ -301,18 +301,25 @@ const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
       <Divider/>
 
       <Grid container>
-        <Grid container xs={4}>
+        <Grid item xs={4}>
           <Grid direction="row" container>
+            <Grid item xs={12}>
             <Typography variant="h5">バージョン {_version}</Typography>
           </Grid>
+          </Grid>
           <Grid direction="row" container>
+            <Grid item xs={12}>
             <Typography variant="h5">説明</Typography>
-            {scoreVersion?.description?.split('\n').map(t=>(<Typography>{t}</Typography>))}
+              {scoreVersion?.description?.split('\n').map((t,index)=>(<Typography key={index}>{t}</Typography>))}
+            </Grid>
+
           </Grid>
         </Grid>
-        <Grid container xs alignItems="flex-start" justify="flex-start" alignContent="flex-start">
+        <Grid item xs={8}>
+          <Grid container alignItems="flex-start" justify="flex-start" alignContent="flex-start">
           {thumbnailContents}
         </Grid>
+      </Grid>
       </Grid>
 
       <PageDialog
@@ -462,12 +469,12 @@ const HomePage = () => {
       default: return (<></>)
   }})(contentType);
 
-  const breadcrumbList = [(<Button component={Link} to="/">Home</Button>)];
+  const breadcrumbList = [(<Button key={0} component={Link} to="/">Home</Button>)];
   if(score){
-    breadcrumbList.push((<Button component={Link} to={`/home/${score.name}/`}>{score.name}</Button>));
+    breadcrumbList.push((<Button key={breadcrumbList.length} component={Link} to={`/home/${score.name}/`}>{score.name}</Button>));
 
     if(version){
-      breadcrumbList.push((<Button component={Link} to={`/home/${score.name}/${version}`}>version {version}</Button>));
+      breadcrumbList.push((<Button key={breadcrumbList.length} component={Link} to={`/home/${score.name}/${version}`}>version {version}</Button>));
     }
   }
 
