@@ -86,7 +86,7 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
   const timelineItems = !_socre ? [] : [..._socre.versions].reverse().map((version, index)=>{
 
     return (
-      <TimelineItem>
+      <TimelineItem key={index}>
         <TimelineSeparator>
           <TimelineDot>
             {/* Todo チェックしたかどうかをアイコンで表示する */}
@@ -94,7 +94,13 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
           {index !== (_socre.versions.length - 1) ? (<TimelineConnector />) : (<></>)}
         </TimelineSeparator>
         <TimelineContent>
-          <Button component={Link} to={`/home/${_socre?.name}/${version.version}`}>{version.version}</Button>
+          <Button component={Link} to={`/home/${_socre?.name}/${version.version}`}>
+            <Paper elevation={3} style={{padding: "6px 16px"}}>
+              <Typography>version {version.version}</Typography>
+            </Paper>
+
+          </Button>
+
         </TimelineContent>
       </TimelineItem>
     );
@@ -110,21 +116,31 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
 
       <Divider/>
 
-      <Grid container>
-        <Grid xs={4} container justify="center">
-          <Typography variant="h5">バージョン</Typography>
-          {/* Todo バージョンは長くなることが良そうされるのでスクロールできるようにする */}
-          <Timeline align="left">
-            {timelineItems}
-          </Timeline>
-
+      <Grid container spacing={3}>
+        <Grid item xs>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Typography variant="h5">説明</Typography>
+            </Grid>
+            <Grid item xs={12}>
+              {_socre?.description?.split('\n').map((t,index)=>(<Typography key={index}>{t}</Typography>))}
+            </Grid>
+          </Grid>
         </Grid>
-        <Grid xs>
-          <Typography variant="h5">説明</Typography>
-          {_socre?.description?.split('\n').map(t=>(<Typography>{t}</Typography>))}
+        <Grid item xs={5}>
+          <Grid container justify="center" spacing={3}>
+            <Grid item xs={12}>
+              <Typography variant="h5">バージョン</Typography>
+            </Grid>
+            <Grid item xs={12}>
+              {/* Todo バージョンは長くなることが良そうされるのでスクロールできるようにする */}
+              <Timeline align="left">
+                {timelineItems}
+              </Timeline>
+            </Grid>
+          </Grid>
         </Grid>
       </Grid>
-
     </>
   );
 }
@@ -195,7 +211,7 @@ const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
                 <img src={page.thumbnail_url ?? page.image_url} height={"200px"} alt={page.no.toString()} style={{userSelect: "none"}}/>
               </Grid>
               <Grid item xs={12}>
-                <Typography align="center">{page.no}</Typography>
+                <Typography align="center">p. {page.no}</Typography>
               </Grid>
             </Grid>
           </Paper>
@@ -219,23 +235,25 @@ const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
 
       <Divider/>
 
-      <Grid container>
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <Typography variant="h5">バージョン {_version}</Typography>
+        </Grid>
         <Grid item xs={4}>
-          <Grid direction="row" container>
-            <Grid item xs={12}>
-              <Typography variant="h5">バージョン {_version}</Typography>
-            </Grid>
+          <Grid container spacing={3}>
+
           </Grid>
-          <Grid direction="row" container>
+          <Grid container spacing={3}>
             <Grid item xs={12}>
               <Typography variant="h5">説明</Typography>
+            </Grid>
+            <Grid item xs={12}>
               {scoreVersion?.description?.split('\n').map((t,index)=>(<Typography key={index}>{t}</Typography>))}
             </Grid>
-
           </Grid>
         </Grid>
         <Grid item xs={8}>
-          <Grid container alignItems="flex-start" justify="flex-start" alignContent="flex-start">
+          <Grid container alignItems="flex-start" justify="flex-start" alignContent="flex-start" spacing={1}>
             {thumbnailContents}
           </Grid>
         </Grid>
