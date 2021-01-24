@@ -207,7 +207,7 @@ const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
         <Button component={Link} to={`/home/${_socre?.name}/${_version}/${page.no}`}>
           <Paper>
             <Grid container justify="center">
-              <Grid item xs={12}>
+              <Grid item xs={12} style={{textAlign: "center"}}>
                 <img src={page.thumbnail_url ?? page.image_url} height={"200px"} alt={page.no.toString()} style={{userSelect: "none"}}/>
               </Grid>
               <Grid item xs={12}>
