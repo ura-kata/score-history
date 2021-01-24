@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import GenericTemplate from '../templates/GenericTemplate'
 import {
   createStyles,
@@ -15,18 +15,11 @@ import {
   Button,
   Breadcrumbs,
   Paper,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  IconButton,
 } from '@material-ui/core'
 import PracticeManagerApiClient, { Score, ScoreVersion, ScoreVersionPage } from '../../PracticeManagerApiClient'
-import ScoreDialog from '../molecules/ScoreDialog';
 import { Link, useHistory, useRouteMatch } from "react-router-dom";
-import { Skeleton, Timeline, TimelineConnector, TimelineContent, TimelineDot, TimelineItem, TimelineOppositeContent, TimelineSeparator } from '@material-ui/lab';
-import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import { Timeline, TimelineConnector, TimelineContent, TimelineDot, TimelineItem, TimelineSeparator } from '@material-ui/lab';
+import ScorePageDetailDialog from '../organisms/ScorePageDetailDialog';
 
 const client = new PracticeManagerApiClient(process.env.REACT_APP_API_URI_BASE as string);
 
@@ -136,80 +129,6 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
   );
 }
 
-// ------------------------------------------------------------------------------------------
-
-interface PageDialogProps{
-  page?: ScoreVersionPage;
-  open: boolean;
-  onClose?: ()=>void;
-  onPrev?: ()=>void;
-  onNext?: ()=>void;
-}
-const PageDialog = (props: PageDialogProps) =>{
-  const _page = props.page;
-  const _open = props.open;
-  const _onClose = props.onClose;
-  const _onPrev = props.onPrev;
-  const _onNext = props.onNext;
-
-  const dialogContentRef = useRef();
-  const onDrag = (event : React.DragEvent<HTMLImageElement>)=>{
-    console.log(event);
-  };
-
-  const [zoomEnable, setZoomEnable] = useState(false);
-
-  const zoomOnClick = ()=>{
-    setZoomEnable(!zoomEnable);
-  };
-
-  const onPrev = ()=>{
-    setZoomEnable(false);
-    if(_onPrev) _onPrev();
-  };
-  const onNext = ()=>{
-    setZoomEnable(false);
-    if(_onNext) _onNext();
-  };
-
-  return (
-  <Dialog onClose={_onClose} open={_open}>
-    <DialogTitle>
-      <Typography align="center">{_page?.no}</Typography>
-    </DialogTitle>
-    <DialogContent dividers ref={dialogContentRef}>
-      <Grid style={{height: "70vh", display:zoomEnable ? "inline" : "none"}} >
-        <img src={_page?.image_url} alt={_page?.no.toString()} onDrag={onDrag} onClick={zoomOnClick} style={{userSelect: "none"}}/>
-      </Grid>
-      <img src={_page?.image_url} alt={_page?.no.toString()} onDrag={onDrag} style={{height: "70vh", userSelect: "none", display:zoomEnable ? "none" : "inline"}} onClick={zoomOnClick}/>
-    </DialogContent>
-    <DialogActions>
-      <Grid container>
-        <Grid container xs>
-          <Grid item>
-            <IconButton onClick={onPrev} color="primary" disabled={_onPrev === undefined}>
-              <ChevronLeftIcon />
-            </IconButton>
-          </Grid>
-          <Grid item>
-            <IconButton onClick={onNext} color="primary" disabled={_onNext === undefined}>
-              <ChevronRightIcon />
-            </IconButton>
-          </Grid>
-        </Grid>
-        <Grid container xs justify="flex-end">
-          <Grid item>
-            <Button onClick={_onClose} color="primary">
-        Close
-      </Button>
-          </Grid>
-        </Grid>
-      </Grid>
-
-    </DialogActions>
-  </Dialog>
-  );
-};
 
 // ------------------------------------------------------------------------------------------
 
@@ -257,7 +176,7 @@ const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
         page: page,
         onPrev: prevUrl ? ()=>history.push(prevUrl) : undefined,
         onNext: nextUrl ? ()=>history.push(nextUrl) : undefined,
-  }
+      }
     });
 
     return ret;
@@ -304,12 +223,12 @@ const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
         <Grid item xs={4}>
           <Grid direction="row" container>
             <Grid item xs={12}>
-            <Typography variant="h5">バージョン {_version}</Typography>
-          </Grid>
+              <Typography variant="h5">バージョン {_version}</Typography>
+            </Grid>
           </Grid>
           <Grid direction="row" container>
             <Grid item xs={12}>
-            <Typography variant="h5">説明</Typography>
+              <Typography variant="h5">説明</Typography>
               {scoreVersion?.description?.split('\n').map((t,index)=>(<Typography key={index}>{t}</Typography>))}
             </Grid>
 
@@ -317,12 +236,12 @@ const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
         </Grid>
         <Grid item xs={8}>
           <Grid container alignItems="flex-start" justify="flex-start" alignContent="flex-start">
-          {thumbnailContents}
+            {thumbnailContents}
+          </Grid>
         </Grid>
       </Grid>
-      </Grid>
 
-      <PageDialog
+      <ScorePageDetailDialog
         open={actionsAndPage !== undefined}
         page={actionsAndPage?.page}
         onClose={handleOnClose}
