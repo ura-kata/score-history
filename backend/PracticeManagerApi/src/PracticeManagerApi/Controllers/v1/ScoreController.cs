@@ -718,8 +718,8 @@ namespace PracticeManagerApi.Controllers.v1
 
             version.Pages = meta.Pages.Select(x => new ScoreVersionPage()
             {
-                No = double.Parse(x.Value.No),
-                Url = urlConvertor.CreateUri(x.Value.ImageFileKey)
+                No = int.Parse(x.Value.No),
+                ImageUrl = urlConvertor.CreateUri(x.Value.ImageFileKey)
             }).ToArray();
 
             return version;
