@@ -1,3 +1,4 @@
+import queryString from "query-string";
 
 export interface ScoreVersionPage{
   image_url: string;
@@ -44,10 +45,13 @@ export interface UserMe{
   id: string;
 }
 
-export default class PracticeManagerApiClient{
-  constructor(private baseUrl: string){
-
+export interface UploadedContent {
+  href: string;
+  original_name: string;
   }
+
+export default class PracticeManagerApiClient {
+  constructor(private baseUrl: string) {}
 
   async getUserMe(): Promise<UserMe> {
     const url = new URL('api/v1/user/me', this.baseUrl);
@@ -194,12 +198,72 @@ export default class PracticeManagerApiClient{
       if(!response.ok){
         throw new Error(`Score の取得に失敗しました(${await response.text()})`);
       }
-    } catch(err){
+  async uploadContent(
+    file: File,
+    owner: string,
+    scoreName: string
+  ): Promise<UploadedContent> {
+    const url = new URL(`api/v1/content/upload`, this.baseUrl);
+
+    // Todo 引数の検証を追加する
+    const formData = new FormData();
+    formData.append("content", file);
+    formData.append("owner", owner);
+    formData.append("score_name", scoreName);
+
+    try {
+      const response = await fetch(url.href, {
+        method: "POST",
+        // headers: {
+        //   "Content-Type": "multipart/form-data",
+        //   Accept: "application/json",
+        // },
+        body: formData,
+      });
+
+      // throw new Error("test");
+
+      if (response.ok) {
+        const uploadedContent = (await response.json()) as UploadedContent;
+
+        return uploadedContent;
+      }
+
+      throw new Error(
+        `コンテンツのアップロードに失敗しました (${response.text()})`
+      );
+    } catch (err) {
       throw err;
     }
   }
 
+  async deleteContent(cntentUrl: string): Promise<void> {
+    // Todo 引数の検証
 
+    const url = new URL(`api/v1/content/delete`, this.baseUrl);
 
+    const requestUrl = queryString.stringifyUrl({
+      url: url.toString(),
+      query: {
+        uri: cntentUrl,
+      },
+    });
 
+    try {
+      const response = await fetch(requestUrl, {
+        method: "DELETE",
+        // headers: {
+        //   "Content-Type": "application/json",
+        // },
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `コンテンツの削除に失敗しました (${await response.text()})`
+        );
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
 }

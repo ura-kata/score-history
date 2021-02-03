@@ -1,1 +1,3 @@
-Contents/IMSLP*
+Contents/**/*.png
+Contents/**/*.jpg
+Contents/**/*.jpeg
