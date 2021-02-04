@@ -118,6 +118,10 @@ ${owner}/${score_name}
 
 HEAD ファイルは 最新の Version File の hash を1つだけ記述するテキストファイル
 
+ブランチはサポートせず、まっすぐなグラフになるようにするために Version File の `parent` がこのファイルに記載されていない場合はコミットを失敗にする。
+
+もし失敗した場合は古い Version File を参照して作られた Version File になるので最新のデータを反映させてから再度コミットさせる。
+
 ```text
 ${Version File hash}
 
