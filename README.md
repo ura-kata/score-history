@@ -213,16 +213,28 @@ string ComputeUUID() => Guid.NewGuid().ToString("D");
 
 - user_bucket
   - ${user_name}
-    - ${UUID} (Score Ref Object の UUID)
+    - socre
+      - SHARED
       - checked
+        - ${UUID} (Checked Object)
 
-#### checked
+#### SHARED
 
-確認した Hash File の hash
+共有してる別の owner の Score の id のリストテキスト
+
+```text
+${id}
+${id}
+
+```
+
+#### Checked Object
+
+確認した Score の Object の hash 値
 
 ```json
 {
-  "${Hash File hash}": {
+  "${Object hash}": {
     "checked_at": "${ISO 8601 UTC 拡張形式}"
   }
 }
