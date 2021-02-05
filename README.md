@@ -79,7 +79,7 @@
   - repositories
     - ${owner}
       - ${score_name}
-        - id
+        - ID
         - objects
           - ${hash の上位2桁}
             - ${hash の下位38桁} (Object)
@@ -90,7 +90,7 @@
         - shared
           - ${user_name} (Shared Object)
 
-#### id
+#### ID
 
 UUID が記録されたテキストファイル
 
