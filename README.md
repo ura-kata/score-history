@@ -36,7 +36,7 @@
 - タイトル
 - 説明
 - バージョングラフ
-  - Version File hash の上位 8 桁
+  - Version Object hash の上位 8 桁
   - Version message
   - create_at
   - author
@@ -48,7 +48,7 @@
 
 表示する項目
 
-- Version File hash の上位 8 桁
+- Version Object hash の上位 8 桁
 - Version message
 - create_at
 - author
@@ -74,21 +74,21 @@
 ### スコアのデータ
 
 - score_bucket
-  - id
-    - ${UUID} (Score Ref File)
+  - ids
+    - ${UUID} (Score Ref Object)
   - repositories
     - ${owner}
       - ${score_name}
         - id
         - objects
           - ${hash の上位2桁}
-            - ${hash の下位38桁} (Hash File)
+            - ${hash の下位38桁} (Object)
         - HEAD
-        - detail
+        - PROPERTY
         - contents
           - ${UUID}@${original_name} (Content File)
         - shared
-          - ${user_name} (Shared File)
+          - ${user_name} (Shared Object)
 
 #### id
 
@@ -101,7 +101,7 @@ ${UUID}
 
 ```
 
-#### Score Ref File
+#### Score Ref Object
 
 UUID に紐づくスコアを記述したテキストファイル
 
@@ -114,22 +114,26 @@ ${owner}/${score_name}
 
 ```
 
+#### PROPERTY
+
+スコアの Property Object の hash を1つだけ記述するテキストファイル
+
 #### HEAD
 
-HEAD ファイルは 最新の Version File の hash を1つだけ記述するテキストファイル
+HEAD ファイルは 最新の Version Object の hash を1つだけ記述するテキストファイル
 
-ブランチはサポートせず、まっすぐなグラフになるようにするために Version File の `parent` がこのファイルに記載されていない場合はコミットを失敗にする。
+ブランチはサポートせず、まっすぐなグラフになるようにするために Version Object の `parent` がこのファイルに記載されていない場合はコミットを失敗にする。
 
-もし失敗した場合は古い Version File を参照して作られた Version File になるので最新のデータを反映させてから再度コミットさせる。
+もし失敗した場合は古い Version Object を参照して作られた Version Object になるので最新のデータを反映させてから再度コミットさせる。
 
 ```text
-${Version File hash}
+${Version Object hash}
 
 ```
 
-#### Hash File
+#### Object
 
-##### Version File
+##### Version Object
 
 ```json
 {
@@ -139,12 +143,12 @@ ${Version File hash}
   "pages": [
     "${Page File hash}"
   ],
-  "parent": "${Version File hash}",
+  "parent": "${Version Object hash}",
   "message": "${Version メッセージ}"
 }
 ```
 
-##### Page File
+##### Page Object
 
 ```json
 {
@@ -160,7 +164,7 @@ ${Version File hash}
 }
 ```
 
-##### Comment File
+##### Comment Object
 
 ```json
 {
@@ -171,7 +175,7 @@ ${Version File hash}
 }
 ```
 
-#### detail
+##### Property Object
 
 スコアの詳細情報。
 
@@ -195,7 +199,7 @@ UUID は以下のように計算する。
 string ComputeUUID() => Guid.NewGuid().ToString("D");
 ```
 
-#### Shared File
+#### Shared Object
 
 共有できるユーザー名のファイル。
 
@@ -209,7 +213,7 @@ string ComputeUUID() => Guid.NewGuid().ToString("D");
 
 - user_bucket
   - ${user_name}
-    - ${UUID} (Score Ref File の UUID)
+    - ${UUID} (Score Ref Object の UUID)
       - checked
 
 #### checked
