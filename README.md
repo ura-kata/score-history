@@ -139,10 +139,14 @@ ${Version Object hash}
 {
   "create_at": "${ISO 8601 UTC 拡張形式}",
   "author": "${ユーザー名}",
-  "email": "${ユーザーのメールアドレス}",
   "pages": [
-    "${Page File hash}"
+    "${Page Object hash}"
   ],
+  "comments": {
+    "${Page Object hash}": [
+      "${Comment Object hash}"
+    ]
+  },
   "parent": "${Version Object hash}",
   "message": "${Version メッセージ}"
 }
@@ -154,13 +158,10 @@ ${Version Object hash}
 {
   "create_at": "${ISO 8601 UTC 拡張形式}",
   "author": "${ユーザー名}",
-  "email": "${ユーザーのメールアドレス}",
-  "no": "${ページナンバー}",
-  "image_uri": "${ページイメージのURI}",
-  "thumbnail_uri": "${サムネイルイメージのURI}",
-  "comments":[
-    "${Comment File hash}"
-  ]
+  
+  "number": "${ページナンバー}",
+  "image": "${ページイメージのURI}",
+  "thumbnail": "${サムネイルイメージのURI}"
 }
 ```
 
@@ -170,7 +171,6 @@ ${Version Object hash}
 {
   "create_at": "${ISO 8601 UTC 拡張形式}",
   "author": "${ユーザー名}",
-  "email": "${ユーザーのメールアドレス}",
   "comment": "${コメント}"
 }
 ```
@@ -183,9 +183,9 @@ ${Version Object hash}
 {
   "create_at": "${ISO 8601 UTC 拡張形式}",
   "author": "${ユーザー名}",
-  "email": "${ユーザーのメールアドレス}",
   "title": "${スコアのタイトル}",
-  "description": "${説明}"
+  "description": "${説明}",
+  "parent": "${Property Object hash}"
 }
 ```
 
