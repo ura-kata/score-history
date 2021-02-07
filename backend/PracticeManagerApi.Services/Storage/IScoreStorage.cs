@@ -12,9 +12,9 @@ namespace PracticeManagerApi.Services.Storage
 
         public bool DeleteObject(string key);
 
-        public bool CreatePath(string key);
-        public bool DeletePath(string key);
-        public bool ExistPath(string key);
-        public string[] GetChildrenPathNames(string key);
+        public bool CreateDirectory(string key);
+        public bool DeleteDirectory(string key);
+        public bool ExistDirectory(string key);
+        public string[] GetChildrenDirectoryNames(string key);
     }
 }

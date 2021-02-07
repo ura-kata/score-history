@@ -117,7 +117,7 @@ namespace PracticeManagerApi.Mock
             }
         }
 
-        public bool CreatePath(string key)
+        public bool CreateDirectory(string key)
         {
             var path = Path.Join(BaseDirectory, key);
 
@@ -130,7 +130,7 @@ namespace PracticeManagerApi.Mock
             return true;
         }
 
-        public bool DeletePath(string key)
+        public bool DeleteDirectory(string key)
         {
             var path = Path.Join(BaseDirectory, key);
 
@@ -163,14 +163,14 @@ namespace PracticeManagerApi.Mock
             return false;
         }
 
-        public bool ExistPath(string key)
+        public bool ExistDirectory(string key)
         {
             var path = Path.Join(BaseDirectory, key);
 
             return File.Exists(path) || Directory.Exists(path);
         }
 
-        public string[] GetChildrenPathNames(string key)
+        public string[] GetChildrenDirectoryNames(string key)
         {
             var path = Path.Join(BaseDirectory, key);
 

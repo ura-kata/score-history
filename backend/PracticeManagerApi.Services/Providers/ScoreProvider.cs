@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -289,7 +289,7 @@ namespace PracticeManagerApi.Services.Providers
             var scoreKey = JoinKeys(owner, scoreName);
             var scoreRootKey = JoinKeys(RepositoriesRoot, scoreKey);
 
-            if (_storage.ExistPath(scoreRootKey))
+            if (_storage.ExistDirectory(scoreRootKey))
             {
                 throw new InvalidOperationException($"'{owner}/{scoreName}' is existed.");
             }
@@ -322,7 +322,7 @@ namespace PracticeManagerApi.Services.Providers
             var scoreKey = JoinKeys(owner, scoreName);
             var scoreRootKey = JoinKeys(RepositoriesRoot, scoreKey);
 
-            if (false == _storage.ExistPath(scoreRootKey))
+            if (false == _storage.ExistDirectory(scoreRootKey))
             {
                 throw new InvalidOperationException($"'{owner}/{scoreName}' is not found.");
             }
@@ -359,12 +359,12 @@ namespace PracticeManagerApi.Services.Providers
         {
             var ownerKey = JoinKeys(RepositoriesRoot, owner);
 
-            if (false == _storage.ExistPath(ownerKey))
+            if (false == _storage.ExistDirectory(ownerKey))
             {
                 throw new InvalidOperationException($"'{owner}' is not found.");
             }
 
-            var scoreNames = _storage.GetChildrenPathNames(ownerKey);
+            var scoreNames = _storage.GetChildrenDirectoryNames(ownerKey);
 
             var latestList = scoreNames.Select(scoreName => (key: JoinKeys(owner, scoreName), value: GetScore(owner, scoreName)))
                 .ToArray();
@@ -387,12 +387,12 @@ namespace PracticeManagerApi.Services.Providers
             var owner = UserName;
             var ownerKey = JoinKeys(RepositoriesRoot, owner);
 
-            if (false == _storage.ExistPath(ownerKey))
+            if (false == _storage.ExistDirectory(ownerKey))
             {
                 return new ScoreV2LatestSet();
             }
 
-            var scoreNames = _storage.GetChildrenPathNames(ownerKey);
+            var scoreNames = _storage.GetChildrenDirectoryNames(ownerKey);
 
             var latestList = scoreNames.Select(scoreName => (key: JoinKeys(owner, scoreName), value: GetScore(owner, scoreName)))
                 .ToArray();
@@ -462,7 +462,7 @@ namespace PracticeManagerApi.Services.Providers
         {
             var scoreRootKey = JoinKeys(RepositoriesRoot, owner, scoreName);
 
-            if (false == _storage.DeletePath(scoreRootKey))
+            if (false == _storage.DeleteDirectory(scoreRootKey))
             {
                 throw new InvalidOperationException($"'{owner}/{scoreName}' is not found.");
             }
