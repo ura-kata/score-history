@@ -373,3 +373,5 @@ FodyWeavers.xsd
 
 /cloudformation.yaml
 /cloudfm.ps1
+
+.vscode/settings.json
