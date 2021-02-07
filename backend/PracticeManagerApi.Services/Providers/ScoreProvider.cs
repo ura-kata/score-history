@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,44 +9,99 @@ using PracticeManagerApi.Services.Storage;
 
 namespace PracticeManagerApi.Services.Providers
 {
+    /// <summary>
+    /// 楽譜のデータのプロバイダー
+    /// </summary>
     public class ScoreProvider: IScoreProvider
     {
+        /// <summary>
+        /// ユーザー名
+        /// </summary>
         public string UserName { get; }
         private readonly DateTimeOffset _now;
         private readonly IScoreStorage _storage;
 
+        /// <summary>Ids の root key</summary>
         public const string IdsRoot = "ids";
+        /// <summary>Repositories の root key</summary>
         public const string RepositoriesRoot = "repositories";
+        /// <summary>Object の directory name</summary>
         public const string ObjectDirectoryName = "objects";
 
+        /// <summary>ID Object の名前</summary>
         public const string IdObjectName = "ID";
+        /// <summary>HEAD Object の名前</summary>
         public const string HeadObjectName = "HEAD";
+        /// <summary>PROPERTY Object の名前</summary>
         public const string PropertyObjectName = "PROPERTY";
 
+        /// <summary>Version Object Hash Type</summary>
         public const string VersionHashType = "version";
+        /// <summary>Page Object Hash Type</summary>
         public const string PageHashType = "page";
+        /// <summary>Comment Object Hash Type</summary>
         public const string CommentHashType = "comment";
+        /// <summary>Property Object Hash Type</summary>
         public const string PropertyHashType = "property";
 
         #region Utility --------------------------------------------------------------------------------------------------------------------
 
-
+        /// <summary>
+        /// Key を接続する
+        /// </summary>
+        /// <param name="key1">Key1</param>
+        /// <param name="key2">Key2</param>
+        /// <returns>接続された Key</returns>
         public static string JoinKeys(ReadOnlySpan<char> key1, ReadOnlySpan<char> key2) =>
             string.Concat(key1, "/", key2);
 
+        /// <summary>
+        /// Key を接続する
+        /// </summary>
+        /// <param name="key1">Key1</param>
+        /// <param name="key2">Key2</param>
+        /// <param name="key3">Key3</param>
+        /// <returns>接続された Key</returns>
         public static string JoinKeys(ReadOnlySpan<char> key1, ReadOnlySpan<char> key2, ReadOnlySpan<char> key3) =>
             string.Concat(string.Concat(key1, "/", key2), "/", key3);
-
+        
+        /// <summary>
+        /// Key を接続する
+        /// </summary>
+        /// <param name="key1">Key1</param>
+        /// <param name="key2">Key2</param>
+        /// <param name="key3">Key3</param>
+        /// <param name="key4">Key4</param>
+        /// <returns>接続された Key</returns>
         public static string JoinKeys(
             ReadOnlySpan<char> key1, ReadOnlySpan<char> key2,
             ReadOnlySpan<char> key3, ReadOnlySpan<char> key4) =>
             string.Concat(string.Concat(key1, "/", key2, "/"), key3, "/", key4);
-
+        
+        /// <summary>
+        /// Key を接続する
+        /// </summary>
+        /// <param name="key1">Key1</param>
+        /// <param name="key2">Key2</param>
+        /// <param name="key3">Key3</param>
+        /// <param name="key4">Key4</param>
+        /// <param name="key5">Key5</param>
+        /// <returns>接続された Key</returns>
         public static string JoinKeys(
             ReadOnlySpan<char> key1, ReadOnlySpan<char> key2, ReadOnlySpan<char> key3,
             ReadOnlySpan<char> key4, ReadOnlySpan<char> key5) =>
             string.Concat(string.Concat(string.Concat(key1, "/", key2, "/"), key3, "/", key4), "/", key5);
 
+        /// <summary>
+        /// Key を接続する
+        /// </summary>
+        /// <param name="key1">Key1</param>
+        /// <param name="key2">Key2</param>
+        /// <param name="key3">Key3</param>
+        /// <param name="key4">Key4</param>
+        /// <param name="key5">Key5</param>
+        /// <param name="key6">Key6</param>
+        /// <returns>接続された Key</returns>
         public static string JoinKeys(
             ReadOnlySpan<char> key1, ReadOnlySpan<char> key2, ReadOnlySpan<char> key3,
             ReadOnlySpan<char> key4, ReadOnlySpan<char> key5, ReadOnlySpan<char> key6) =>
@@ -57,6 +112,12 @@ namespace PracticeManagerApi.Services.Providers
                 .Append("/").Append(key5)
                 .Append("/").Append(key6).ToString();
 
+        /// <summary>
+        /// Hash を計算する
+        /// </summary>
+        /// <param name="type">Hash Type</param>
+        /// <param name="contents">コンテンツ</param>
+        /// <returns>Hash</returns>
         public static string ComputeHash(string type, byte[] contents)
         {
             var contentsBytes = contents;
@@ -78,14 +139,28 @@ namespace PracticeManagerApi.Services.Providers
             }
             return sb.ToString();
         }
+
+        /// <summary>
+        /// Hash を計算する
+        /// </summary>
+        /// <param name="type">Hash Type</param>
+        /// <param name="contents">コンテンツ</param>
+        /// <returns>Hash</returns>
         public static string ComputeHash(string type, string contents)
         {
             var contentsBytes = System.Text.Encoding.UTF8.GetBytes(contents);
             return ComputeHash(type, contentsBytes);
         }
 
+        /// <summary>
+        /// UUID を作成する
+        /// </summary>
+        /// <returns>UUID</returns>
         public static string CreateUuid() => Guid.NewGuid().ToString("D");
 
+        /// <summary>
+        /// JSON Serializer のオプション
+        /// </summary>
         public static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions()
         {
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -97,18 +172,43 @@ namespace PracticeManagerApi.Services.Providers
             ReadCommentHandling = JsonCommentHandling.Disallow,
         };
 
+        /// <summary>
+        /// JSON に Serialize する
+        /// </summary>
+        /// <typeparam name="TValue">value の型</typeparam>
+        /// <param name="value">値</param>
+        /// <returns>JSON</returns>
         public static byte[] Serialize<TValue>(TValue value) =>
             JsonSerializer.SerializeToUtf8Bytes(value, JsonSerializerOptions);
 
+        /// <summary>
+        /// JSON を Deserialize する
+        /// </summary>
+        /// <typeparam name="TValue">value の型</typeparam>
+        /// <param name="utf8Json">JSON</param>
+        /// <returns>value</returns>
         public static TValue Deserialize<TValue>(ReadOnlySpan<byte> utf8Json) =>
             JsonSerializer.Deserialize<TValue>(utf8Json, JsonSerializerOptions);
 
+        /// <summary>
+        /// Object の Key を生成する
+        /// </summary>
+        /// <param name="owner">所有者</param>
+        /// <param name="scoreName">楽譜の名前</param>
+        /// <param name="hash">Hash</param>
+        /// <returns>Key</returns>
         public static string CreateObjectKey(string owner, string scoreName, string hash) =>
             JoinKeys(RepositoriesRoot, owner, scoreName, ObjectDirectoryName, hash.AsSpan(0, 2), hash.AsSpan(2));
 
 
         #endregion --------------------------------------------------------------------------------------------------------------------
 
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="now"></param>
+        /// <param name="storage"></param>
+        /// <param name="userName"></param>
         protected ScoreProvider(DateTimeOffset now, IScoreStorage storage, string userName)
         {
             UserName = userName;
@@ -116,6 +216,12 @@ namespace PracticeManagerApi.Services.Providers
             _storage = storage;
         }
 
+        /// <summary>
+        /// Repository の Property Object を作成する
+        /// </summary>
+        /// <param name="owner">所有者</param>
+        /// <param name="scoreName">楽譜の名前</param>
+        /// <param name="property">新しいプロパティ</param>
         private void CreateProperty(string owner, string scoreName, NewScoreV2Property property)
         {
             var propertyObject = new ScoreV2PropertyObject()
@@ -138,6 +244,11 @@ namespace PracticeManagerApi.Services.Providers
             _storage.SetObjectString(propertyKey, propertyHash);
         }
 
+        /// <summary>
+        /// Repository の Version Object を初期化する
+        /// </summary>
+        /// <param name="owner">所有者</param>
+        /// <param name="scoreName">楽譜の名前</param>
         private void CreateInitialVersion(string owner, string scoreName)
         {
             var versionObject = new ScoreV2VersionObject()
@@ -161,7 +272,14 @@ namespace PracticeManagerApi.Services.Providers
             var headKey = JoinKeys(RepositoriesRoot, owner, scoreName, HeadObjectName);
             _storage.SetObjectString(headKey, versionHash);
         }
-
+        
+        /// <summary>
+        /// 楽譜を作成する
+        /// </summary>
+        /// <param name="owner">所有者</param>
+        /// <param name="scoreName">楽譜の名前</param>
+        /// <param name="property">プロパティ</param>
+        /// <exception cref="InvalidOperationException"></exception>
         public void CreateScore(string owner, string scoreName, NewScoreV2Property property)
         {
 
@@ -192,6 +310,14 @@ namespace PracticeManagerApi.Services.Providers
             _storage.SetObjectString(idKey, idObject);
         }
 
+        /// <summary>
+        /// 楽譜のプロパティを更新する
+        /// </summary>
+        /// <param name="owner">所有者</param>
+        /// <param name="scoreName">楽譜の名前</param>
+        /// <param name="parentPropertyHash">親となる Property の Hash</param>
+        /// <param name="property">更新するプロパティ</param>
+        /// <exception cref="InvalidOperationException"></exception>
         public void UpdateProperty(string owner, string scoreName, string parentPropertyHash, PatchScoreV2Property property)
         {
 
@@ -233,6 +359,12 @@ namespace PracticeManagerApi.Services.Providers
             _storage.SetObjectBytes(objectKey, propertyData);
         }
 
+        /// <summary>
+        /// 楽譜を削除する
+        /// </summary>
+        /// <param name="owner">所有者</param>
+        /// <param name="scoreName">楽譜の名前</param>
+        /// <exception cref="InvalidOperationException"></exception>
         public void DeleteScore(string owner, string scoreName)
         {
             var scoreRootKey = JoinKeys(RepositoriesRoot, owner, scoreName);
@@ -243,16 +375,28 @@ namespace PracticeManagerApi.Services.Providers
             }
         }
 
-        private void CheckHead(string headKey, string parentVersionHash)
+        /// <summary>
+        /// 現在の HEAD が指定した HASH であるか確認する
+        /// </summary>
+        /// <param name="headKey">HEAD Object の Key</param>
+        /// <param name="hash">確認する Hash</param>
+        /// <exception cref="InvalidOperationException"></exception>
+        private void CheckHead(string headKey, string hash)
         {
             var versionHashFromHead = _storage.GetObjectString(headKey).TrimEnd('\n', '\r');
 
-            if (false == versionHashFromHead.Equals(parentVersionHash, StringComparison.Ordinal))
+            if (false == versionHashFromHead.Equals(hash, StringComparison.Ordinal))
             {
-                throw new InvalidOperationException($"'{parentVersionHash}' is old.");
+                throw new InvalidOperationException($"'{hash}' is old.");
             }
         }
 
+        /// <summary>
+        /// HEAD を更新する
+        /// </summary>
+        /// <param name="headKey">HEAD Object の Key</param>
+        /// <param name="newVersionHash">新しい HEAD の Hash</param>
+        /// <exception cref="InvalidOperationException"></exception>
         private void UpdateHead(string headKey, string newVersionHash)
         {
             _storage.SetObjectString(headKey, newVersionHash);
@@ -265,6 +409,15 @@ namespace PracticeManagerApi.Services.Providers
             }
         }
 
+        /// <summary>
+        /// ページを指定した位置に挿入する
+        /// </summary>
+        /// <param name="owner">所有者</param>
+        /// <param name="scoreName">楽譜名</param>
+        /// <param name="parentVersionHash">親となる Version の Hash</param>
+        /// <param name="index">挿入する位置</param>
+        /// <param name="pages">挿入するページ</param>
+        /// <exception cref="InvalidOperationException"></exception>
         public void InsertPages(string owner, string scoreName, string parentVersionHash, int index, NewScoreV2Page[] pages)
         {
             var headKey = JoinKeys(RepositoriesRoot, owner, scoreName, HeadObjectName);
@@ -321,6 +474,14 @@ namespace PracticeManagerApi.Services.Providers
             }
         }
 
+        /// <summary>
+        /// 指定したページを削除する
+        /// </summary>
+        /// <param name="owner">所有者</param>
+        /// <param name="scoreName">楽譜名</param>
+        /// <param name="parentVersionHash">親となる Version の Hash</param>
+        /// <param name="hashList">削除するページの Hash リスト</param>
+        /// <exception cref="InvalidOperationException"></exception>
         public void DeletePages(string owner, string scoreName, string parentVersionHash, string[] hashList)
         {
             var headKey = JoinKeys(RepositoriesRoot, owner, scoreName, HeadObjectName);
@@ -372,6 +533,14 @@ namespace PracticeManagerApi.Services.Providers
 
         }
 
+        /// <summary>
+        /// 指定したページを更新する
+        /// </summary>
+        /// <param name="owner">所有者</param>
+        /// <param name="scoreName">楽譜名</param>
+        /// <param name="parentVersionHash">親となる Version の Hash</param>
+        /// <param name="pages">更新するページ</param>
+        /// <exception cref="InvalidOperationException"></exception>
         public void UpdatePages(string owner, string scoreName, string parentVersionHash, PatchScoreV2Page[] pages)
         {
             var headKey = JoinKeys(RepositoriesRoot, owner, scoreName, HeadObjectName);
@@ -445,6 +614,14 @@ namespace PracticeManagerApi.Services.Providers
             }
         }
 
+        /// <summary>
+        /// 指定したページにコメントを追加する
+        /// </summary>
+        /// <param name="owner">所有者</param>
+        /// <param name="scoreName">楽譜名</param>
+        /// <param name="parentVersionHash">親となる Version の Hash</param>
+        /// <param name="comments">追加するコメント</param>
+        /// <exception cref="InvalidOperationException"></exception>
         public void AddComments(string owner, string scoreName, string parentVersionHash, NewScoreV2Comment[] comments)
         {
             var headKey = JoinKeys(RepositoriesRoot, owner, scoreName, HeadObjectName);
@@ -521,9 +698,17 @@ namespace PracticeManagerApi.Services.Providers
             }
         }
 
+        /// <summary>
+        /// 指定ページのコメントを削除する
+        /// </summary>
+        /// <param name="owner">所有者</param>
+        /// <param name="scoreName">楽譜名</param>
+        /// <param name="parentVersionHash">親となる Version の Hash</param>
+        /// <param name="targetPage">指定するページ</param>
+        /// <param name="hashList">削除するコメントの Hash リスト</param>
+        /// <exception cref="InvalidOperationException"></exception>
         public void DeleteComments(string owner, string scoreName, string parentVersionHash,
-            string targetPage,
-            string[] hashList)
+            string targetPage, string[] hashList)
         {
             var headKey = JoinKeys(RepositoriesRoot, owner, scoreName, HeadObjectName);
 
@@ -586,6 +771,14 @@ namespace PracticeManagerApi.Services.Providers
 
         }
 
+        /// <summary>
+        /// 指定したコメントを更新する
+        /// </summary>
+        /// <param name="owner">所有者</param>
+        /// <param name="scoreName">楽譜名</param>
+        /// <param name="parentVersionHash">親となる Version の Hash</param>
+        /// <param name="comments">更新するコメント</param>
+        /// <exception cref="InvalidOperationException"></exception>
         public void UpdateComments(string owner, string scoreName, string parentVersionHash, PatchScoreV2Comment[] comments)
         {
             var headKey = JoinKeys(RepositoriesRoot, owner, scoreName, HeadObjectName);
@@ -678,6 +871,14 @@ namespace PracticeManagerApi.Services.Providers
             }
         }
 
+        /// <summary>
+        /// 指定した Hash のオブジェクトデータを JSON で取得する
+        /// </summary>
+        /// <param name="owner">所有者</param>
+        /// <param name="scoreName">楽譜名</param>
+        /// <param name="hashList">Hash リスト</param>
+        /// <returns>Key: Object Hash , Value: JSON</returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public ScoreV2ObjectSet GetObjects(string owner, string scoreName, string[] hashList)
         {
             var result = new ScoreV2ObjectSet();
