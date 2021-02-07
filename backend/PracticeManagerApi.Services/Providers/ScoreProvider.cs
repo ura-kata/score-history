@@ -311,6 +311,103 @@ namespace PracticeManagerApi.Services.Providers
         }
 
         /// <summary>
+        /// 楽譜の Property と Head を取得する
+        /// </summary>
+        /// <param name="owner">所有者</param>
+        /// <param name="scoreName">楽譜の名前</param>
+        /// <returns>Property と Head</returns>
+        public ScoreV2Latest GetScore(string owner, string scoreName)
+        {
+            var scoreKey = JoinKeys(owner, scoreName);
+            var scoreRootKey = JoinKeys(RepositoriesRoot, scoreKey);
+
+            if (false == _storage.ExistPath(scoreRootKey))
+            {
+                throw new InvalidOperationException($"'{owner}/{scoreName}' is not found.");
+            }
+
+            var propertyKey = JoinKeys(RepositoriesRoot, owner, scoreName, PropertyObjectName);
+            var headKey = JoinKeys(RepositoriesRoot, owner, scoreName, HeadObjectName);
+
+            var propertyHash = _storage.GetObjectString(propertyKey).TrimEnd('\n', '\r');
+            var headHash = _storage.GetObjectString(headKey).TrimEnd('\n', '\r');
+
+            var propertyObjectKey = CreateObjectKey(owner, scoreName, propertyHash);
+            var propertyData = _storage.GetObjectBytes(propertyObjectKey);
+            var propertyObject = Deserialize<ScoreV2PropertyObject>(propertyData);
+
+            var headObjectKey = CreateObjectKey(owner, scoreName, headHash);
+            var headData = _storage.GetObjectBytes(headObjectKey);
+            var headObject = Deserialize<ScoreV2VersionObject>(headData);
+
+            return new ScoreV2Latest()
+            {
+                PropertyHash = propertyHash,
+                Property = propertyObject,
+                HeadHash = headHash,
+                Head = headObject,
+            };
+        }
+
+        /// <summary>
+        /// 楽譜の Property と Head を一覧で取得する
+        /// </summary>
+        /// <param name="owner">所有者</param>
+        /// <returns>Property と Head</returns>
+        public ScoreV2LatestSet GetScores(string owner)
+        {
+            var ownerKey = JoinKeys(RepositoriesRoot, owner);
+
+            if (false == _storage.ExistPath(ownerKey))
+            {
+                throw new InvalidOperationException($"'{owner}' is not found.");
+            }
+
+            var scoreNames = _storage.GetChildrenPathNames(ownerKey);
+
+            var latestList = scoreNames.Select(scoreName => (key: JoinKeys(owner, scoreName), value: GetScore(owner, scoreName)))
+                .ToArray();
+
+            var result =new ScoreV2LatestSet();
+            foreach (var latest in latestList)
+            {
+                result[latest.key] = latest.value;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 楽譜の Property と Head を一覧で取得する
+        /// </summary>
+        /// <returns>Property と Head</returns>
+        public ScoreV2LatestSet GetScores()
+        {
+            var owner = UserName;
+            var ownerKey = JoinKeys(RepositoriesRoot, owner);
+
+            if (false == _storage.ExistPath(ownerKey))
+            {
+                return new ScoreV2LatestSet();
+            }
+
+            var scoreNames = _storage.GetChildrenPathNames(ownerKey);
+
+            var latestList = scoreNames.Select(scoreName => (key: JoinKeys(owner, scoreName), value: GetScore(owner, scoreName)))
+                .ToArray();
+
+            var result = new ScoreV2LatestSet();
+            foreach (var latest in latestList)
+            {
+                result[latest.key] = latest.value;
+            }
+
+            // Todo Shared な楽譜を取得する
+
+            return result;
+        }
+
+        /// <summary>
         /// 楽譜のプロパティを更新する
         /// </summary>
         /// <param name="owner">所有者</param>
