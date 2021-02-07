@@ -15,5 +15,6 @@ namespace PracticeManagerApi.Services.Storage
         public bool CreatePath(string key);
         public bool DeletePath(string key);
         public bool ExistPath(string key);
+        public string[] GetChildrenPathNames(string key);
     }
 }
