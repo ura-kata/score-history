@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using PracticeManagerApi.Services.Providers;
 
 namespace PracticeManagerApi.Services.Models
 {
@@ -8,10 +9,10 @@ namespace PracticeManagerApi.Services.Models
     /// </summary>
     public class UpdateScoreWithOwner
     {
-        [JsonPropertyName(name: "title")]
-        public string Title { get; set; }
+        [JsonPropertyName(name: "parent")]
+        public string Parent { get; set; }
 
-        [JsonPropertyName(name: "description")]
-        public string Description { get; set; }
+        [JsonPropertyName(name: "property")]
+        public PatchScoreV2Property Property { get; set; }
     }
 }
