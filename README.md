@@ -83,6 +83,9 @@
         - objects
           - ${hash の上位2桁}
             - ${hash の下位38桁} (Object)
+        - refs
+          - versions
+            - ${0000000000} (Version Ref Object)
         - HEAD
         - PROPERTY
         - contents
@@ -188,6 +191,12 @@ ${Version Object hash}
   "parent": "${Property Object hash}"
 }
 ```
+
+#### Version Ref Object
+
+Version Ref Object ファイルは 最新の Version Object の hash を1つだけ記述するテキストファイル
+
+ファイル名は `^\d{10}$` とする
 
 #### Content File
 
