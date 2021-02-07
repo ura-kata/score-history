@@ -209,7 +209,7 @@ namespace PracticeManagerApi.Services.Providers
         /// <param name="now"></param>
         /// <param name="storage"></param>
         /// <param name="userName"></param>
-        protected ScoreProvider(DateTimeOffset now, IScoreStorage storage, string userName)
+        public ScoreProvider(DateTimeOffset now, IScoreStorage storage, string userName)
         {
             UserName = userName;
             _now = now;
