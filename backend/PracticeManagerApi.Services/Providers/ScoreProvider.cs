@@ -425,12 +425,12 @@ namespace PracticeManagerApi.Services.Providers
 
             var propertyHashFromStorage = _storage.GetObjectString(propertyKey).TrimEnd('\n', '\r');
 
-            if (propertyHashFromStorage.Equals(parentPropertyHash, StringComparison.Ordinal))
+            if (false == propertyHashFromStorage.Equals(parentPropertyHash, StringComparison.Ordinal))
             {
                 throw new InvalidOperationException($"'{parentPropertyHash}' is old.");
             }
 
-
+            // update property object
             var propertyObject = new ScoreV2PropertyObject()
             {
                 CreateAt = _now,
@@ -440,21 +440,16 @@ namespace PracticeManagerApi.Services.Providers
                 Parent = parentPropertyHash
             };
 
+
+            // register property objects
             var propertyData = Serialize(propertyObject);
             var propertyHash = ComputeHash(PropertyHashType, propertyData);
+            var propertyObjectKey = CreateObjectKey(owner, scoreName, propertyHash);
+            _storage.SetObjectBytes(propertyObjectKey, propertyData);
+
             
+            // update PROPERTY
             _storage.SetObjectString(propertyKey, propertyHash);
-
-
-            var checkedPropertyHashFromStorage = _storage.GetObjectString(propertyKey).TrimEnd('\n', '\r');
-
-            if (checkedPropertyHashFromStorage.Equals(propertyHash, StringComparison.Ordinal))
-            {
-                throw new InvalidOperationException($"There was an interrupt in the update.");
-            }
-
-            var objectKey = CreateObjectKey(owner, scoreName, propertyHash);
-            _storage.SetObjectBytes(objectKey, propertyData);
         }
 
         /// <summary>
@@ -479,7 +474,7 @@ namespace PracticeManagerApi.Services.Providers
         /// <param name="headKey">HEAD Object の Key</param>
         /// <param name="hash">確認する Hash</param>
         /// <exception cref="InvalidOperationException"></exception>
-        private void CheckHead(string headKey, string hash)
+        private void CheckHeadBeforeUpdating(string headKey, string hash)
         {
             var versionHashFromHead = _storage.GetObjectString(headKey).TrimEnd('\n', '\r');
 
@@ -498,13 +493,6 @@ namespace PracticeManagerApi.Services.Providers
         private void UpdateHead(string headKey, string newVersionHash)
         {
             _storage.SetObjectString(headKey, newVersionHash);
-
-            var checkedVersionHashFromHead = _storage.GetObjectString(headKey).TrimEnd('\n', '\r');
-
-            if (checkedVersionHashFromHead.Equals(newVersionHash, StringComparison.Ordinal))
-            {
-                throw new InvalidOperationException($"There was an interrupt in the update.");
-            }
         }
 
         /// <summary>
@@ -525,7 +513,7 @@ namespace PracticeManagerApi.Services.Providers
                 throw new InvalidOperationException($"'{owner}/{scoreName}' is not found.");
             }
 
-            CheckHead(headKey, parentVersionHash);
+            CheckHeadBeforeUpdating(headKey, parentVersionHash);
 
             // update object
 
@@ -553,23 +541,30 @@ namespace PracticeManagerApi.Services.Providers
 
             pageList.InsertRange(index, newPages.Select(x => x.hash));
 
+
+
+            // update version object
             versionObject.Pages = pageList.ToArray();
+            versionObject.Parent = parentVersionHash;
 
-
-            // update hash
-            var newVersionData = Serialize(versionObject);
-
-            var newVersionHash = ComputeHash(VersionHashType, newVersionData);
-
-            UpdateHead(headKey, newVersionHash);
-
+            
             // register page objects
-
             foreach (var (data,hash) in newPages)
             {
                 var objectKey = CreateObjectKey(owner, scoreName, hash);
                 _storage.SetObjectBytes(objectKey, data);
             }
+
+
+            // register version objects
+            var newVersionData = Serialize(versionObject);
+            var newVersionHash = ComputeHash(VersionHashType, newVersionData);
+            var newVersionKey = CreateObjectKey(owner, scoreName, newVersionHash);
+            _storage.SetObjectBytes(newVersionKey, newVersionData);
+
+
+            // update head
+            UpdateHead(headKey, newVersionHash);
         }
 
         /// <summary>
@@ -589,7 +584,7 @@ namespace PracticeManagerApi.Services.Providers
                 throw new InvalidOperationException($"'{owner}/{scoreName}' is not found.");
             }
 
-            CheckHead(headKey, parentVersionHash);
+            CheckHeadBeforeUpdating(headKey, parentVersionHash);
 
             // update object
 
@@ -618,17 +613,22 @@ namespace PracticeManagerApi.Services.Providers
             {
                 Remove(hash);
             }
-            
+
+
+            // update version object
             versionObject.Pages = pageList.ToArray();
-
-
-            // update hash
+            versionObject.Parent = parentVersionHash;
+            
+            
+            // register version objects
             var newVersionData = Serialize(versionObject);
-
             var newVersionHash = ComputeHash(VersionHashType, newVersionData);
+            var newVersionKey = CreateObjectKey(owner, scoreName, newVersionHash);
+            _storage.SetObjectBytes(newVersionKey, newVersionData);
 
+
+            // update head
             UpdateHead(headKey, newVersionHash);
-
         }
 
         /// <summary>
@@ -648,7 +648,7 @@ namespace PracticeManagerApi.Services.Providers
                 throw new InvalidOperationException($"'{owner}/{scoreName}' is not found.");
             }
 
-            CheckHead(headKey, parentVersionHash);
+            CheckHeadBeforeUpdating(headKey, parentVersionHash);
 
             // update object
 
@@ -693,23 +693,29 @@ namespace PracticeManagerApi.Services.Providers
                 pageList[targetPageIndex] = newPageHash;
             }
 
+
+            // update version object
             versionObject.Pages = pageList;
+            versionObject.Parent = parentVersionHash;
 
-
-            // update hash
-            var newVersionData = Serialize(versionObject);
-
-            var newVersionHash = ComputeHash(VersionHashType, newVersionData);
-
-            UpdateHead(headKey, newVersionHash);
-
+            
             // register page objects
-
-            foreach (var (targetPageIndex, newPageData, newPageHash) in newPageList)
+            foreach (var (_, newPageData, newPageHash) in newPageList)
             {
                 var objectKey = CreateObjectKey(owner, scoreName, newPageHash);
                 _storage.SetObjectBytes(objectKey, newPageData);
             }
+            
+
+            // register version objects
+            var newVersionData = Serialize(versionObject);
+            var newVersionHash = ComputeHash(VersionHashType, newVersionData);
+            var newVersionKey = CreateObjectKey(owner, scoreName, newVersionHash);
+            _storage.SetObjectBytes(newVersionKey, newVersionData);
+
+
+            // update head
+            UpdateHead(headKey, newVersionHash);
         }
 
         /// <summary>
@@ -729,7 +735,7 @@ namespace PracticeManagerApi.Services.Providers
                 throw new InvalidOperationException($"'{owner}/{scoreName}' is not found.");
             }
 
-            CheckHead(headKey, parentVersionHash);
+            CheckHeadBeforeUpdating(headKey, parentVersionHash);
 
             // update object
 
@@ -776,24 +782,29 @@ namespace PracticeManagerApi.Services.Providers
                     throw new InvalidOperationException($"'{newComment.targetPageHash}' is not found in comment keys.");
                 }
             }
-            
+
+            // update version object
             versionObject.Comments = commentSet;
+            versionObject.Parent = parentVersionHash;
 
-
-            // update hash
-            var newVersionData = Serialize(versionObject);
-
-            var newVersionHash = ComputeHash(VersionHashType, newVersionData);
-
-            UpdateHead(headKey, newVersionHash);
-
+            
             // register page objects
-
             foreach (var (_, newCommentData, newCommentHash) in newComments)
             {
                 var objectKey = CreateObjectKey(owner, scoreName, newCommentHash);
                 _storage.SetObjectBytes(objectKey, newCommentData);
             }
+            
+
+            // register version objects
+            var newVersionData = Serialize(versionObject);
+            var newVersionHash = ComputeHash(VersionHashType, newVersionData);
+            var newVersionKey = CreateObjectKey(owner, scoreName, newVersionHash);
+            _storage.SetObjectBytes(newVersionKey, newVersionData);
+
+
+            // update head
+            UpdateHead(headKey, newVersionHash);
         }
 
         /// <summary>
@@ -815,7 +826,7 @@ namespace PracticeManagerApi.Services.Providers
                 throw new InvalidOperationException($"'{owner}/{scoreName}' is not found.");
             }
 
-            CheckHead(headKey, parentVersionHash);
+            CheckHeadBeforeUpdating(headKey, parentVersionHash);
 
             // update object
 
@@ -856,17 +867,20 @@ namespace PracticeManagerApi.Services.Providers
 
             commentSet[targetPage] = commentList.ToArray();
 
-
+            // update version object
             versionObject.Comments = commentSet;
+            versionObject.Parent = parentVersionHash;
 
 
-            // update hash
+            // register version objects
             var newVersionData = Serialize(versionObject);
-
             var newVersionHash = ComputeHash(VersionHashType, newVersionData);
+            var newVersionKey = CreateObjectKey(owner, scoreName, newVersionHash);
+            _storage.SetObjectBytes(newVersionKey, newVersionData);
 
+
+            // update head
             UpdateHead(headKey, newVersionHash);
-
         }
 
         /// <summary>
@@ -886,7 +900,7 @@ namespace PracticeManagerApi.Services.Providers
                 throw new InvalidOperationException($"'{owner}/{scoreName}' is not found.");
             }
 
-            CheckHead(headKey, parentVersionHash);
+            CheckHeadBeforeUpdating(headKey, parentVersionHash);
 
             // update object
 
@@ -950,23 +964,28 @@ namespace PracticeManagerApi.Services.Providers
                 }
             }
 
+            // update version object
             versionObject.Comments = commentSet;
+            versionObject.Parent = parentVersionHash;
 
-
-            // update hash
-            var newVersionData = Serialize(versionObject);
-
-            var newVersionHash = ComputeHash(VersionHashType, newVersionData);
-
-            UpdateHead(headKey, newVersionHash);
-
+            
             // register page objects
-
             foreach (var (_, _, newCommentData, newCommentHash) in newComments)
             {
                 var objectKey = CreateObjectKey(owner, scoreName, newCommentHash);
                 _storage.SetObjectBytes(objectKey, newCommentData);
             }
+
+
+            // register version objects
+            var newVersionData = Serialize(versionObject);
+            var newVersionHash = ComputeHash(VersionHashType, newVersionData);
+            var newVersionKey = CreateObjectKey(owner, scoreName, newVersionHash);
+            _storage.SetObjectBytes(newVersionKey, newVersionData);
+
+
+            // update head
+            UpdateHead(headKey, newVersionHash);
         }
 
         /// <summary>
