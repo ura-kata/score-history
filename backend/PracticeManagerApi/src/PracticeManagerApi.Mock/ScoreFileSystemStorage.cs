@@ -184,5 +184,20 @@ namespace PracticeManagerApi.Mock
                 .Select(dir => dir.TrimEnd('/', '\\').Split('/', '\\').Last())
                 .ToArray();
         }
+
+        public string[] GetChildrenObjectNames(string key)
+        {
+            var path = Path.Join(BaseDirectory, key);
+
+            if (false == Directory.Exists(path))
+            {
+                throw new InvalidOperationException($"'{key}' directory is not found.");
+            }
+
+            return Directory
+                .GetFiles(path)
+                .Select(file => file.TrimEnd('/', '\\').Split('/', '\\').Last())
+                .ToArray();
+        }
     }
 }

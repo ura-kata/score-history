@@ -16,5 +16,6 @@ namespace PracticeManagerApi.Services.Storage
         public bool DeleteDirectory(string key);
         public bool ExistDirectory(string key);
         public string[] GetChildrenDirectoryNames(string key);
+        public string[] GetChildrenObjectNames(string key);
     }
 }
