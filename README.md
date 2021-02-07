@@ -198,6 +198,8 @@ Version Ref Object ファイルは 最新の Version Object の hash を1つだ�
 
 ファイル名は `^\d{10}$` とする
 
+Version は 1 からとする
+
 #### Content File
 
 ページイメージなど API を経由せずに参照するファイルデータ。
