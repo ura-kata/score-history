@@ -229,7 +229,8 @@ namespace PracticeManagerApi.Services.Providers
                 CreateAt = _now,
                 Author = UserName,
                 Title = property.Title,
-                Description = property.Description
+                Description = property.Description,
+                Parent = "",
             };
 
             
