@@ -1,4 +1,5 @@
 using PracticeManagerApi.Services.Models;
+using PracticeManagerApi.Services.Objects;
 
 namespace PracticeManagerApi.Services.Providers
 {
@@ -25,5 +26,9 @@ namespace PracticeManagerApi.Services.Providers
         void UpdateComments(string owner, string scoreName, string parentVersionHash, PatchScoreV2Comment[] comments);
 
         ScoreV2ObjectSet GetObjects(string owner, string scoreName, string[] hashList);
+
+        void CreateVersionRef(string owner, string scoreName);
+
+        ScoreV2VersionSet GetVersions(string owner, string scoreName);
     }
 }

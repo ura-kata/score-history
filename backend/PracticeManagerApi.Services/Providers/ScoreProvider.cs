@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,6 +27,10 @@ namespace PracticeManagerApi.Services.Providers
         public const string RepositoriesRoot = "repositories";
         /// <summary>Object の directory name</summary>
         public const string ObjectDirectoryName = "objects";
+        /// <summary>Ref Object の directory name</summary>
+        public const string RefsDirectoryName = "refs";
+        /// <summary>Version Ref Object の directory name</summary>
+        public const string VersionRefsDirectoryName = "versions";
 
         /// <summary>ID Object の名前</summary>
         public const string IdObjectName = "ID";
@@ -200,6 +204,9 @@ namespace PracticeManagerApi.Services.Providers
         public static string CreateObjectKey(string owner, string scoreName, string hash) =>
             JoinKeys(RepositoriesRoot, owner, scoreName, ObjectDirectoryName, hash.AsSpan(0, 2), hash.AsSpan(2));
 
+        public static string CreateVersionRefObjectKey(string owner, string scoreName, int version) =>
+            JoinKeys(RepositoriesRoot, owner, scoreName,
+                RefsDirectoryName, VersionRefsDirectoryName, version.ToString("0000000000"));
 
         #endregion --------------------------------------------------------------------------------------------------------------------
 
@@ -1015,6 +1022,77 @@ namespace PracticeManagerApi.Services.Providers
                 {
                     throw new InvalidOperationException($"'{hash}' is not found in objects.", ex);
                 }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Version Ref Object を作成する
+        /// </summary>
+        /// <param name="owner">所有者</param>
+        /// <param name="scoreName">楽譜名</param>
+        public void CreateVersionRef(string owner, string scoreName)
+        {
+            var scoreRootKey = JoinKeys(RepositoriesRoot, owner, scoreName);
+
+            var headKey = JoinKeys(scoreRootKey, HeadObjectName);
+            if (false == _storage.ExistObject(headKey))
+            {
+                throw new InvalidOperationException($"'{owner}/{scoreName}' is not found.");
+            }
+
+            var head = _storage.GetObjectString(headKey).TrimEnd('\n', '\r');
+
+            var versionRefRootKey = JoinKeys(scoreRootKey, RefsDirectoryName, VersionRefsDirectoryName);
+            var version = 0;
+            if (_storage.ExistDirectory(versionRefRootKey))
+            {
+                var versionKeys = _storage.GetChildrenObjectNames(versionRefRootKey);
+
+                foreach (var versionKey in versionKeys)
+                {
+                    var v = int.Parse(versionKey);
+                    if (version < v)
+                    {
+                        version = v;
+                    }
+                }
+            }
+
+            var versionRefKey = CreateVersionRefObjectKey(owner, scoreName, version);
+
+            _storage.SetObjectString(versionRefKey, head);
+        }
+
+        /// <summary>
+        /// Version Ref の一覧を取得する
+        /// </summary>
+        /// <param name="owner">所有者</param>
+        /// <param name="scoreName">楽譜名</param>
+        /// <returns></returns>
+        public ScoreV2VersionSet GetVersions(string owner, string scoreName)
+        {
+            var scoreRootKey = JoinKeys(RepositoriesRoot, owner, scoreName);
+
+            if (false == _storage.ExistDirectory(scoreRootKey))
+            {
+                throw new InvalidOperationException($"'{owner}/{scoreName}' is not found.");
+            }
+
+            var versionRefRootKey = JoinKeys(scoreRootKey, RefsDirectoryName, VersionRefsDirectoryName);
+            if (false == _storage.ExistDirectory(versionRefRootKey))
+            {
+                return new ScoreV2VersionSet();
+            }
+
+            var versionKeys= _storage.GetChildrenObjectNames(versionRefRootKey);
+
+            var result = new ScoreV2VersionSet();
+            foreach (var versionKey in versionKeys)
+            {
+                var version = int.Parse(versionKey);
+                result[version] = _storage.GetObjectString(versionKey).TrimEnd('\n', '\r');
             }
 
             return result;
