@@ -36,8 +36,6 @@ namespace PracticeManagerApi.Services.Providers
         public const string IdObjectName = "ID";
         /// <summary>HEAD Object の名前</summary>
         public const string HeadObjectName = "HEAD";
-        /// <summary>PROPERTY Object の名前</summary>
-        public const string PropertyObjectName = "PROPERTY";
 
         /// <summary>Version Object Hash Type</summary>
         public const string VersionHashType = "version";
@@ -45,8 +43,6 @@ namespace PracticeManagerApi.Services.Providers
         public const string PageHashType = "page";
         /// <summary>Comment Object Hash Type</summary>
         public const string CommentHashType = "comment";
-        /// <summary>Property Object Hash Type</summary>
-        public const string PropertyHashType = "property";
 
         #region Utility --------------------------------------------------------------------------------------------------------------------
 
@@ -223,64 +219,7 @@ namespace PracticeManagerApi.Services.Providers
             _storage = storage;
         }
 
-        /// <summary>
-        /// Repository の Property Object を作成する
-        /// </summary>
-        /// <param name="owner">所有者</param>
-        /// <param name="scoreName">楽譜の名前</param>
-        /// <param name="property">新しいプロパティ</param>
-        private void CreateProperty(string owner, string scoreName, NewScoreV2Property property)
-        {
-            var propertyObject = new ScoreV2PropertyObject()
-            {
-                CreateAt = _now,
-                Author = UserName,
-                Title = property.Title,
-                Description = property.Description,
-                Parent = "",
-            };
 
-            
-            var propertyData = Serialize(propertyObject);
-
-            var propertyHash = ComputeHash(PropertyHashType, propertyData);
-            var objectKey = CreateObjectKey(owner, scoreName, propertyHash);
-            _storage.SetObjectBytes(objectKey, propertyData);
-
-
-            var propertyKey = JoinKeys(RepositoriesRoot, owner, scoreName, PropertyObjectName);
-            _storage.SetObjectString(propertyKey, propertyHash);
-        }
-
-        /// <summary>
-        /// Repository の Version Object を初期化する
-        /// </summary>
-        /// <param name="owner">所有者</param>
-        /// <param name="scoreName">楽譜の名前</param>
-        private void CreateInitialVersion(string owner, string scoreName)
-        {
-            var versionObject = new ScoreV2VersionObject()
-            {
-                CreateAt = _now,
-                Author = UserName,
-                Message = "create score",
-                Comments = new Dictionary<string, string[]>(),
-                Pages = new string[0],
-                Parent = "",
-            };
-
-
-            var versionData = Serialize(versionObject);
-
-            var versionHash = ComputeHash(PropertyHashType, versionData);
-            var objectKey = CreateObjectKey(owner, scoreName, versionHash);
-            _storage.SetObjectBytes(objectKey, versionData);
-
-
-            var headKey = JoinKeys(RepositoriesRoot, owner, scoreName, HeadObjectName);
-            _storage.SetObjectString(headKey, versionHash);
-        }
-        
         /// <summary>
         /// 楽譜を作成する
         /// </summary>
@@ -310,18 +249,37 @@ namespace PracticeManagerApi.Services.Providers
                 throw new InvalidOperationException($"'{owner}/{scoreName}' is existed.");
             }
 
+            // save Score Ref Object
             var scoreId = CreateUuid();
-
             var scoreRefObject = scoreKey;
             var scoreRefObjectKey = JoinKeys(IdsRoot, scoreId);
             _storage.SetObjectString(scoreRefObjectKey, scoreRefObject);
 
 
-            CreateProperty(owner, scoreName, property);
+            // create Version Object
+            var propertyItem = new ScoreV2PropertyItem()
+            {
+                Title = property.Title,
+                Description = property.Description,
+            };
 
-            CreateInitialVersion(owner, scoreName);
+            var versionObject = new ScoreV2VersionObject()
+            {
+                Author = UserName,
+                CreateAt = _now,
+                Parent = "",
+                Comments = new Dictionary<string, string[]>(),
+                Pages = new string[0],
+                Property = propertyItem,
+                Message = "create score"
+            };
 
 
+            // update version
+            UpdateVersionObject(owner, scoreName, "", versionObject);
+
+
+            // save ID
             var idKey = JoinKeys(scoreRootKey, IdObjectName);
             var idObject = scoreId;
             _storage.SetObjectString(idKey, idObject);
@@ -349,24 +307,20 @@ namespace PracticeManagerApi.Services.Providers
                 throw new InvalidOperationException($"'{owner}/{scoreName}' is not found.");
             }
 
-            var propertyKey = JoinKeys(RepositoriesRoot, owner, scoreName, PropertyObjectName);
-            var headKey = JoinKeys(RepositoriesRoot, owner, scoreName, HeadObjectName);
 
-            var propertyHash = _storage.GetObjectString(propertyKey).TrimEnd('\n', '\r');
+            // load HEAD
+            var headKey = JoinKeys(RepositoriesRoot, owner, scoreName, HeadObjectName);
             var headHash = _storage.GetObjectString(headKey).TrimEnd('\n', '\r');
 
-            var propertyObjectKey = CreateObjectKey(owner, scoreName, propertyHash);
-            var propertyData = _storage.GetObjectBytes(propertyObjectKey);
-            var propertyObject = Deserialize<ScoreV2PropertyObject>(propertyData);
 
+            // deserialize Version Object
             var headObjectKey = CreateObjectKey(owner, scoreName, headHash);
             var headData = _storage.GetObjectBytes(headObjectKey);
             var headObject = Deserialize<ScoreV2VersionObject>(headData);
 
+
             return new ScoreV2Latest()
             {
-                PropertyHash = propertyHash,
-                Property = propertyObject,
                 HeadHash = headHash,
                 Head = headObject,
             };
@@ -443,43 +397,69 @@ namespace PracticeManagerApi.Services.Providers
         /// </summary>
         /// <param name="owner">所有者</param>
         /// <param name="scoreName">楽譜の名前</param>
-        /// <param name="parentPropertyHash">親となる Property の Hash</param>
+        /// <param name="parentVersionHash">親となる Property の Hash</param>
         /// <param name="property">更新するプロパティ</param>
         /// <exception cref="InvalidOperationException"></exception>
-        public void UpdateProperty(string owner, string scoreName, string parentPropertyHash, PatchScoreV2Property property)
+        public void UpdateProperty(string owner, string scoreName, string parentVersionHash, PatchScoreV2Property property)
         {
+            if (string.IsNullOrWhiteSpace(owner))
+                throw new ArgumentException(nameof(owner));
+            if (string.IsNullOrWhiteSpace(scoreName))
+                throw new ArgumentException(nameof(scoreName));
+            if (string.IsNullOrWhiteSpace(parentVersionHash))
+                throw new ArgumentException(nameof(parentVersionHash));
+            if (property == null)
+                throw new ArgumentNullException(nameof(property));
 
-            // Todo property の検証を行う
 
-            var propertyKey = JoinKeys(RepositoriesRoot, owner, scoreName, PropertyObjectName);
+            var headKey = JoinKeys(RepositoriesRoot, owner, scoreName, HeadObjectName);
 
-            var propertyHashFromStorage = _storage.GetObjectString(propertyKey).TrimEnd('\n', '\r');
+            var headHashFromStorage = _storage.GetObjectString(headKey).TrimEnd('\n', '\r');
 
-            if (false == propertyHashFromStorage.Equals(parentPropertyHash, StringComparison.Ordinal))
+            if (false == headHashFromStorage.Equals(parentVersionHash, StringComparison.Ordinal))
             {
-                throw new InvalidOperationException($"'{parentPropertyHash}' is old.");
+                throw new InvalidOperationException($"'{parentVersionHash}' is old.");
             }
 
+            var versionObjectData = _storage.GetObjectBytes(parentVersionHash);
+            var versionObjectObject = Deserialize<ScoreV2VersionObject>(versionObjectData);
+
             // update property object
-            var propertyObject = new ScoreV2PropertyObject()
+            var propertyItem = versionObjectObject.Property ?? new ScoreV2PropertyItem();
+
+            propertyItem.Title = property.Title ?? propertyItem.Title;
+            propertyItem.Description = property.Description ?? propertyItem.Description;
+
+            versionObjectObject.Property = propertyItem;
+
+
+            // update version
+            UpdateVersionObject(owner, scoreName, parentVersionHash, versionObjectObject);
+        }
+
+        /// <summary>
+        /// Version Object の登録と HEAD の更新を行う
+        /// </summary>
+        /// <param name="owner"></param>
+        /// <param name="scoreName"></param>
+        /// <param name="parentVersionHash"></param>
+        /// <param name="versionObject"></param>
+        private void UpdateVersionObject(string owner, string scoreName, string parentVersionHash, ScoreV2VersionObject versionObject)
             {
-                CreateAt = _now,
-                Author = UserName,
-                Title = property.Title,
-                Description = property.Description,
-                Parent = parentPropertyHash
-            };
+            // update parent
+            versionObject.Parent = parentVersionHash;
 
 
-            // register property objects
-            var propertyData = Serialize(propertyObject);
-            var propertyHash = ComputeHash(PropertyHashType, propertyData);
-            var propertyObjectKey = CreateObjectKey(owner, scoreName, propertyHash);
-            _storage.SetObjectBytes(propertyObjectKey, propertyData);
+            // save property objects
+            var updatedVersionData = Serialize(versionObject);
+            var updatedVersionObjectHash = ComputeHash(VersionHashType, updatedVersionData);
+            var updatedVersionObjectKey = CreateObjectKey(owner, scoreName, updatedVersionObjectHash);
+            _storage.SetObjectBytes(updatedVersionObjectKey, updatedVersionData);
 
             
-            // update PROPERTY
-            _storage.SetObjectString(propertyKey, propertyHash);
+            // update HEAD
+            var headKey = JoinKeys(RepositoriesRoot, owner, scoreName, HeadObjectName);
+            _storage.SetObjectString(headKey, updatedVersionObjectHash);
         }
 
         /// <summary>

@@ -87,7 +87,6 @@
           - versions
             - ${0000000000} (Version Ref Object)
         - HEAD
-        - PROPERTY
         - contents
           - ${UUID}@${original_name} (Content File)
         - shared
@@ -117,10 +116,6 @@ ${owner}/${score_name}
 
 ```
 
-#### PROPERTY
-
-スコアの Property Object の hash を1つだけ記述するテキストファイル
-
 #### HEAD
 
 HEAD ファイルは 最新の Version Object の hash を1つだけ記述するテキストファイル
@@ -142,6 +137,10 @@ ${Version Object hash}
 {
   "create_at": "${ISO 8601 UTC 拡張形式}",
   "author": "${ユーザー名}",
+  "property": {
+    "title": "${スコアのタイトル}",
+    "description": "${説明}",
+  },
   "pages": [
     "${Page Object hash}"
   ],
@@ -175,20 +174,6 @@ ${Version Object hash}
   "create_at": "${ISO 8601 UTC 拡張形式}",
   "author": "${ユーザー名}",
   "comment": "${コメント}"
-}
-```
-
-##### Property Object
-
-スコアの詳細情報。
-
-```json
-{
-  "create_at": "${ISO 8601 UTC 拡張形式}",
-  "author": "${ユーザー名}",
-  "title": "${スコアのタイトル}",
-  "description": "${説明}",
-  "parent": "${Property Object hash}"
 }
 ```
 
