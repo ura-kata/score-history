@@ -494,16 +494,6 @@ namespace PracticeManagerApi.Services.Providers
             }
         }
 
-        /// <summary>
-        /// HEAD を更新する
-        /// </summary>
-        /// <param name="headKey">HEAD Object の Key</param>
-        /// <param name="newVersionHash">新しい HEAD の Hash</param>
-        /// <exception cref="InvalidOperationException"></exception>
-        private void UpdateHead(string headKey, string newVersionHash)
-        {
-            _storage.SetObjectString(headKey, newVersionHash);
-        }
 
         /// <summary>
         /// ページを指定した位置に挿入する
@@ -555,7 +545,6 @@ namespace PracticeManagerApi.Services.Providers
 
             // update version object
             versionObject.Pages = pageList.ToArray();
-            versionObject.Parent = parentVersionHash;
 
             
             // register page objects
@@ -566,15 +555,8 @@ namespace PracticeManagerApi.Services.Providers
             }
 
 
-            // register version objects
-            var newVersionData = Serialize(versionObject);
-            var newVersionHash = ComputeHash(VersionHashType, newVersionData);
-            var newVersionKey = CreateObjectKey(owner, scoreName, newVersionHash);
-            _storage.SetObjectBytes(newVersionKey, newVersionData);
-
-
-            // update head
-            UpdateHead(headKey, newVersionHash);
+            // update version
+            UpdateVersionObject(owner, scoreName, parentVersionHash, versionObject);
         }
 
         /// <summary>
@@ -627,18 +609,10 @@ namespace PracticeManagerApi.Services.Providers
 
             // update version object
             versionObject.Pages = pageList.ToArray();
-            versionObject.Parent = parentVersionHash;
             
             
-            // register version objects
-            var newVersionData = Serialize(versionObject);
-            var newVersionHash = ComputeHash(VersionHashType, newVersionData);
-            var newVersionKey = CreateObjectKey(owner, scoreName, newVersionHash);
-            _storage.SetObjectBytes(newVersionKey, newVersionData);
-
-
-            // update head
-            UpdateHead(headKey, newVersionHash);
+            // update version
+            UpdateVersionObject(owner, scoreName, parentVersionHash, versionObject);
         }
 
         /// <summary>
@@ -706,7 +680,6 @@ namespace PracticeManagerApi.Services.Providers
 
             // update version object
             versionObject.Pages = pageList;
-            versionObject.Parent = parentVersionHash;
 
             
             // register page objects
@@ -717,15 +690,8 @@ namespace PracticeManagerApi.Services.Providers
             }
             
 
-            // register version objects
-            var newVersionData = Serialize(versionObject);
-            var newVersionHash = ComputeHash(VersionHashType, newVersionData);
-            var newVersionKey = CreateObjectKey(owner, scoreName, newVersionHash);
-            _storage.SetObjectBytes(newVersionKey, newVersionData);
-
-
-            // update head
-            UpdateHead(headKey, newVersionHash);
+            // update version
+            UpdateVersionObject(owner, scoreName, parentVersionHash, versionObject);
         }
 
         /// <summary>
@@ -795,7 +761,6 @@ namespace PracticeManagerApi.Services.Providers
 
             // update version object
             versionObject.Comments = commentSet;
-            versionObject.Parent = parentVersionHash;
 
             
             // register page objects
@@ -806,15 +771,8 @@ namespace PracticeManagerApi.Services.Providers
             }
             
 
-            // register version objects
-            var newVersionData = Serialize(versionObject);
-            var newVersionHash = ComputeHash(VersionHashType, newVersionData);
-            var newVersionKey = CreateObjectKey(owner, scoreName, newVersionHash);
-            _storage.SetObjectBytes(newVersionKey, newVersionData);
-
-
-            // update head
-            UpdateHead(headKey, newVersionHash);
+            // update version
+            UpdateVersionObject(owner, scoreName, parentVersionHash, versionObject);
         }
 
         /// <summary>
@@ -879,18 +837,10 @@ namespace PracticeManagerApi.Services.Providers
 
             // update version object
             versionObject.Comments = commentSet;
-            versionObject.Parent = parentVersionHash;
 
 
-            // register version objects
-            var newVersionData = Serialize(versionObject);
-            var newVersionHash = ComputeHash(VersionHashType, newVersionData);
-            var newVersionKey = CreateObjectKey(owner, scoreName, newVersionHash);
-            _storage.SetObjectBytes(newVersionKey, newVersionData);
-
-
-            // update head
-            UpdateHead(headKey, newVersionHash);
+            // update version
+            UpdateVersionObject(owner, scoreName, parentVersionHash, versionObject);
         }
 
         /// <summary>
@@ -976,7 +926,6 @@ namespace PracticeManagerApi.Services.Providers
 
             // update version object
             versionObject.Comments = commentSet;
-            versionObject.Parent = parentVersionHash;
 
             
             // register page objects
@@ -987,15 +936,8 @@ namespace PracticeManagerApi.Services.Providers
             }
 
 
-            // register version objects
-            var newVersionData = Serialize(versionObject);
-            var newVersionHash = ComputeHash(VersionHashType, newVersionData);
-            var newVersionKey = CreateObjectKey(owner, scoreName, newVersionHash);
-            _storage.SetObjectBytes(newVersionKey, newVersionData);
-
-
-            // update head
-            UpdateHead(headKey, newVersionHash);
+            // update version
+            UpdateVersionObject(owner, scoreName, parentVersionHash, versionObject);
         }
 
         /// <summary>
