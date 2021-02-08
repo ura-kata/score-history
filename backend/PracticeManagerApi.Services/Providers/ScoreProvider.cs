@@ -219,7 +219,7 @@ namespace PracticeManagerApi.Services.Providers
             _storage = storage;
         }
 
-
+        
         /// <summary>
         /// 楽譜を作成する
         /// </summary>
@@ -445,7 +445,7 @@ namespace PracticeManagerApi.Services.Providers
         /// <param name="parentVersionHash"></param>
         /// <param name="versionObject"></param>
         private void UpdateVersionObject(string owner, string scoreName, string parentVersionHash, ScoreV2VersionObject versionObject)
-            {
+        {
             // update parent
             versionObject.Parent = parentVersionHash;
 
@@ -456,7 +456,7 @@ namespace PracticeManagerApi.Services.Providers
             var updatedVersionObjectKey = CreateObjectKey(owner, scoreName, updatedVersionObjectHash);
             _storage.SetObjectBytes(updatedVersionObjectKey, updatedVersionData);
 
-            
+
             // update HEAD
             var headKey = JoinKeys(RepositoriesRoot, owner, scoreName, HeadObjectName);
             _storage.SetObjectString(headKey, updatedVersionObjectHash);
@@ -837,7 +837,7 @@ namespace PracticeManagerApi.Services.Providers
 
             // update version object
             versionObject.Comments = commentSet;
-
+            
 
             // update version
             UpdateVersionObject(owner, scoreName, parentVersionHash, versionObject);
@@ -935,7 +935,7 @@ namespace PracticeManagerApi.Services.Providers
                 _storage.SetObjectBytes(objectKey, newCommentData);
             }
 
-
+            
             // update version
             UpdateVersionObject(owner, scoreName, parentVersionHash, versionObject);
         }
@@ -1041,6 +1041,345 @@ namespace PracticeManagerApi.Services.Providers
             }
 
             return result;
+        }
+
+        public void Commit(string owner, string scoreName, string parentVersionHash, CommitObject[] commitObjects)
+        {
+
+            if (string.IsNullOrWhiteSpace(owner))
+                throw new ArgumentException(nameof(owner));
+            if (string.IsNullOrWhiteSpace(scoreName))
+                throw new ArgumentException(nameof(scoreName));
+            if (string.IsNullOrWhiteSpace(parentVersionHash))
+                throw new ArgumentException(nameof(parentVersionHash));
+            if (commitObjects == null)
+                throw new ArgumentNullException(nameof(commitObjects));
+            if (commitObjects.Length == 0)
+                throw new ArgumentException(nameof(commitObjects));
+
+
+            // check HEAD
+            var headKey = JoinKeys(RepositoriesRoot, owner, scoreName, HeadObjectName);
+            var headHashFromStorage = _storage.GetObjectString(headKey).TrimEnd('\n', '\r');
+            if (false == headHashFromStorage.Equals(parentVersionHash, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException($"'{parentVersionHash}' is old.");
+            }
+
+
+            // deserialize Version Object
+            var versionObjectData = _storage.GetObjectBytes(parentVersionHash);
+            var versionObjectObject = Deserialize<ScoreV2VersionObject>(versionObjectData);
+
+
+            // update object
+            foreach (var (commitObject, index) in commitObjects.Select((x, index) => (x, index)))
+            {
+                switch (commitObject.CommitType?.ToLowerInvariant())
+                {
+                    case AddCommentCommitObject.CommitType:
+                    {
+                        var addComment = commitObject.AddComment;
+
+                        if (addComment == null)
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.AddComment)} == null");
+
+                        if (string.IsNullOrWhiteSpace(addComment.Page))
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.AddComment)}.{addComment.Page} is empty.");
+
+
+                        var commentHashSet = versionObjectObject.Comments ?? new Dictionary<string, string[]>();
+
+                        if(false == commentHashSet.TryGetValue(addComment.Page, out var commentHashList))
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.AddComment)}.{addComment.Page} is not found. ({addComment.Page})");
+                        var newCommentHashList = commentHashList?.ToList() ?? new List<string>();
+
+                        var newCommentObject = new ScoreV2CommentObject()
+                        {
+                            CreateAt = _now,
+                            Author = UserName,
+                            Comment = addComment.Comment,
+                        };
+
+                        // save Comment Object
+                        var newCommentData = Serialize(newCommentObject);
+                        var newCommentHash = ComputeHash(CommentHashType, newCommentData);
+                        var newCommentKey = CreateObjectKey(owner, scoreName, newCommentHash);
+                        _storage.SetObjectBytes(newCommentKey, newCommentData);
+
+
+                        // update Version Object
+                        newCommentHashList.Add(newCommentKey);
+                        commentHashSet[addComment.Page] = newCommentHashList.ToArray();
+                        versionObjectObject.Comments = commentHashSet;
+
+                        break;
+                    }
+                    case AddPageCommitObject.CommitType:
+                    {
+                        var addPage = commitObject.AddPage;
+
+                        if (addPage == null)
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.AddPage)} == null");
+
+                        var pageHashList = versionObjectObject.Pages?.ToList() ?? new List<string>();
+
+                        var newPageObject = new ScoreV2PageObject()
+                        {
+                            CreateAt = _now,
+                            Author = UserName,
+                            Image = addPage.Image,
+                            Number = addPage.Number,
+                            Thumbnail = addPage.Thumbnail,
+                        };
+
+                        // save Page Object
+                        var newPageData = Serialize(newPageObject);
+                        var newPageHash = ComputeHash(PageHashType, newPageData);
+                        var newPageKey = CreateObjectKey(owner, scoreName, newPageHash);
+                        _storage.SetObjectBytes(newPageKey, newPageData);
+
+
+                        // update Version Object
+                        pageHashList.Add(newPageHash);
+                        versionObjectObject.Pages = pageHashList.ToArray();
+
+                        break;
+                    }
+                    case InsertCommentCommitObject.CommitType:
+                    {
+                        var insertComment = commitObject.InsertComment;
+
+                        if (insertComment == null)
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.InsertComment)} == null");
+
+                        if (string.IsNullOrWhiteSpace(insertComment.Page))
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.InsertComment)}.{insertComment.Page} is empty.");
+
+
+                        var commentHashSet = versionObjectObject.Comments ?? new Dictionary<string, string[]>();
+
+                        if (false == commentHashSet.TryGetValue(insertComment.Page, out var commentHashList))
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.InsertComment)}.{insertComment.Page} is not found. ({insertComment.Page})");
+
+                        var newCommentHashList = commentHashList?.ToList() ?? new List<string>();
+
+                        if(insertComment.Index < newCommentHashList.Count || newCommentHashList.Count < insertComment.Index)
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.InsertComment)}.{insertComment.Index} out of range. ({insertComment.Page})");
+
+                        var newCommentObject = new ScoreV2CommentObject()
+                        {
+                            CreateAt = _now,
+                            Author = UserName,
+                            Comment = insertComment.Comment,
+                        };
+
+                        // save Comment Object
+                        var newCommentData = Serialize(newCommentObject);
+                        var newCommentHash = ComputeHash(CommentHashType, newCommentData);
+                        var newCommentKey = CreateObjectKey(owner, scoreName, newCommentHash);
+                        _storage.SetObjectBytes(newCommentKey, newCommentData);
+
+
+                        // update Version Object
+                        newCommentHashList.Insert(insertComment.Index, newCommentKey);
+                        commentHashSet[insertComment.Page] = newCommentHashList.ToArray();
+                        versionObjectObject.Comments = commentHashSet;
+
+                        break;
+                    }
+                    case InsertPageCommitObject.CommitType:
+                    {
+                        var insertPage = commitObject.InsertPage;
+
+                        if (insertPage == null)
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.InsertPage)} == null");
+
+
+                        var pageHashList = versionObjectObject.Pages?.ToList() ?? new List<string>();
+
+                        if (insertPage.Index < pageHashList.Count || pageHashList.Count < insertPage.Index)
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.InsertPage)}.{insertPage.Index} out of range.");
+
+                        var newPageObject = new ScoreV2PageObject()
+                        {
+                            CreateAt = _now,
+                            Author = UserName,
+                            Number = insertPage.Number,
+                            Image = insertPage.Image,
+                            Thumbnail = insertPage.Thumbnail,
+                        };
+
+                        // save Comment Object
+                        var newPageData = Serialize(newPageObject);
+                        var newPageHash = ComputeHash(CommentHashType, newPageData);
+                        var newPageKey = CreateObjectKey(owner, scoreName, newPageHash);
+                        _storage.SetObjectBytes(newPageKey, newPageData);
+
+
+                        // update Version Object
+                        pageHashList.Insert(insertPage.Index, newPageKey);
+                        versionObjectObject.Pages = pageHashList.ToArray();
+
+                        break;
+                    }
+                    case DeleteCommentCommitObject.CommitType:
+                    {
+                        var deleteComment = commitObject.DeleteComment;
+
+                        if (deleteComment == null)
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.DeleteComment)} == null");
+
+                        if (string.IsNullOrWhiteSpace(deleteComment.Page))
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.DeleteComment)}.{deleteComment.Page} is empty.");
+
+
+                        var commentHashSet = versionObjectObject.Comments ?? new Dictionary<string, string[]>();
+
+                        if (false == commentHashSet.TryGetValue(deleteComment.Page, out var commentHashList))
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.DeleteComment)}.{deleteComment.Page} is not found. ({deleteComment.Page})");
+
+                        var newCommentHashList = commentHashList?.ToList() ?? new List<string>();
+
+                        if (deleteComment.Index < newCommentHashList.Count || newCommentHashList.Count <= deleteComment.Index)
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.DeleteComment)}.{deleteComment.Index} out of range. ({deleteComment.Page})");
+
+                        
+                        // update Version Object
+                        newCommentHashList.RemoveAt(deleteComment.Index);
+                        commentHashSet[deleteComment.Page] = newCommentHashList.ToArray();
+                        versionObjectObject.Comments = commentHashSet;
+
+                        break;
+                    }
+                    case DeletePageCommitObject.CommitType:
+                    {
+                        var deletePage = commitObject.DeletePage;
+
+                        if (deletePage == null)
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.DeletePage)} == null");
+
+
+                        var newPageHashList = versionObjectObject.Pages?.ToList() ?? new List<string>();
+                        
+                        if (deletePage.Index < newPageHashList.Count || newPageHashList.Count <= deletePage.Index)
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.DeletePage)}.{deletePage.Index} out of range.");
+
+
+                        // update Version Object
+                        newPageHashList.RemoveAt(deletePage.Index);
+                        versionObjectObject.Pages = newPageHashList.ToArray();
+
+                        break;
+                    }
+                    case UpdateCommentCommitObject.CommitType:
+                    {
+                        var updateComment = commitObject.UpdateComment;
+
+                        if (updateComment == null)
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.UpdateComment)} == null");
+
+                        if (string.IsNullOrWhiteSpace(updateComment.Page))
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.UpdateComment)}.{updateComment.Page} is empty.");
+
+
+                        var commentHashSet = versionObjectObject.Comments ?? new Dictionary<string, string[]>();
+
+                        if (false == commentHashSet.TryGetValue(updateComment.Page, out var commentHashList))
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.UpdateComment)}.{updateComment.Page} is not found. ({updateComment.Page})");
+
+                        var newCommentHashList = commentHashList?.ToList() ?? new List<string>();
+
+                        if (updateComment.Index < newCommentHashList.Count || newCommentHashList.Count <= updateComment.Index)
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.UpdateComment)}.{updateComment.Index} out of range. ({updateComment.Page})");
+
+                        var oldCommentHash = newCommentHashList[updateComment.Index];
+                        var oldCommentKey = CreateObjectKey(owner, scoreName, oldCommentHash);
+                        var oldCommentData = _storage.GetObjectBytes(oldCommentKey);
+                        var oldCommentObject = Deserialize<ScoreV2CommentObject>(oldCommentData);
+                        var newCommentObject = new ScoreV2CommentObject()
+                        {
+                            CreateAt = _now,
+                            Author = UserName,
+                            Comment = updateComment.Comment ?? oldCommentObject.Comment,
+                        };
+
+                        // save Comment Object
+                        var newCommentData = Serialize(newCommentObject);
+                        var newCommentHash = ComputeHash(CommentHashType, newCommentData);
+                        var newCommentKey = CreateObjectKey(owner, scoreName, newCommentHash);
+                        _storage.SetObjectBytes(newCommentKey, newCommentData);
+
+
+                        // update Version Object
+                        newCommentHashList[updateComment.Index] = newCommentKey;
+                        commentHashSet[updateComment.Page] = newCommentHashList.ToArray();
+                        versionObjectObject.Comments = commentHashSet;
+                        break;
+                    }
+                    case UpdatePageCommitObject.CommitType:
+                    {
+                        var updatePage = commitObject.UpdatePage;
+
+                        if (updatePage == null)
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.UpdatePage)} == null");
+
+                        var newPageHashList = versionObjectObject.Pages?.ToList() ?? new List<string>();
+
+                        if (updatePage.Index < newPageHashList.Count || newPageHashList.Count <= updatePage.Index)
+                            throw new ArgumentException($"[{index}].{nameof(commitObject.UpdatePage)}.{updatePage.Index} out of range.");
+
+                        var oldPageHash = newPageHashList[updatePage.Index];
+                        var oldPageKey = CreateObjectKey(owner, scoreName, oldPageHash);
+                        var oldPageData = _storage.GetObjectBytes(oldPageKey);
+                        var oldPageObject = Deserialize<ScoreV2PageObject>(oldPageData);
+                        var newPageObject = new ScoreV2PageObject()
+                        {
+                            CreateAt = _now,
+                            Author = UserName,
+                            Image = updatePage.Image ?? oldPageObject.Image,
+                            Number = updatePage.Number ?? oldPageObject.Number,
+                            Thumbnail = updatePage.Thumbnail ?? oldPageObject.Thumbnail,
+                        };
+
+                        // save Comment Object
+                        var newPageData = Serialize(newPageObject);
+                        var newPageHash = ComputeHash(CommentHashType, newPageData);
+                        var newPageKey = CreateObjectKey(owner, scoreName, newPageHash);
+                        _storage.SetObjectBytes(newPageKey, newPageData);
+
+
+                        // update Version Object
+                        newPageHashList[updatePage.Index] = newPageKey;
+                        versionObjectObject.Pages = newPageHashList.ToArray();
+
+                        break;
+                    }
+                    case UpdatePropertyCommitObject.CommitType:
+                    {
+                        var property = commitObject.UpdateProperty;
+
+                        if(property == null)
+                            throw new ArgumentException($"'{nameof(commitObject.UpdateProperty)}' is null. Index '{index}'.");
+
+                        var propertyItem = versionObjectObject.Property ?? new ScoreV2PropertyItem();
+
+                        propertyItem.Title = property.Title ?? propertyItem.Title;
+                        propertyItem.Description = property.Description ?? propertyItem.Description;
+
+                        versionObjectObject.Property = propertyItem;
+                        break;
+                    }
+                    default:
+                    {
+                        throw new InvalidOperationException($"commit type '{commitObject.CommitType}' is not found.");
+                    }
+                }
+            }
+
+
+            // update version
+            UpdateVersionObject(owner, scoreName, parentVersionHash, versionObjectObject);
         }
     }
 }

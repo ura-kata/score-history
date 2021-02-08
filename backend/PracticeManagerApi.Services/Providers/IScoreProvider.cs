@@ -1,6 +1,3 @@
-using PracticeManagerApi.Services.Models;
-using PracticeManagerApi.Services.Objects;
-
 namespace PracticeManagerApi.Services.Providers
 {
     public interface IScoreProvider
@@ -30,5 +27,7 @@ namespace PracticeManagerApi.Services.Providers
         void CreateVersionRef(string owner, string scoreName);
 
         ScoreV2VersionSet GetVersions(string owner, string scoreName);
+
+        void Commit(string owner, string scoreName, string parentVersionHash, CommitObject[] commitObjects);
     }
 }
