@@ -79,7 +79,7 @@ namespace PracticeManagerApi.Mock.Controllers.v1
             string scoreName,
             [FromBody]
             [Required]
-            NewScoreV2Property property)
+            InitialScoreV2Property property)
         {
             if (string.IsNullOrWhiteSpace(property.Title) || !(1 <= property.Title.Length && property.Title.Length <= 128))
             {

@@ -6,7 +6,7 @@ namespace PracticeManagerApi.Services.Providers
     public interface IScoreProvider
     {
         string UserName { get; }
-        void CreateScore(string owner, string scoreName, NewScoreV2Property property);
+        void CreateScore(string owner, string scoreName, InitialScoreV2Property property);
 
         ScoreV2Latest GetScore(string owner, string scoreName);
         ScoreV2LatestSet GetScores(string owner);

@@ -288,7 +288,7 @@ namespace PracticeManagerApi.Services.Providers
         /// <param name="scoreName">楽譜の名前</param>
         /// <param name="property">プロパティ</param>
         /// <exception cref="InvalidOperationException"></exception>
-        public void CreateScore(string owner, string scoreName, NewScoreV2Property property)
+        public void CreateScore(string owner, string scoreName, InitialScoreV2Property property)
         {
 
             // Todo property の検証を行う
