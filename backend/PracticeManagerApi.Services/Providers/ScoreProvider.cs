@@ -290,8 +290,17 @@ namespace PracticeManagerApi.Services.Providers
         /// <exception cref="InvalidOperationException"></exception>
         public void CreateScore(string owner, string scoreName, InitialScoreV2Property property)
         {
+            if (string.IsNullOrWhiteSpace(owner))
+                throw new ArgumentException(nameof(owner));
 
-            // Todo property の検証を行う
+            if (string.IsNullOrWhiteSpace(scoreName))
+                throw new ArgumentException(nameof(scoreName));
+
+            if (null == property.Title)
+                throw new ArgumentException($"{nameof(property)}.{nameof(property.Title)}");
+
+            if (null == property.Description)
+                throw new ArgumentException($"{nameof(property)}.{nameof(property.Description)}");
 
             var scoreKey = JoinKeys(owner, scoreName);
             var scoreRootKey = JoinKeys(RepositoriesRoot, scoreKey);
@@ -326,6 +335,12 @@ namespace PracticeManagerApi.Services.Providers
         /// <returns>Property と Head</returns>
         public ScoreV2Latest GetScore(string owner, string scoreName)
         {
+            if (string.IsNullOrWhiteSpace(owner))
+                throw new ArgumentException(nameof(owner));
+
+            if (string.IsNullOrWhiteSpace(scoreName))
+                throw new ArgumentException(nameof(scoreName));
+
             var scoreKey = JoinKeys(owner, scoreName);
             var scoreRootKey = JoinKeys(RepositoriesRoot, scoreKey);
 
@@ -364,6 +379,10 @@ namespace PracticeManagerApi.Services.Providers
         /// <returns>Property と Head</returns>
         public ScoreV2LatestSet GetScores(string owner)
         {
+            if (string.IsNullOrWhiteSpace(owner))
+                throw new ArgumentException(nameof(owner));
+
+
             var ownerKey = JoinKeys(RepositoriesRoot, owner);
 
             if (false == _storage.ExistDirectory(ownerKey))
@@ -391,6 +410,10 @@ namespace PracticeManagerApi.Services.Providers
         /// <returns>Property と Head</returns>
         public ScoreV2LatestSet GetScores()
         {
+            if (string.IsNullOrWhiteSpace(UserName))
+                throw new InvalidOperationException(nameof(UserName));
+
+
             var owner = UserName;
             var ownerKey = JoinKeys(RepositoriesRoot, owner);
 
