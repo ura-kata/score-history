@@ -6,7 +6,7 @@ namespace PracticeManagerApi.Services.Providers
     /// 
     /// </summary>
     /// <remarks>Key: Version Number, Value: Version Object Hash</remarks>
-    public class ScoreV2VersionSet: Dictionary<int, string>
+    public class ScoreV2VersionSet: Dictionary<string, string>
     {
     }
 }

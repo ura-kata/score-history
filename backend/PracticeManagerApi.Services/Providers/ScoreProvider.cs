@@ -1042,13 +1042,14 @@ namespace PracticeManagerApi.Services.Providers
                 return new ScoreV2VersionSet();
             }
 
-            var versionKeys= _storage.GetChildrenObjectNames(versionRefRootKey);
+            var versionKeyNames= _storage.GetChildrenObjectNames(versionRefRootKey);
 
             var result = new ScoreV2VersionSet();
-            foreach (var versionKey in versionKeys)
+            foreach (var versionKeyName in versionKeyNames)
             {
-                var version = int.Parse(versionKey);
-                result[version] = _storage.GetObjectString(versionKey).TrimEnd('\n', '\r');
+                var version = int.Parse(versionKeyName);
+                var versionRefObjectKey = CreateVersionRefObjectKey(owner, scoreName, version);
+                result[version.ToString("D")] = _storage.GetObjectString(versionRefObjectKey).TrimEnd('\n', '\r');
             }
 
             return result;
