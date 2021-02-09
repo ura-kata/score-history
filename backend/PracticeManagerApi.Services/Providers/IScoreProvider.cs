@@ -28,6 +28,7 @@ namespace PracticeManagerApi.Services.Providers
 
         ScoreV2VersionSet GetVersions(string owner, string scoreName);
 
-        void Commit(string owner, string scoreName, string parentVersionHash, CommitObject[] commitObjects);
+        ScoreV2Latest Commit(string owner, string scoreName, string parentVersionHash,
+            CommitObject[] commitObjects);
     }
 }

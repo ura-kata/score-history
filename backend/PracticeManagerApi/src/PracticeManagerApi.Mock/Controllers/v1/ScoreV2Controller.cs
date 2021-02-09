@@ -220,6 +220,40 @@ namespace PracticeManagerApi.Mock.Controllers.v1
             }
         }
 
+
+
+        [HttpPost]
+        [Route("{owner}/{score_name}/commit")]
+        public ScoreV2Latest CommitScoreWithOwner(
+            [FromRoute(Name = "owner")]
+            [MaxLength(128, ErrorMessage = "{0} は 128 文字以内です")]
+            [MinLength(1, ErrorMessage = "{0} は 1 文字以上です")]
+            [RegularExpression(@"^[a-zA-Z0-9\-_]+$",ErrorMessage = "{0} は 半角英数字 , - , _ が使用できます", MatchTimeoutInMilliseconds = 1000)]
+            string owner,
+            [FromRoute(Name = "score_name")]
+            [MaxLength(128, ErrorMessage = "{0} は 128 文字以内です")]
+            [MinLength(1, ErrorMessage = "{0} は 1 文字以上です")]
+            [RegularExpression(@"^[a-zA-Z0-9\-_]+$",ErrorMessage = "{0} は 半角英数字 , - , _ が使用できます", MatchTimeoutInMilliseconds = 1000)]
+            string scoreName,
+            [FromBody]
+            CommitRequest request)
+        {
+
+            try
+            {
+                var response = _scoreProvider.Commit(owner, scoreName, request.Parent, request.Commits);
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                throw new InvalidOperationException("Hash Object の取得に失敗しました", ex);
+            }
+        }
+
+
+
         [HttpPost]
         [Route("{owner}/{score_name}/version")]
         public ScoreV2Version CreateVersionWithOwner(
