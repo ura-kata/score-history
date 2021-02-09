@@ -24,7 +24,7 @@ namespace PracticeManagerApi.Services.Providers
 
         ScoreV2ObjectSet GetObjects(string owner, string scoreName, string[] hashList);
 
-        void CreateVersionRef(string owner, string scoreName);
+        ScoreV2Version CreateVersionRef(string owner, string scoreName);
 
         ScoreV2VersionSet GetVersions(string owner, string scoreName);
 

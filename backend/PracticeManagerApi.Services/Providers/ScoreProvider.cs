@@ -444,7 +444,8 @@ namespace PracticeManagerApi.Services.Providers
         /// <param name="scoreName"></param>
         /// <param name="parentVersionHash"></param>
         /// <param name="versionObject"></param>
-        private void UpdateVersionObject(string owner, string scoreName, string parentVersionHash, ScoreV2VersionObject versionObject)
+        /// <returns>HEAD hash, serialize object</returns>
+        private (string hash, byte[] data) UpdateVersionObject(string owner, string scoreName, string parentVersionHash, ScoreV2VersionObject versionObject)
         {
             // update parent
             versionObject.Parent = parentVersionHash;
@@ -460,6 +461,8 @@ namespace PracticeManagerApi.Services.Providers
             // update HEAD
             var headKey = JoinKeys(RepositoriesRoot, owner, scoreName, HeadObjectName);
             _storage.SetObjectString(headKey, updatedVersionObjectHash);
+
+            return (updatedVersionObjectHash, updatedVersionData);
         }
 
         /// <summary>
@@ -977,7 +980,7 @@ namespace PracticeManagerApi.Services.Providers
         /// </summary>
         /// <param name="owner">所有者</param>
         /// <param name="scoreName">楽譜名</param>
-        public void CreateVersionRef(string owner, string scoreName)
+        public ScoreV2Version CreateVersionRef(string owner, string scoreName)
         {
             var scoreRootKey = JoinKeys(RepositoriesRoot, owner, scoreName);
 
@@ -1005,9 +1008,17 @@ namespace PracticeManagerApi.Services.Providers
                 }
             }
 
+            version++;
+
             var versionRefKey = CreateVersionRefObjectKey(owner, scoreName, version);
 
             _storage.SetObjectString(versionRefKey, head);
+
+            return new ScoreV2Version()
+            {
+                Hash = head,
+                Version = version,
+            };
         }
 
         /// <summary>
