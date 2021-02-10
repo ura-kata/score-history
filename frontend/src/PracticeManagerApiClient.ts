@@ -1,5 +1,25 @@
 import queryString from "query-string";
 
+function assertArgumentUndefined<T>(
+  arg: T,
+  argName: string
+): asserts arg is NonNullable<T> {
+  if (arg === undefined) {
+    throw new Error(`'${argName}' is undefined`);
+  }
+  if (arg === null) {
+    throw new Error(`'${argName}' is null`);
+  }
+}
+
+const postHeaders = {
+  "Content-Type": "application/json",
+};
+
+const patchHeaders = {
+  "Content-Type": "application/json",
+};
+
 export interface ScoreVersionPage {
   image_url: string;
   thumbnail_url: string;
@@ -47,6 +67,122 @@ export interface UserMe {
 export interface UploadedContent {
   href: string;
   original_name: string;
+}
+
+export interface ScoreV2PropertyItem {
+  title?: string;
+  description?: string;
+}
+export interface ScoreV2VersionObject {
+  property: ScoreV2PropertyItem;
+  pages: string[];
+  parent?: string;
+  message: string;
+  comments: {
+    [pageHash: string]: string[];
+  };
+}
+export interface ScoreV2Latest {
+  head_hash: string;
+  head: ScoreV2VersionObject;
+}
+export interface ScoreV2LatestSet {
+  [scoreName: string]: ScoreV2Latest;
+}
+
+export interface PatchScoreV2PropertyItem {
+  title?: string;
+  description?: string;
+}
+
+/** ページを挿入するコミット */
+export interface InsertPageCommitObject {
+  index: number;
+  number?: string;
+  image?: string;
+  thumbnail?: string;
+}
+
+/** ページを追加するコミット */
+export interface AddPageCommitObject {
+  number?: string;
+  image?: string;
+  thumbnail?: string;
+}
+
+/** ページを更新するコミット */
+export interface UpdatePageCommitObject {
+  index: number;
+  number?: string;
+  image?: string;
+  thumbnail?: string;
+}
+
+/** ページを削除するコミット */
+export interface DeletePageCommitObject {
+  index: number;
+}
+
+/** 楽譜のプロパティを更新するコミット */
+export interface UpdatePropertyCommitObject {
+  title?: string;
+  description?: string;
+}
+
+/** コメントを挿入するコミット */
+export interface InsertCommentCommitObject {
+  page: string;
+  index: number;
+  comment?: string;
+}
+
+/** コメントを追加するコミット */
+export interface AddCommentCommitObject {
+  page: string;
+  comment?: string;
+}
+
+/** コメントを更新するコミット */
+export interface UpdateCommentCommitObject {
+  page: string;
+  index: number;
+  comment?: string;
+}
+
+/** コメントを削除するコミット */
+export interface DeleteCommentCommitObject {
+  page: string;
+  index: number;
+}
+
+export interface CommitObject {
+  type:
+    | "insert_page"
+    | "add_page"
+    | "update_page"
+    | "delete_page"
+    | "update_property"
+    | "insert_comment"
+    | "add_comment"
+    | "update_comment"
+    | "delete_comment";
+
+  insert_page: InsertPageCommitObject;
+  add_page: AddPageCommitObject;
+  update_page: UpdatePageCommitObject;
+  delete_page: DeletePageCommitObject;
+
+  update_property: UpdatePropertyCommitObject;
+
+  insert_comment: InsertCommentCommitObject;
+  add_comment: AddCommentCommitObject;
+  update_comment: UpdateCommentCommitObject;
+  delete_comment: DeleteCommentCommitObject;
+}
+export interface CommitRequest {
+  /** 変更する Version Object の Hash */
+  parent: string;
+  commits: CommitObject[];
 }
 
 export default class PracticeManagerApiClient {
@@ -265,6 +401,247 @@ export default class PracticeManagerApiClient {
         throw new Error(
           `コンテンツの削除に失敗しました (${await response.text()})`
         );
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /** 自分がアクセス可能な楽譜を取得する */
+  async getScoreV2Set(): Promise<ScoreV2LatestSet> {
+    const url = new URL(`api/v1/score_v2`, this.baseUrl);
+
+    const requestUrl = url.toString();
+    try {
+      const response = await fetch(requestUrl, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        throw new Error(`スコアの取得に失敗しました`);
+      }
+
+      return (await response.json()) as ScoreV2LatestSet;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /** 指定した所有者の楽譜を取得する */
+  async getScoreV2SetWithOwner(
+    /** 所有者 */
+    owner: string
+  ): Promise<ScoreV2LatestSet> {
+    assertArgumentUndefined(owner, "owner");
+
+    const url = new URL(`api/v1/score_v2/${owner}`, this.baseUrl);
+
+    const requestUrl = url.toString();
+    try {
+      const response = await fetch(requestUrl, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        throw new Error(`スコアの取得に失敗しました`);
+      }
+
+      return (await response.json()) as ScoreV2LatestSet;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /** 楽譜を取得する */
+  async getScoreV2(
+    /** 所有者 */
+    owner: string,
+    /** 楽譜名 */
+    scoreName: string
+  ): Promise<ScoreV2Latest> {
+    assertArgumentUndefined(owner, "owner");
+    assertArgumentUndefined(scoreName, "scoreName");
+
+    const url = new URL(`api/v1/score_v2/${owner}/${scoreName}`, this.baseUrl);
+
+    const requestUrl = url.toString();
+    try {
+      const response = await fetch(requestUrl, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        throw new Error(`スコアの取得に失敗しました`);
+      }
+
+      return (await response.json()) as ScoreV2Latest;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /** 楽譜を作成する */
+  async createScoreV2(
+    /** 所有者 */
+    owner: string,
+    /** 楽譜名 */
+    scoreName: string,
+    property: ScoreV2PropertyItem
+  ): Promise<void> {
+    assertArgumentUndefined(owner, "owner");
+    assertArgumentUndefined(scoreName, "scoreName");
+    assertArgumentUndefined(property, "property");
+
+    const url = new URL(`api/v1/score_v2/${owner}/${scoreName}`, this.baseUrl);
+
+    const requestUrl = url.toString();
+    try {
+      const response = await fetch(requestUrl, {
+        method: "POST",
+        headers: postHeaders,
+        body: JSON.stringify(property),
+      });
+
+      if (!response.ok) {
+        throw new Error(`スコアの作成に失敗しました`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /** 指定した楽譜を削除する */
+  async deleteScoreV2(
+    /** 所有者 */
+    owner: string,
+    /** 楽譜名 */
+    scoreName: string
+  ): Promise<void> {
+    assertArgumentUndefined(owner, "owner");
+    assertArgumentUndefined(scoreName, "scoreName");
+
+    const url = new URL(`api/v1/score_v2/${owner}/${scoreName}`, this.baseUrl);
+
+    const requestUrl = url.toString();
+    try {
+      const response = await fetch(requestUrl, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error(`スコアの削除に失敗しました`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /** 楽譜のプロパティを更新する */
+  async updateScoreV2Property(
+    /** 所有者 */
+    owner: string,
+    /** 楽譜名 */
+    scoreName: string,
+    /** 更新するプロパティ 更新しないものは undefined にする */
+    propery: PatchScoreV2PropertyItem
+  ): Promise<void> {
+    assertArgumentUndefined(owner, "owner");
+    assertArgumentUndefined(scoreName, "scoreName");
+    assertArgumentUndefined(propery, "property");
+
+    const url = new URL(`api/v1/score_v2/${owner}/${scoreName}`, this.baseUrl);
+
+    const requestUrl = url.toString();
+    try {
+      const response = await fetch(requestUrl, {
+        method: "PATCH",
+        headers: patchHeaders,
+        body: JSON.stringify(propery),
+      });
+
+      if (!response.ok) {
+        throw new Error(`スコアのプロパティの更新に失敗しました`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /** Hash を指定して Object を取得する */
+  async getHashObjects(
+    /** 所有者 */
+    owner: string,
+    /** 楽譜名 */
+    scoreName: string,
+    /** 取得する Hash のリスト */
+    hash: string[]
+  ): Promise<void> {
+    assertArgumentUndefined(owner, "owner");
+    assertArgumentUndefined(scoreName, "scoreName");
+    assertArgumentUndefined(hash, "hash");
+
+    if (0 === hash.length) {
+      throw new Error(`'hash' is empty`);
+    }
+    if (100 < hash.length) {
+      throw new Error(`1 <= 'hash.length' <= 100 (${hash.length})`);
+    }
+
+    const url = new URL(`api/v1/score_v2/${owner}/${scoreName}`, this.baseUrl);
+
+    const requestUrl = queryString.stringifyUrl(
+      {
+        url: url.toString(),
+        query: {
+          hash: hash,
+        },
+      },
+      {
+        arrayFormat: "comma",
+      }
+    );
+    try {
+      const response = await fetch(requestUrl, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        throw new Error(`オブジェクトの取得に失敗しました`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /** 楽譜のデータを更新する */
+  async commit(
+    /** 所有者 */
+    owner: string,
+    /** 楽譜名 */
+    scoreName: string,
+    /** 更新するプロパティ 更新しないものは undefined にする */
+    commits: CommitRequest
+  ): Promise<void> {
+    assertArgumentUndefined(owner, "owner");
+    assertArgumentUndefined(scoreName, "scoreName");
+    assertArgumentUndefined(commits, "commits");
+
+    if (!commits.parent) {
+      throw new Error(`'parent' を指定してください`);
+    }
+
+    const url = new URL(`api/v1/score_v2/${owner}/${scoreName}`, this.baseUrl);
+
+    const requestUrl = url.toString();
+    try {
+      const response = await fetch(requestUrl, {
+        method: "PATCH",
+        headers: patchHeaders,
+        body: JSON.stringify(commits),
+      });
+
+      if (!response.ok) {
+        throw new Error(`スコアのプロパティの更新に失敗しました`);
       }
     } catch (err) {
       throw err;
