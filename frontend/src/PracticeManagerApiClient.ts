@@ -202,6 +202,17 @@ export interface CommitRequest {
   commits: CommitObject[];
 }
 
+/** バージョンのハッシュセット Key: version, Value: Hash */
+export interface ScoreV2VersionSet {
+  [version: string]: string;
+}
+
+/** バージョンのハッシュ */
+export interface ScoreV2Version {
+  hash: string;
+  version: number;
+}
+
 export default class PracticeManagerApiClient {
   constructor(private baseUrl: string) {}
 
@@ -665,6 +676,61 @@ export default class PracticeManagerApiClient {
         throw new Error(`スコアのプロパティの更新に失敗しました`);
       }
       return (await response.json()) as ScoreV2Latest;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async getScoreV2Versions(
+    owner: string,
+    scoreName: string
+  ): Promise<ScoreV2VersionSet> {
+    assertArgumentUndefined(owner, "owner");
+    assertArgumentUndefined(scoreName, "scoreName");
+
+    const url = new URL(
+      `api/v1/score_v2/${owner}/${scoreName}/version`,
+      this.baseUrl
+    );
+
+    const requestUrl = url.toString();
+    try {
+      const response = await fetch(requestUrl, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        throw new Error(`スコアのバージョン取得に失敗しました`);
+      }
+      return (await response.json()) as ScoreV2VersionSet;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async createScoreV2Version(
+    owner: string,
+    scoreName: string
+  ): Promise<ScoreV2Version> {
+    assertArgumentUndefined(owner, "owner");
+    assertArgumentUndefined(scoreName, "scoreName");
+
+    const url = new URL(
+      `api/v1/score_v2/${owner}/${scoreName}/version`,
+      this.baseUrl
+    );
+
+    const requestUrl = url.toString();
+    try {
+      const response = await fetch(requestUrl, {
+        method: "POST",
+        headers: postHeaders,
+      });
+
+      if (!response.ok) {
+        throw new Error(`スコアのバージョンを作成に失敗しました`);
+      }
+      return (await response.json()) as ScoreV2Version;
     } catch (err) {
       throw err;
     }

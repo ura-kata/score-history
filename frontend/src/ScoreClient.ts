@@ -6,6 +6,8 @@ import PracticeManagerApiClient, {
   ScoreV2Latest,
   ScoreV2LatestSet,
   ScoreV2PropertyItem,
+  ScoreV2VersionObject,
+  ScoreV2VersionSet,
 } from "./PracticeManagerApiClient";
 
 /** 新しいスコア */
@@ -101,5 +103,31 @@ export default class ScoreClient {
       console.log(err);
       throw new Error(`楽譜の作成に失敗しました`);
     }
+  }
+
+  async getVersions(
+    owner: string,
+    scoreName: string
+  ): Promise<ScoreV2VersionSet> {
+    const versionSet = await this.apiClient.getScoreV2Versions(
+      owner,
+      scoreName
+    );
+
+    return versionSet;
+  }
+
+  async getVersion(
+    owner: string,
+    scoreName: string,
+    hash: string
+  ): Promise<ScoreV2VersionObject> {
+    const versionObject = await this.objectStore.getVersionObjects(
+      owner,
+      scoreName,
+      [hash]
+    );
+
+    return versionObject[hash];
   }
 }
