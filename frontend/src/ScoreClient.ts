@@ -5,6 +5,7 @@ import PracticeManagerApiClient, {
   CommitRequest,
   ScoreV2Latest,
   ScoreV2LatestSet,
+  ScoreV2PageObject,
   ScoreV2PropertyItem,
   ScoreV2VersionObject,
   ScoreV2VersionSet,
@@ -129,5 +130,21 @@ export default class ScoreClient {
     );
 
     return versionObject[hash];
+  }
+
+  async getPages(
+    owner: string,
+    scoreName: string,
+    versionObject: ScoreV2VersionObject
+  ): Promise<ScoreV2PageObject[]> {
+    const hash = versionObject.pages;
+
+    const pageSet = await this.objectStore.getPageObjects(
+      owner,
+      scoreName,
+      hash
+    );
+
+    return hash.map((h) => pageSet[h]);
   }
 }
