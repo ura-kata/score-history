@@ -30,7 +30,7 @@ import {
   TimelineItem,
   TimelineSeparator,
 } from "@material-ui/lab";
-import ScorePageDetailDialog from "../organisms/ScorePageDetailDialog";
+import ScorePageDetailDialog from "../molecules/ScorePageDetailDialog";
 import ScoreDetailContent from "../organisms/ScoreDetailContent";
 import ScoreVersionDetailContent from "../organisms/ScoreVersionDetailContent";
 import SocreListContent from "../organisms/SocreListContent";

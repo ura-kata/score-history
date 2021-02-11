@@ -7,7 +7,7 @@ import {
   ScoreVersion,
   ScoreVersionPage,
 } from "../../PracticeManagerApiClient";
-import ScorePageDetailDialog from "./ScorePageDetailDialog";
+import ScorePageDetailDialog from "../molecules/ScorePageDetailDialog";
 
 export interface ScoreVersionDetailContentProps {
   score?: Score;
