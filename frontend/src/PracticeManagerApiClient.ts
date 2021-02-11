@@ -74,6 +74,9 @@ export interface ScoreV2PropertyItem {
   description?: string;
 }
 export interface ScoreV2VersionObject {
+  create_at: Date;
+  author: string;
+  //--------------------------------------
   property: ScoreV2PropertyItem;
   pages: string[];
   parent?: string;
@@ -81,6 +84,20 @@ export interface ScoreV2VersionObject {
   comments: {
     [pageHash: string]: string[];
   };
+}
+export interface ScoreV2PageObject {
+  create_at: Date;
+  author: string;
+  //--------------------------------------
+  number: string;
+  image: string;
+  thumbnail: string;
+}
+export interface ScoreV2CommentObject {
+  create_at: Date;
+  author: string;
+  //--------------------------------------
+  comment: string;
 }
 export interface ScoreV2Latest {
   head_hash: string;
