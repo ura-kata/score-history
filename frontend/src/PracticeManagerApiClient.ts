@@ -487,7 +487,7 @@ export default class PracticeManagerApiClient {
     /** 楽譜名 */
     scoreName: string,
     property: ScoreV2PropertyItem
-  ): Promise<void> {
+  ): Promise<ScoreV2Latest> {
     assertArgumentUndefined(owner, "owner");
     assertArgumentUndefined(scoreName, "scoreName");
     assertArgumentUndefined(property, "property");
@@ -505,6 +505,8 @@ export default class PracticeManagerApiClient {
       if (!response.ok) {
         throw new Error(`スコアの作成に失敗しました`);
       }
+
+      return (await response.json()) as ScoreV2Latest;
     } catch (err) {
       throw err;
     }
@@ -544,7 +546,7 @@ export default class PracticeManagerApiClient {
     scoreName: string,
     /** 更新するプロパティ 更新しないものは undefined にする */
     propery: PatchScoreV2PropertyItem
-  ): Promise<void> {
+  ): Promise<ScoreV2Latest> {
     assertArgumentUndefined(owner, "owner");
     assertArgumentUndefined(scoreName, "scoreName");
     assertArgumentUndefined(propery, "property");
@@ -562,6 +564,7 @@ export default class PracticeManagerApiClient {
       if (!response.ok) {
         throw new Error(`スコアのプロパティの更新に失敗しました`);
       }
+      return (await response.json()) as ScoreV2Latest;
     } catch (err) {
       throw err;
     }
@@ -575,7 +578,7 @@ export default class PracticeManagerApiClient {
     scoreName: string,
     /** 取得する Hash のリスト */
     hash: string[]
-  ): Promise<void> {
+  ): Promise<{ [hash: string]: any }> {
     assertArgumentUndefined(owner, "owner");
     assertArgumentUndefined(scoreName, "scoreName");
     assertArgumentUndefined(hash, "hash");
@@ -608,6 +611,7 @@ export default class PracticeManagerApiClient {
       if (!response.ok) {
         throw new Error(`オブジェクトの取得に失敗しました`);
       }
+      return (await response.json()) as { [hash: string]: any };
     } catch (err) {
       throw err;
     }
@@ -621,7 +625,7 @@ export default class PracticeManagerApiClient {
     scoreName: string,
     /** 更新するプロパティ 更新しないものは undefined にする */
     commits: CommitRequest
-  ): Promise<void> {
+  ): Promise<ScoreV2Latest> {
     assertArgumentUndefined(owner, "owner");
     assertArgumentUndefined(scoreName, "scoreName");
     assertArgumentUndefined(commits, "commits");
@@ -643,6 +647,7 @@ export default class PracticeManagerApiClient {
       if (!response.ok) {
         throw new Error(`スコアのプロパティの更新に失敗しました`);
       }
+      return (await response.json()) as ScoreV2Latest;
     } catch (err) {
       throw err;
     }

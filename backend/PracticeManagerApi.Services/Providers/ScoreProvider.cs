@@ -219,7 +219,7 @@ namespace PracticeManagerApi.Services.Providers
             _storage = storage;
         }
 
-        
+
         /// <summary>
         /// 楽譜を作成する
         /// </summary>
@@ -227,7 +227,7 @@ namespace PracticeManagerApi.Services.Providers
         /// <param name="scoreName">楽譜の名前</param>
         /// <param name="property">プロパティ</param>
         /// <exception cref="InvalidOperationException"></exception>
-        public void CreateScore(string owner, string scoreName, InitialScoreV2Property property)
+        public ScoreV2Latest CreateScore(string owner, string scoreName, InitialScoreV2Property property)
         {
             if (string.IsNullOrWhiteSpace(owner))
                 throw new ArgumentException(nameof(owner));
@@ -276,13 +276,19 @@ namespace PracticeManagerApi.Services.Providers
 
 
             // update version
-            UpdateVersionObject(owner, scoreName, "", versionObject);
+            var (hash, _) = UpdateVersionObject(owner, scoreName, "", versionObject);
 
 
             // save ID
             var idKey = JoinKeys(scoreRootKey, IdObjectName);
             var idObject = scoreId;
             _storage.SetObjectString(idKey, idObject);
+
+            return new ScoreV2Latest()
+            {
+                Head = versionObject,
+                HeadHash = hash,
+            };
         }
 
         /// <summary>
@@ -400,7 +406,8 @@ namespace PracticeManagerApi.Services.Providers
         /// <param name="parentVersionHash">親となる Property の Hash</param>
         /// <param name="property">更新するプロパティ</param>
         /// <exception cref="InvalidOperationException"></exception>
-        public void UpdateProperty(string owner, string scoreName, string parentVersionHash, PatchScoreV2Property property)
+        public ScoreV2Latest UpdateProperty(string owner, string scoreName, string parentVersionHash,
+            PatchScoreV2Property property)
         {
             if (string.IsNullOrWhiteSpace(owner))
                 throw new ArgumentException(nameof(owner));
@@ -434,7 +441,13 @@ namespace PracticeManagerApi.Services.Providers
 
 
             // update version
-            UpdateVersionObject(owner, scoreName, parentVersionHash, versionObjectObject);
+            var (hash, _) = UpdateVersionObject(owner, scoreName, parentVersionHash, versionObjectObject);
+
+            return new ScoreV2Latest()
+            {
+                HeadHash = hash,
+                Head = versionObjectObject,
+            };
         }
 
         /// <summary>

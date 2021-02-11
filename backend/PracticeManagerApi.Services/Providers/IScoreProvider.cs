@@ -3,13 +3,14 @@ namespace PracticeManagerApi.Services.Providers
     public interface IScoreProvider
     {
         string UserName { get; }
-        void CreateScore(string owner, string scoreName, InitialScoreV2Property property);
+        ScoreV2Latest CreateScore(string owner, string scoreName, InitialScoreV2Property property);
 
         ScoreV2Latest GetScore(string owner, string scoreName);
         ScoreV2LatestSet GetScores(string owner);
         ScoreV2LatestSet GetScores();
 
-        void UpdateProperty(string owner, string scoreName, string parentVersionHash, PatchScoreV2Property property);
+        ScoreV2Latest UpdateProperty(string owner, string scoreName, string parentVersionHash,
+            PatchScoreV2Property property);
 
         void DeleteScore(string owner, string scoreName);
         

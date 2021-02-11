@@ -67,7 +67,7 @@ namespace PracticeManagerApi.Mock.Controllers.v1
 
         [HttpPost]
         [Route("{owner}/{score_name}")]
-        public IActionResult CreateScoreWithOwner(
+        public ActionResult <ScoreV2Latest> CreateScoreWithOwner(
             [FromRoute(Name = "owner")]
             [MaxLength(128, ErrorMessage = "{0} は 128 文字以内です")]
             [MinLength(1, ErrorMessage = "{0} は 1 文字以上です")]
@@ -93,15 +93,13 @@ namespace PracticeManagerApi.Mock.Controllers.v1
             
             try
             {
-                _scoreProvider.CreateScore(owner, scoreName,property);
+                return _scoreProvider.CreateScore(owner, scoreName,property);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
                 throw new InvalidOperationException("作成に失敗しました");
             }
-            
-            return Ok();
         }
 
         [HttpDelete]
@@ -133,7 +131,7 @@ namespace PracticeManagerApi.Mock.Controllers.v1
 
         [HttpPatch]
         [Route("{owner}/{score_name}")]
-        public IActionResult UpdateScoreWithOwner(
+        public ActionResult<ScoreV2Latest> UpdateScoreWithOwner(
             [FromRoute(Name = "owner")]
             [MaxLength(128, ErrorMessage = "{0} は 128 文字以内です")]
             [MinLength(1, ErrorMessage = "{0} は 1 文字以上です")]
@@ -150,14 +148,13 @@ namespace PracticeManagerApi.Mock.Controllers.v1
         {
             try
             {
-                _scoreProvider.UpdateProperty(owner, scoreName, body.Parent, body.Property);
+                return _scoreProvider.UpdateProperty(owner, scoreName, body.Parent, body.Property);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
                 throw new InvalidComObjectException("プロパティの更新に失敗しました", ex);
             }
-            return Ok();
         }
 
         [HttpGet]
