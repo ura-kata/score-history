@@ -12,57 +12,58 @@ import {
   makeStyles,
   createStyles,
   Theme,
-  colors
-} from '@material-ui/core';
-import React from 'react';
-import { useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
-import PracticeManagerApiClient from '../../PracticeManagerApiClient';
+  colors,
+} from "@material-ui/core";
+import React from "react";
+import { useCallback } from "react";
+import { useDropzone } from "react-dropzone";
+import PracticeManagerApiClient from "../../PracticeManagerApiClient";
 
-const client = new PracticeManagerApiClient(process.env.REACT_APP_API_URI_BASE as string);
+const client = new PracticeManagerApiClient(
+  process.env.REACT_APP_API_URI_BASE as string
+);
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
-    img:{
-      height: "50vh"
+    img: {
+      height: "50vh",
     },
     imageDropZoneRoot: {
-      margin:"20px",
+      margin: "20px",
     },
-    imageDropZone:{
+    imageDropZone: {
       width: "100%",
       height: "50px",
       cursor: "pointer",
       backgroundColor: colors.grey[200],
       textAlign: "center",
-      '&:hover': {
+      "&:hover": {
         backgroundColor: colors.yellow[100],
-      }
+      },
     },
-    imageList:{
+    imageList: {
       backgroundColor: colors.grey[100],
     },
     table: {
       height: "auto",
-      width: '100%'
-    }
+      width: "100%",
+    },
   })
 );
 
-interface FileData{
+interface FileData {
   fileUrl: string;
   file: File;
 }
 
-export interface UpdateDialogProps{
+export interface UpdateDialogProps {
   open: boolean;
   scoreName: string;
   onUploaded?: ((event: {}) => void) | undefined;
   onCanceled?: ((event: {}) => void) | undefined;
 }
 
-const UpdateDialog = (props: UpdateDialogProps)=>{
-
+const UpdateDialog = (props: UpdateDialogProps) => {
   const classes = useStyles();
 
   const _open = props.open;
@@ -70,60 +71,59 @@ const UpdateDialog = (props: UpdateDialogProps)=>{
   const _onUploaded = props.onUploaded;
   const _onCanceled = props.onCanceled;
 
-  const [updateFileDataList, setUpdateFileDataList] = React.useState([] as FileData[]);
+  const [updateFileDataList, setUpdateFileDataList] = React.useState(
+    [] as FileData[]
+  );
 
   const onUpdateDrop = useCallback((acceptedFiles) => {
-    setUpdateFileDataList([])
+    setUpdateFileDataList([]);
     const loadedFileDataList: FileData[] = [];
 
     acceptedFiles.forEach((f: File) => {
       const reader = new FileReader();
 
-      reader.onabort = () => console.log('ファイルの読み込み中断');
-      reader.onerror = () => console.log('ファイルの読み込みエラー');
+      reader.onabort = () => console.log("ファイルの読み込み中断");
+      reader.onerror = () => console.log("ファイルの読み込みエラー");
       reader.onload = (e) => {
         // 正常に読み込みが完了した
 
-          loadedFileDataList.push({
-            fileUrl: e.target?.result as string,
-            file: f
-          });
-          setUpdateFileDataList([...loadedFileDataList]);
-
+        loadedFileDataList.push({
+          fileUrl: e.target?.result as string,
+          file: f,
+        });
+        setUpdateFileDataList([...loadedFileDataList]);
       };
 
       reader.readAsDataURL(f);
-    })
+    });
+  }, []);
+  const updateDrop = useDropzone({ onDrop: onUpdateDrop });
 
-  },[]);
-  const updateDrop = useDropzone({onDrop:onUpdateDrop});
-
-  const handlerUpdate = useCallback(async ()=>{
-    try{
-      await client.createVersion(_scoreName, updateFileDataList.map(x=>x.file));
+  const handlerUpdate = useCallback(async () => {
+    try {
+      await client.createVersion(
+        _scoreName,
+        updateFileDataList.map((x) => x.file)
+      );
       setUpdateFileDataList([]);
-    } catch(err) {
-      alert('スコアの更新に失敗しました');
+    } catch (err) {
+      alert("スコアの更新に失敗しました");
       return;
     }
 
-    if(_onUploaded){
+    if (_onUploaded) {
       _onUploaded({});
     }
-  },[_onUploaded, _scoreName, updateFileDataList]);
+  }, [_onUploaded, _scoreName, updateFileDataList]);
 
-  const handleCancelClick = useCallback(async ()=>{
-    if(_onCanceled){
+  const handleCancelClick = useCallback(async () => {
+    if (_onCanceled) {
       _onCanceled({});
     }
-  },[_onCanceled]);
+  }, [_onCanceled]);
 
-
-  return(
-    <Dialog
-      open={_open}
-      scroll={'paper'}
-    >
+  return (
+    <Dialog open={_open} scroll={"paper"}>
       <DialogTitle>新しいバージョン</DialogTitle>
       <DialogContent dividers={true}>
         <Grid container spacing={3}>
@@ -142,25 +142,30 @@ const UpdateDialog = (props: UpdateDialogProps)=>{
           </Grid>
           <Grid item xs={12}>
             <GridList className={classes.imageList}>
-              {
-                updateFileDataList.map((fd, i) => (
-                  <GridListTile key={'image' + i.toString()}>
-                    <img src={fd.fileUrl} className={classes.img} alt={fd.file.name}></img>
-                    <GridListTileBar title={fd.file.name}/>
-                  </GridListTile>
-                ))
-              }
+              {updateFileDataList.map((fd, i) => (
+                <GridListTile key={"image" + i.toString()}>
+                  <img
+                    src={fd.fileUrl}
+                    className={classes.img}
+                    alt={fd.file.name}
+                  ></img>
+                  <GridListTileBar title={fd.file.name} />
+                </GridListTile>
+              ))}
             </GridList>
           </Grid>
         </Grid>
-
       </DialogContent>
       <DialogActions>
-        <Button variant="outlined" color="primary" onClick={handlerUpdate}>更新</Button>
-        <Button variant="outlined" color="primary" onClick={handleCancelClick}>キャンセル</Button>
+        <Button variant="outlined" color="primary" onClick={handlerUpdate}>
+          更新
+        </Button>
+        <Button variant="outlined" color="primary" onClick={handleCancelClick}>
+          キャンセル
+        </Button>
       </DialogActions>
     </Dialog>
   );
-}
+};
 
 export default UpdateDialog;

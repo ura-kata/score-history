@@ -1,22 +1,19 @@
-import {
-  Collapse,
-  IconButton,
-} from '@material-ui/core'
-import Alert from '@material-ui/lab/Alert';
-import { CloseIcon } from '@material-ui/data-grid';
-import { useEffect } from 'react';
-import React from 'react';
+import { Collapse, IconButton } from "@material-ui/core";
+import Alert from "@material-ui/lab/Alert";
+import { CloseIcon } from "@material-ui/data-grid";
+import { useEffect } from "react";
+import React from "react";
 
-export interface AlertAreaProps{
+export interface AlertAreaProps {
   successText?: string;
   warningText?: string;
   errorText?: string;
-  onHideSuccessText?: ()=>void;
-  onHideWarningText?: ()=>void;
-  onHideErrorText?: ()=>void;
+  onHideSuccessText?: () => void;
+  onHideWarningText?: () => void;
+  onHideErrorText?: () => void;
 }
 
-const AlertArea = (props: AlertAreaProps) =>{
+const AlertArea = (props: AlertAreaProps) => {
   const _successText = props.successText;
   const _warningText = props.warningText;
   const _errorText = props.errorText;
@@ -25,88 +22,95 @@ const AlertArea = (props: AlertAreaProps) =>{
   const _onHideWarningText = props.onHideWarningText;
   const _onHideErrorText = props.onHideErrorText;
 
-  const [alertErrorOpen, setAlertErrorOpen] = React.useState(!_errorText && _errorText !== "");
-  const [alertWarningOpen, setAlertWarningOpen] = React.useState(!_warningText && _warningText !== "");
-  const [alertSuccessOpen, setAlertSuccessOpen] = React.useState(!_successText && _successText !== "");
+  const [alertErrorOpen, setAlertErrorOpen] = React.useState(
+    !_errorText && _errorText !== ""
+  );
+  const [alertWarningOpen, setAlertWarningOpen] = React.useState(
+    !_warningText && _warningText !== ""
+  );
+  const [alertSuccessOpen, setAlertSuccessOpen] = React.useState(
+    !_successText && _successText !== ""
+  );
 
-  useEffect(()=>{
-    if(_successText && _successText !== ""){
+  useEffect(() => {
+    if (_successText && _successText !== "") {
       setAlertSuccessOpen(true);
     } else {
       setAlertSuccessOpen(false);
     }
-  },[_successText]);
-  useEffect(()=>{
-    if(_warningText && _warningText !== ""){
+  }, [_successText]);
+  useEffect(() => {
+    if (_warningText && _warningText !== "") {
       setAlertWarningOpen(true);
-    }else{
+    } else {
       setAlertWarningOpen(false);
     }
-  },[_warningText]);
-  useEffect(()=>{
-    if(_errorText && _errorText !== ""){
+  }, [_warningText]);
+  useEffect(() => {
+    if (_errorText && _errorText !== "") {
       setAlertErrorOpen(true);
     } else {
       setAlertErrorOpen(false);
     }
-  },[_errorText]);
+  }, [_errorText]);
 
-  useEffect(()=>{
-    if(alertErrorOpen) return;
-    const f = async ()=>{
-      if(_onHideErrorText){
+  useEffect(() => {
+    if (alertErrorOpen) return;
+    const f = async () => {
+      if (_onHideErrorText) {
         _onHideErrorText();
       }
-    }
+    };
 
     f();
+  }, [alertErrorOpen, _onHideErrorText]);
 
-  },[alertErrorOpen, _onHideErrorText]);
-
-  useEffect(()=>{
-    if(alertWarningOpen) return;
-    const f = async ()=>{
-      if(_onHideWarningText){
+  useEffect(() => {
+    if (alertWarningOpen) return;
+    const f = async () => {
+      if (_onHideWarningText) {
         _onHideWarningText();
       }
-    }
+    };
 
     f();
+  }, [alertWarningOpen, _onHideWarningText]);
 
-  },[alertWarningOpen, _onHideWarningText]);
-
-  useEffect(()=>{
-    if(alertSuccessOpen) return;
-    const f = async ()=>{
-      if(_onHideSuccessText){
+  useEffect(() => {
+    if (alertSuccessOpen) return;
+    const f = async () => {
+      if (_onHideSuccessText) {
         _onHideSuccessText();
       }
-    }
+    };
 
     f();
+  }, [alertSuccessOpen, _onHideSuccessText]);
 
-  },[alertSuccessOpen, _onHideSuccessText]);
+  useEffect(() => {
+    if (!alertSuccessOpen) return;
 
-  useEffect(()=>{
-    if(!alertSuccessOpen) return;
-
-    const timerId = setTimeout(()=>{
+    const timerId = setTimeout(() => {
       setAlertSuccessOpen(false);
-    },5000);
-    return ()=>{clearTimeout(timerId)};
-  },[alertSuccessOpen, _successText]);
+    }, 5000);
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [alertSuccessOpen, _successText]);
 
-  useEffect(()=>{
-    if(!alertWarningOpen) return;
+  useEffect(() => {
+    if (!alertWarningOpen) return;
 
-    const timerId = setTimeout(()=>{
+    const timerId = setTimeout(() => {
       setAlertWarningOpen(false);
-    },5000);
-    return ()=>{clearTimeout(timerId)};
-  },[alertWarningOpen, _warningText]);
+    }, 5000);
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [alertWarningOpen, _warningText]);
 
   return (
-    <div style={{marginTop:'5px', marginBottom:'5px'}}>
+    <div style={{ marginTop: "5px", marginBottom: "5px" }}>
       <Collapse in={alertErrorOpen}>
         <Alert
           severity="error"
