@@ -37,7 +37,10 @@ const App = () => {
         <Router>
           <Switch>
             <Route path="/" component={HomePage} exact />
-            <Route path="/home/:scoreName?/:version?/:pageNo?" component={HomePage} />
+            <Route
+              path="/home/:owner?/:scoreName?/:action?/:version?/:pageNo?"
+              component={HomePage}
+            />
             <Route path="/new" component={ScorePage} />
             <Route path="/upload" component={UploadScorePage} />
             <Route path="/display" component={DisplayPage} />

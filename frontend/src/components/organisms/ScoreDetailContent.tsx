@@ -7,46 +7,47 @@ import {
   TimelineItem,
   TimelineSeparator,
 } from "@material-ui/lab";
-import React, { useEffect } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import { Score } from "../../PracticeManagerApiClient";
+import {
+  ScoreV2Latest,
+  ScoreV2VersionSet,
+} from "../../PracticeManagerApiClient";
 
 interface ScoreDetailContentProps {
-  score?: Score;
+  owner?: string;
+  scoreName?: string;
+  score?: ScoreV2Latest;
+  versionSet?: ScoreV2VersionSet;
 }
 
 const ScoreDetailContent = (props: ScoreDetailContentProps) => {
-  const _socre = props.score;
+  const _owner = props.owner;
+  const _scoreName = props.scoreName;
+  const _score = props.score;
 
-  useEffect(() => {
-    const f = async () => {
-      if (!_socre) return;
-    };
-    f();
-  }, [_socre]);
+  const property = _score?.head.property;
+  const _versionSet = props.versionSet ? props.versionSet : {};
 
-  const timelineItems = !_socre
+  const versions = Object.entries(_versionSet).map(([key, value]) => key);
+  const timelineItems = !_score
     ? []
-    : [..._socre.versions].reverse().map((version, index) => {
+    : [...versions].reverse().map((version, index) => {
         return (
           <TimelineItem key={index}>
             <TimelineSeparator>
               <TimelineDot>
                 {/* Todo チェックしたかどうかをアイコンで表示する */}
               </TimelineDot>
-              {index !== _socre.versions.length - 1 ? (
-                <TimelineConnector />
-              ) : (
-                <></>
-              )}
+              {index !== versions.length - 1 ? <TimelineConnector /> : <></>}
             </TimelineSeparator>
             <TimelineContent>
               <Button
                 component={Link}
-                to={`/home/${_socre?.name}/${version.version}`}
+                to={`/home/${_owner}/${_scoreName}/version/${version}`}
               >
                 <Paper elevation={3} style={{ padding: "6px 16px" }}>
-                  <Typography>version {version.version}</Typography>
+                  <Typography>version {version}</Typography>
                 </Paper>
               </Button>
             </TimelineContent>
@@ -58,7 +59,7 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
     <>
       <Grid container>
         <Grid item xs>
-          <Typography variant="h4">{_socre?.title}</Typography>
+          <Typography variant="h4">{property?.title}</Typography>
         </Grid>
       </Grid>
 
@@ -71,7 +72,7 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
               <Typography variant="h5">説明</Typography>
             </Grid>
             <Grid item xs={12}>
-              {_socre?.description?.split("\n").map((t, index) => (
+              {property?.description?.split("\n").map((t, index) => (
                 <Typography key={index}>{t}</Typography>
               ))}
             </Grid>

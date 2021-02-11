@@ -1,104 +1,88 @@
 import { Button, Divider, Grid, Paper, Typography } from "@material-ui/core";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { Link, useHistory } from "react-router-dom";
-import { apiClient } from "../../global";
 import {
-  Score,
-  ScoreVersion,
-  ScoreVersionPage,
+  ScoreV2PageObject,
+  ScoreV2VersionObject,
 } from "../../PracticeManagerApiClient";
 import ScorePageDetailDialog from "../molecules/ScorePageDetailDialog";
 
 export interface ScoreVersionDetailContentProps {
-  score?: Score;
-  version?: number;
-  pageNo?: number;
+  owner?: string;
+  scoreName?: string;
+  version?: string;
+  versionObject?: ScoreV2VersionObject;
+  pageIndex?: number;
+  pages?: ScoreV2PageObject[];
 }
 
 const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
-  const _socre = props.score;
+  const _owner = props.owner;
+  const _scoreName = props.scoreName;
   const _version = props.version;
-  const _pageNo = props.pageNo;
+  const _versionObject = props.versionObject;
+  const _pageIndex = props.pageIndex;
+  const _pages = props.pages;
 
-  const [scoreVersion, setScoreVersion] = useState<ScoreVersion | undefined>(
-    undefined
-  );
   const history = useHistory();
 
-  useEffect(() => {
-    if (!_socre) return;
-    if (_version === undefined) return;
+  const actionsAndPageList = useMemo(() => {
+    const ret = [] as {
+      page: ScoreV2PageObject;
+      onPrev?: () => void;
+      onNext?: () => void;
+    }[];
 
-    const f = async () => {
-      try {
-        const sv = await apiClient.getScoreVersion(_socre.name, _version);
-        setScoreVersion(sv);
-      } catch (err) {
-        console.log(err);
-      }
-    };
-    f();
-  }, [_socre, _version]);
-
-  const actionsAndPageSet = useMemo(() => {
-    const ret = {} as {
-      [no: number]: {
-        page: ScoreVersionPage;
-        onPrev?: () => void;
-        onNext?: () => void;
-      };
-    };
-
-    scoreVersion?.pages.forEach((page, index) => {
+    _pages?.forEach((page, index) => {
       const prevUrl =
-        index === 0 || _socre === undefined || _version === undefined
-          ? undefined
-          : `/home/${_socre.name}/${_version}/${
-              scoreVersion.pages[index - 1].no
-            }/`;
-
-      const nextUrl =
-        index === scoreVersion.pages.length - 1 ||
-        _socre === undefined ||
+        index === 0 ||
+        _owner === undefined ||
+        _scoreName === undefined ||
         _version === undefined
           ? undefined
-          : `/home/${_socre.name}/${_version}/${
-              scoreVersion.pages[index + 1].no
-            }/`;
-      ret[page.no] = {
+          : `/home/${_owner}/${_scoreName}/version/${_version}/${index - 1}/`;
+
+      const nextUrl =
+        index === _pages.length - 1 ||
+        _owner === undefined ||
+        _scoreName === undefined ||
+        _version === undefined
+          ? undefined
+          : `/home/${_owner}/${_scoreName}/version/${_version}/${index + 1}/`;
+      ret.push({
         page: page,
         onPrev: prevUrl ? () => history.push(prevUrl) : undefined,
         onNext: nextUrl ? () => history.push(nextUrl) : undefined,
-      };
+      });
     });
 
     return ret;
-  }, [_socre, _version, history, scoreVersion]);
+  }, [_owner, _scoreName, _version, history, _pages]);
 
   const actionsAndPage =
-    _pageNo === undefined ? undefined : actionsAndPageSet[_pageNo];
+    _pageIndex === undefined ? undefined : actionsAndPageList[_pageIndex];
 
-  const thumbnailContents = !scoreVersion
+  const thumbnailContents = !_pages
     ? []
-    : scoreVersion.pages.map((page, index) => {
+    : _pages.map((page, index) => {
         return (
-          <Grid item key={page.no}>
+          <Grid item key={page.number}>
             <Button
               component={Link}
-              to={`/home/${_socre?.name}/${_version}/${page.no}`}
+              to={`/home/${_owner}/${_scoreName}/version/${_version}/${index}`}
             >
               <Paper>
                 <Grid container justify="center">
                   <Grid item xs={12} style={{ textAlign: "center" }}>
                     <img
-                      src={page.thumbnail_url ?? page.image_url}
+                      src={page.thumbnail ?? page.image}
                       height={"200px"}
-                      alt={page.no.toString()}
+                      alt={page.number}
                       style={{ userSelect: "none" }}
                     />
                   </Grid>
                   <Grid item xs={12}>
-                    <Typography align="center">p. {page.no}</Typography>
+                    <Typography align="center">p. {page.number}</Typography>
                   </Grid>
                 </Grid>
               </Paper>
@@ -108,15 +92,18 @@ const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
       });
 
   const handleOnClose = () => {
-    if (!_socre) return;
-    history.push(`/home/${_socre.name}/${_version}/`);
+    if (!_owner) return;
+    if (!_scoreName) return;
+    history.push(`/home/${_owner}/${_scoreName}/version/${_version}/`);
   };
+
+  const property = _versionObject?.property;
 
   return (
     <>
       <Grid container>
         <Grid item xs>
-          <Typography variant="h4">{_socre?.title}</Typography>
+          <Typography variant="h4">{property?.title}</Typography>
         </Grid>
       </Grid>
 
@@ -130,13 +117,9 @@ const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
           <Grid container spacing={3}></Grid>
           <Grid container spacing={3}>
             <Grid item xs={12}>
-              <Typography variant="h5">説明</Typography>
+              <Typography variant="h5">コメント</Typography>
             </Grid>
-            <Grid item xs={12}>
-              {scoreVersion?.description?.split("\n").map((t, index) => (
-                <Typography key={index}>{t}</Typography>
-              ))}
-            </Grid>
+            <Grid item xs={12}></Grid>
           </Grid>
         </Grid>
         <Grid item xs={8}>

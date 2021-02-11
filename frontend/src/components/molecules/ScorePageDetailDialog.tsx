@@ -14,12 +14,12 @@ import {
   Theme,
   Typography,
 } from "@material-ui/core";
-import { ScoreVersionPage } from "../../PracticeManagerApiClient";
+import { ScoreV2PageObject } from "../../PracticeManagerApiClient";
 import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 
 export interface ScorePageDetailDialogProps {
-  page?: ScoreVersionPage;
+  page?: ScoreV2PageObject;
   open: boolean;
   onClose?: () => void;
   onPrev?: () => void;
@@ -235,7 +235,7 @@ const ScorePageDetailDialog = (props: ScorePageDetailDialogProps) => {
     <>
       <Dialog onClose={_onClose} open={_open} fullWidth={true} maxWidth={"md"}>
         <DialogTitle>
-          <Typography align="center">{_page?.no}</Typography>
+          <Typography align="center">{_page?.number}</Typography>
         </DialogTitle>
         <DialogContent dividers className={classes.dialogContent}>
           <Grid container>
@@ -251,8 +251,8 @@ const ScorePageDetailDialog = (props: ScorePageDetailDialogProps) => {
                     onMouseMove={handleImageOnMouseMove}
                   >
                     <img
-                      src={_page?.image_url}
-                      alt={_page?.no.toString()}
+                      src={_page?.image}
+                      alt={_page?.number}
                       className={classes.targetImg}
                       onLoad={imageOnLoaded}
                     />
@@ -288,8 +288,8 @@ const ScorePageDetailDialog = (props: ScorePageDetailDialogProps) => {
             <div className={classes.images}>
               <div className={classes.zoomArea}>
                 <img
-                  src={_page?.image_url}
-                  alt={_page?.no.toString()}
+                  src={_page?.image}
+                  alt={_page?.number.toString()}
                   className={classes.zoomImage}
                   onLoad={zoomImageOnLoaded}
                   ref={zoomImageRef}

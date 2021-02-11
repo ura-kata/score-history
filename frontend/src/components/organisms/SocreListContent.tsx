@@ -8,22 +8,27 @@ import {
   createStyles,
   Divider,
   Grid,
+  IconButton,
   makeStyles,
   Theme,
   Typography,
 } from "@material-ui/core";
 import React from "react";
-import { Link, useHistory } from "react-router-dom";
-import { Score } from "../../PracticeManagerApiClient";
+import { Link } from "react-router-dom";
+import {
+  ScoreV2Latest,
+  ScoreV2LatestSet,
+} from "../../PracticeManagerApiClient";
+import RefreshIcon from "@material-ui/icons/Refresh";
 
 // ------------------------------------------------------------------------------------------
 interface ScoreListViewProps {
-  scores: { [name: string]: Score };
-  onClick?: (key: string, score: Score) => void;
+  scoreSet: ScoreV2LatestSet;
+  onClick?: (owner: string, scoreName: string, score: ScoreV2Latest) => void;
 }
 
 const ScoreListView = (props: ScoreListViewProps) => {
-  const _scores = props.scores;
+  const _scoreSet = props.scoreSet;
   const _onClick = props.onClick;
 
   const classes = makeStyles((theme: Theme) =>
@@ -43,25 +48,32 @@ const ScoreListView = (props: ScoreListViewProps) => {
 
   return (
     <Grid container className={classes.scoreCardContainer}>
-      {Object.entries(_scores).map(([key, score], i) => (
-        <Card key={i.toString()} className={classes.scoreCard}>
-          <CardActionArea
-            onClick={() => {
-              if (_onClick) _onClick(key, score);
-            }}
-          >
-            <CardContent>
-              <Typography variant="h5">{score.title}</Typography>
-              <Typography variant="caption" className={classes.scoreCardName}>
-                {score.name}
-              </Typography>
-              <Typography variant="subtitle1" gutterBottom>
-                {score.description}
-              </Typography>
-            </CardContent>
-          </CardActionArea>
-        </Card>
-      ))}
+      {Object.entries(_scoreSet).map(([ownerAndScoreName, score], i) => {
+        const os = ownerAndScoreName.split("/");
+        const owner = os[0];
+        const scoreName = os[1];
+        const property = score.head.property;
+
+        return (
+          <Card key={i.toString()} className={classes.scoreCard}>
+            <CardActionArea
+              onClick={() => {
+                if (_onClick) _onClick(owner, scoreName, score);
+              }}
+            >
+              <CardContent>
+                <Typography variant="h5">{property?.title}</Typography>
+                <Typography variant="caption" className={classes.scoreCardName}>
+                  {scoreName}
+                </Typography>
+                <Typography variant="subtitle1" gutterBottom>
+                  {property?.description}
+                </Typography>
+              </CardContent>
+            </CardActionArea>
+          </Card>
+        );
+      })}
     </Grid>
   );
 };
@@ -69,15 +81,26 @@ const ScoreListView = (props: ScoreListViewProps) => {
 // ------------------------------------------------------------------------------------------
 
 export interface ScoreListContentProps {
-  scores: { [name: string]: Score };
+  scoreSet: ScoreV2LatestSet;
+  onCardClick?: (
+    owner: string,
+    scoreName: string,
+    score: ScoreV2Latest
+  ) => void;
+  onRefreshClick?: () => void;
 }
 
 const SocreListContent = (props: ScoreListContentProps) => {
-  const _scores = props.scores;
-  const history = useHistory();
+  const _scoreSet = props.scoreSet;
+  const _onCardClick = props.onCardClick;
+  const _onRefreshClick = props.onRefreshClick;
 
-  const handleScoreOnClick = (key: string, socre: Score) => {
-    history.push(`/home/${key}/`);
+  const handleScoreOnClick = (
+    owner: string,
+    scoreName: string,
+    socre: ScoreV2Latest
+  ) => {
+    if (_onCardClick) _onCardClick(owner, scoreName, socre);
   };
 
   return (
@@ -87,17 +110,26 @@ const SocreListContent = (props: ScoreListContentProps) => {
           <Typography variant="h4">スコア一覧</Typography>
         </Grid>
         <Grid item xs>
-          <ButtonGroup color="primary" style={{ float: "right" }}>
-            <Button component={Link} to="/new">
-              新規
-            </Button>
-          </ButtonGroup>
+          <Grid container alignItems="center" justify="flex-end" spacing={1}>
+            <Grid item>
+              <IconButton onClick={_onRefreshClick}>
+                <RefreshIcon />
+              </IconButton>
+            </Grid>
+            <Grid item>
+              <ButtonGroup color="primary" style={{ float: "right" }}>
+                <Button component={Link} to="/new">
+                  新規
+                </Button>
+              </ButtonGroup>
+            </Grid>
+          </Grid>
         </Grid>
       </Grid>
 
       <Divider />
 
-      <ScoreListView scores={_scores} onClick={handleScoreOnClick} />
+      <ScoreListView scoreSet={_scoreSet} onClick={handleScoreOnClick} />
     </>
   );
 };

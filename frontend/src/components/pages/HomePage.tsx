@@ -1,45 +1,26 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import GenericTemplate from "../templates/GenericTemplate";
 import {
   createStyles,
   makeStyles,
   Theme,
   colors,
-  Grid,
-  Card,
-  CardContent,
   Typography,
-  CardActionArea,
-  Divider,
-  ButtonGroup,
   Button,
   Breadcrumbs,
-  Paper,
 } from "@material-ui/core";
-import PracticeManagerApiClient, {
-  Score,
-  ScoreVersion,
-  ScoreVersionPage,
+import {
+  ScoreV2Latest,
+  ScoreV2LatestSet,
+  ScoreV2PageObject,
+  ScoreV2VersionObject,
+  ScoreV2VersionSet,
 } from "../../PracticeManagerApiClient";
 import { Link, useHistory, useRouteMatch } from "react-router-dom";
-import {
-  Timeline,
-  TimelineConnector,
-  TimelineContent,
-  TimelineDot,
-  TimelineItem,
-  TimelineSeparator,
-} from "@material-ui/lab";
-import ScorePageDetailDialog from "../molecules/ScorePageDetailDialog";
 import ScoreDetailContent from "../organisms/ScoreDetailContent";
 import ScoreVersionDetailContent from "../organisms/ScoreVersionDetailContent";
 import SocreListContent from "../organisms/SocreListContent";
-
-const client = new PracticeManagerApiClient(
-  process.env.REACT_APP_API_URI_BASE as string
-);
-
-// ------------------------------------------------------------------------------------------
+import { scoreClient } from "../../global";
 
 // ------------------------------------------------------------------------------------------
 
@@ -66,49 +47,37 @@ type HomeContentType = "home" | "detail" | "version" | "page";
 const HomePage = () => {
   const classes = useStyles();
 
-  const [scores, setScores] = useState<{ [name: string]: Score }>({});
+  const [scoreSet, setScoreSet] = useState<ScoreV2LatestSet>({});
+  const [versionObject, setVersionObject] = useState<ScoreV2VersionObject>();
+  const [pages, setPages] = useState<ScoreV2PageObject[]>([]);
+
   const history = useHistory();
   const urlMatch = useRouteMatch<{
+    owner?: string;
     scoreName?: string;
+    action?: string;
     version?: string;
     pageNo?: string;
-  }>("/home/:scoreName?/:version?/:pageNo?");
-
-  useEffect(() => {
-    const f = async () => {
-      try {
-        const response = await client.getScores();
-
-        const s: { [name: string]: Score } = {};
-        response.forEach((x) => (s[x.name] = x));
-        setScores(s);
-      } catch (err) {
-        console.log(err);
-        setScores({});
-      }
-    };
-
-    f();
-  }, []);
+  }>("/home/:owner?/:scoreName?/:action?/:version?/:pageNo?");
 
   let contentType: HomeContentType = "home";
 
-  let score: undefined | Score = undefined;
-  if (urlMatch) {
-    const scoreName = urlMatch.params.scoreName;
-    if (scoreName) {
-      score = scores[scoreName];
+  const owner = urlMatch?.params?.owner;
+  const scoreName = urlMatch?.params?.scoreName;
+  const scoreKey = owner && scoreName ? `${owner}/${scoreName}` : undefined;
+  let score: undefined | ScoreV2Latest = undefined;
 
-      if (score) {
-        contentType = "detail";
-      }
+  if (scoreKey) {
+    score = scoreSet[scoreKey];
+
+    if (score) {
+      contentType = "detail";
     }
   }
 
-  let version: undefined | number = undefined;
+  let version: undefined | string = undefined;
   if (urlMatch) {
-    const versinText = urlMatch.params.version;
-    version = versinText !== undefined ? parseInt(versinText) : undefined;
+    version = urlMatch.params.version;
     if (version !== undefined) {
       contentType = "version";
     }
@@ -123,23 +92,137 @@ const HomePage = () => {
     }
   }
 
+  const handleOnCardClick = (owner: string, scoreName: string) => {
+    history.push(`/home/${owner}/${scoreName}/`);
+  };
+
+  const [versionSet, setVersionSet] = useState<ScoreV2VersionSet>({});
+
+  const loadScoreSet = async () => {
+    try {
+      const scoreSet = await scoreClient.getScores();
+      setScoreSet(scoreSet);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    loadScoreSet();
+  }, []);
+
+  const loadVersionSet = async (owner: string, scoreName: string) => {
+    try {
+      const versionSet = await scoreClient.getVersions(owner, scoreName);
+      setVersionSet(versionSet);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    if (!owner) return;
+    if (!scoreName) return;
+    loadVersionSet(owner, scoreName);
+  }, [owner, scoreName]);
+
+  const loadVersion = async (
+    owner: string,
+    scoreName: string,
+    hash: string
+  ) => {
+    try {
+      const versionObject = await scoreClient.getVersion(
+        owner,
+        scoreName,
+        hash
+      );
+      setVersionObject(versionObject);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    if (!owner) return;
+    if (!scoreName) return;
+    if (!version) return;
+    if (!versionSet) return;
+
+    var hash = versionSet[version];
+    if (!hash) return;
+
+    loadVersion(owner, scoreName, hash);
+  }, [owner, scoreName, version, versionSet]);
+
+  const loadPages = async (
+    owner: string,
+    scoreName: string,
+    version: ScoreV2VersionObject
+  ) => {
+    try {
+      const pages = await scoreClient.getPages(owner, scoreName, version);
+      setPages(pages);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  useEffect(() => {
+    if (!owner) return;
+    if (!scoreName) return;
+    if (!versionObject) return;
+    loadPages(owner, scoreName, versionObject);
+  }, [owner, scoreName, versionObject]);
+
+  const handleOnRefreshClick = async () => {
+    await loadScoreSet();
+  };
+
   const content = ((type: HomeContentType) => {
     switch (type) {
       case "home": {
-        return <SocreListContent scores={scores} />;
+        return (
+          <SocreListContent
+            key={type}
+            scoreSet={scoreSet}
+            onCardClick={handleOnCardClick}
+            onRefreshClick={handleOnRefreshClick}
+          />
+        );
       }
       case "detail": {
-        return <ScoreDetailContent score={score} />;
+        return (
+          <ScoreDetailContent
+            key={type}
+            score={score}
+            owner={owner}
+            scoreName={scoreName}
+            versionSet={versionSet}
+          />
+        );
       }
       case "version": {
-        return <ScoreVersionDetailContent score={score} version={version} />;
+        return (
+          <ScoreVersionDetailContent
+            key={type}
+            owner={owner}
+            scoreName={scoreName}
+            version={version}
+            versionObject={versionObject}
+            pages={pages}
+          />
+        );
       }
       case "page": {
         return (
           <ScoreVersionDetailContent
-            score={score}
+            key={type}
+            owner={owner}
+            scoreName={scoreName}
             version={version}
-            pageNo={pageNo}
+            versionObject={versionObject}
+            pages={pages}
+            pageIndex={pageNo}
           />
         );
       }
@@ -158,9 +241,9 @@ const HomePage = () => {
       <Button
         key={breadcrumbList.length}
         component={Link}
-        to={`/home/${score.name}/`}
+        to={`/home/${scoreKey}/`}
       >
-        {score.name}
+        <Typography> {`${scoreName} (${owner})`}</Typography>
       </Button>
     );
 
@@ -169,7 +252,7 @@ const HomePage = () => {
         <Button
           key={breadcrumbList.length}
           component={Link}
-          to={`/home/${score.name}/${version}`}
+          to={`/home/${scoreKey}/version/${version}`}
         >
           version {version}
         </Button>
