@@ -8,6 +8,7 @@ import ScorePage from "./components/pages/ScorePage";
 import useAppReducer, { AppContextDispatch, AppContext } from "./AppContext";
 import HomePage from "./components/pages/HomePage";
 import { apiClient } from "./global";
+import NewScorePage from "./components/pages/NewScorePage";
 
 const App = () => {
   const [state, dispatch] = useAppReducer();
@@ -34,7 +35,7 @@ const App = () => {
               path="/home/:owner?/:scoreName?/:action?/:version?/:pageNo?"
               component={HomePage}
             />
-            <Route path="/new" component={ScorePage} />
+            <Route path="/new" component={NewScorePage} />
             <Route path="/upload" component={UploadScorePage} />
             <Route path="/display" component={DisplayPage} />
             <Route path="/api-test" component={ApiTestPage} />
