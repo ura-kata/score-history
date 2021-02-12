@@ -8,9 +8,9 @@ import {
 import ScorePageDetailDialog from "../molecules/ScorePageDetailDialog";
 
 export interface ScoreVersionDetailContentProps {
-  owner?: string;
-  scoreName?: string;
-  version?: string;
+  owner: string;
+  scoreName: string;
+  version: string;
   versionObject?: ScoreV2VersionObject;
   pageIndex?: number;
   pages?: ScoreV2PageObject[];
