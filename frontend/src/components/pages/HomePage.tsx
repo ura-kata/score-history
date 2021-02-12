@@ -22,10 +22,11 @@ import ScoreDetailContent from "../organisms/ScoreDetailContent";
 import ScoreVersionDetailContent from "../organisms/ScoreVersionDetailContent";
 import SocreListContent from "../organisms/SocreListContent";
 import { scoreClient } from "../../global";
+import UpdateScoreContent from "../organisms/UpdateScoreContent";
 
 // ------------------------------------------------------------------------------------------
 
-class PathCreator {
+export class PathCreator {
   getHomePath(): string {
     return `/`;
   }
@@ -69,8 +70,6 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-type HomeContentType = "home" | "detail" | "version" | "page";
-
 const HomePage = () => {
   const classes = useStyles();
 
@@ -91,7 +90,6 @@ const HomePage = () => {
 
   const owner = urlMatch?.params?.owner;
   const scoreName = urlMatch?.params?.scoreName;
-  const scoreKey = owner && scoreName ? `${owner}/${scoreName}` : undefined;
   const score =
     owner && scoreName ? scoreSet[`${owner}/${scoreName}`] : undefined;
 
@@ -100,20 +98,7 @@ const HomePage = () => {
   const pageIndex =
     pageIndexText !== undefined ? parseInt(pageIndexText) : undefined;
 
-  const contentType: HomeContentType = (() => {
-    if (pageIndex !== undefined) {
-      return "page";
-    }
-
-    if (version !== undefined) {
-      return "version";
-    }
-
-    if (score) {
-      return "detail";
-    }
-    return "home";
-  })();
+  const action = urlMatch?.params?.action;
 
   const handleOnCardClick = (owner: string, scoreName: string) => {
     history.push(pathCreator.getDetailPath(owner, scoreName));
@@ -201,33 +186,26 @@ const HomePage = () => {
     await loadScoreSet();
   };
 
-  const content = ((type: HomeContentType) => {
-    switch (type) {
-      case "home": {
-        return (
-          <SocreListContent
-            key={type}
-            scoreSet={scoreSet}
-            onCardClick={handleOnCardClick}
-            onRefreshClick={handleOnRefreshClick}
-          />
-        );
+  const Content = () => {
+    if (owner && scoreName) {
+      if ("update" === action) {
+        return <UpdateScoreContent />;
       }
-      case "detail": {
-        return (
-          <ScoreDetailContent
-            key={type}
-            score={score}
-            owner={owner}
-            scoreName={scoreName}
-            versionSet={versionSet}
-          />
-        );
-      }
-      case "version": {
+      if ("version" === action && version) {
+        if (pageIndex) {
+          return (
+            <ScoreVersionDetailContent
+              owner={owner}
+              scoreName={scoreName}
+              version={version}
+              versionObject={versionObject}
+              pages={pages}
+              pageIndex={pageIndex}
+            />
+          );
+        }
         return (
           <ScoreVersionDetailContent
-            key={type}
             owner={owner}
             scoreName={scoreName}
             version={version}
@@ -236,23 +214,26 @@ const HomePage = () => {
           />
         );
       }
-      case "page": {
-        return (
-          <ScoreVersionDetailContent
-            key={type}
-            owner={owner}
-            scoreName={scoreName}
-            version={version}
-            versionObject={versionObject}
-            pages={pages}
-            pageIndex={pageIndex}
-          />
-        );
-      }
-      default:
-        return <></>;
+
+      return (
+        <ScoreDetailContent
+          score={score}
+          owner={owner}
+          scoreName={scoreName}
+          versionSet={versionSet}
+          pathCreator={pathCreator}
+        />
+      );
     }
-  })(contentType);
+
+    return (
+      <SocreListContent
+        scoreSet={scoreSet}
+        onCardClick={handleOnCardClick}
+        onRefreshClick={handleOnRefreshClick}
+      />
+    );
+  };
 
   const breadcrumbList = [
     <Button
@@ -296,7 +277,7 @@ const HomePage = () => {
     <GenericTemplate>
       <Breadcrumbs>{breadcrumbList}</Breadcrumbs>
 
-      {content}
+      <Content />
     </GenericTemplate>
   );
 };
