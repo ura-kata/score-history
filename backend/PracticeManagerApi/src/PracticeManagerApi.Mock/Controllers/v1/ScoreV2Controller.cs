@@ -82,7 +82,7 @@ namespace PracticeManagerApi.Mock.Controllers.v1
             [Required]
             InitialScoreV2Property property)
         {
-            if (string.IsNullOrWhiteSpace(property.Title) || !(1 <= property.Title.Length && property.Title.Length <= 128))
+            if (null != property.Title && !( property.Title.Length <= 128))
             {
                 return BadRequest();
             }
