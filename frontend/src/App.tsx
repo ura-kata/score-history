@@ -32,7 +32,7 @@ const App = () => {
           <Switch>
             <Route path="/" component={HomePage} exact />
             <Route
-              path="/home/:owner?/:scoreName?/:action?/:version?/:pageNo?"
+              path="/home/:owner?/:scoreName?/:action?/:version?/:pageIndex?"
               component={HomePage}
             />
             <Route path="/new" component={NewScorePage} />

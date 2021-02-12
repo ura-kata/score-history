@@ -8,6 +8,7 @@ import {
   Typography,
   Button,
   Breadcrumbs,
+  withStyles,
 } from "@material-ui/core";
 import {
   ScoreV2Latest,
@@ -21,6 +22,31 @@ import ScoreDetailContent from "../organisms/ScoreDetailContent";
 import ScoreVersionDetailContent from "../organisms/ScoreVersionDetailContent";
 import SocreListContent from "../organisms/SocreListContent";
 import { scoreClient } from "../../global";
+
+// ------------------------------------------------------------------------------------------
+
+class PathCreator {
+  getHomePath(): string {
+    return `/`;
+  }
+  getDetailPath(owner: string, scoreName: string): string {
+    return `/home/${owner}/${scoreName}/`;
+  }
+  getUpdatePath(owner: string, scoreName: string): string {
+    return `/home/${owner}/${scoreName}/update/`;
+  }
+  getVersionPath(owner: string, scoreName: string, version: string): string {
+    return `/home/${owner}/${scoreName}/version/${version}/`;
+  }
+  getPagePath(
+    owner: string,
+    scoreName: string,
+    version: string,
+    pageIndex: number
+  ): string {
+    return `/home/${owner}/${scoreName}/version/${version}/${pageIndex}/`;
+  }
+}
 
 // ------------------------------------------------------------------------------------------
 
@@ -38,6 +64,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     breadcrumbsLink: {
       textDecoration: "none",
+      textTransform: "none",
     },
   })
 );
@@ -57,43 +84,39 @@ const HomePage = () => {
     scoreName?: string;
     action?: string;
     version?: string;
-    pageNo?: string;
-  }>("/home/:owner?/:scoreName?/:action?/:version?/:pageNo?");
+    pageIndex?: string;
+  }>("/home/:owner?/:scoreName?/:action?/:version?/:pageIndex?");
 
-  let contentType: HomeContentType = "home";
+  const pathCreator = new PathCreator();
 
   const owner = urlMatch?.params?.owner;
   const scoreName = urlMatch?.params?.scoreName;
   const scoreKey = owner && scoreName ? `${owner}/${scoreName}` : undefined;
-  let score: undefined | ScoreV2Latest = undefined;
+  const score =
+    owner && scoreName ? scoreSet[`${owner}/${scoreName}`] : undefined;
 
-  if (scoreKey) {
-    score = scoreSet[scoreKey];
+  const version = urlMatch?.params.version;
+  const pageIndexText = urlMatch?.params.pageIndex;
+  const pageIndex =
+    pageIndexText !== undefined ? parseInt(pageIndexText) : undefined;
+
+  const contentType: HomeContentType = (() => {
+    if (pageIndex !== undefined) {
+      return "page";
+    }
+
+    if (version !== undefined) {
+      return "version";
+    }
 
     if (score) {
-      contentType = "detail";
+      return "detail";
     }
-  }
-
-  let version: undefined | string = undefined;
-  if (urlMatch) {
-    version = urlMatch.params.version;
-    if (version !== undefined) {
-      contentType = "version";
-    }
-  }
-
-  let pageNo: undefined | number = undefined;
-  if (urlMatch) {
-    const pageNoText = urlMatch.params.pageNo;
-    pageNo = pageNoText !== undefined ? parseInt(pageNoText) : undefined;
-    if (pageNo) {
-      contentType = "page";
-    }
-  }
+    return "home";
+  })();
 
   const handleOnCardClick = (owner: string, scoreName: string) => {
-    history.push(`/home/${owner}/${scoreName}/`);
+    history.push(pathCreator.getDetailPath(owner, scoreName));
   };
 
   const [versionSet, setVersionSet] = useState<ScoreV2VersionSet>({});
@@ -222,7 +245,7 @@ const HomePage = () => {
             version={version}
             versionObject={versionObject}
             pages={pages}
-            pageIndex={pageNo}
+            pageIndex={pageIndex}
           />
         );
       }
@@ -232,31 +255,40 @@ const HomePage = () => {
   })(contentType);
 
   const breadcrumbList = [
-    <Button key={0} component={Link} to="/">
+    <Button
+      key={0}
+      className={classes.breadcrumbsLink}
+      component={Link}
+      to={pathCreator.getHomePath()}
+    >
       Home
     </Button>,
   ];
-  if (score) {
-    breadcrumbList.push(
-      <Button
-        key={breadcrumbList.length}
-        component={Link}
-        to={`/home/${scoreKey}/`}
-      >
-        <Typography> {`${scoreName} (${owner})`}</Typography>
-      </Button>
-    );
-
-    if (version) {
+  if (owner && scoreName) {
+    if (score) {
       breadcrumbList.push(
         <Button
           key={breadcrumbList.length}
+          className={classes.breadcrumbsLink}
           component={Link}
-          to={`/home/${scoreKey}/version/${version}`}
+          to={pathCreator.getDetailPath(owner, scoreName)}
         >
-          version {version}
+          <Typography> {`${scoreName} (${owner})`}</Typography>
         </Button>
       );
+
+      if (version) {
+        breadcrumbList.push(
+          <Button
+            key={breadcrumbList.length}
+            className={classes.breadcrumbsLink}
+            component={Link}
+            to={pathCreator.getVersionPath(owner, scoreName, version)}
+          >
+            version {version}
+          </Button>
+        );
+      }
     }
   }
 
