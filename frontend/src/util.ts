@@ -9,3 +9,7 @@ export function assertArgumentUndefined<T>(
     throw new Error(`'${argName}' is null`);
   }
 }
+
+export function sleep(msec: number) {
+  return new Promise((resolve) => setTimeout(resolve, msec));
+}
