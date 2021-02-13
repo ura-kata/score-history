@@ -9,22 +9,20 @@ import {
   Button,
   Breadcrumbs,
   withStyles,
+  Grid,
 } from "@material-ui/core";
-import {
-  ScoreV2Latest,
-  ScoreV2LatestSet,
-  ScoreV2PageObject,
-  ScoreV2VersionObject,
-  ScoreV2VersionSet,
-} from "../../PracticeManagerApiClient";
 import { Link, useHistory, useRouteMatch } from "react-router-dom";
 import ScoreDetailContent from "../organisms/ScoreDetailContent";
 import ScoreVersionDetailContent from "../organisms/ScoreVersionDetailContent";
 import SocreListContent from "../organisms/SocreListContent";
 import { scoreClient } from "../../global";
-import UpdateScoreContent from "../organisms/UpdateScoreContent";
+import EditScorePropertyContent from "../organisms/EditScorePropertyContent";
+import { Alert } from "@material-ui/lab";
+import { ScorePage, ScoreSummarySet } from "../../ScoreClient";
 
 // ------------------------------------------------------------------------------------------
+
+type PathActionType = "edit" | "version";
 
 export class PathCreator {
   getHomePath(): string {
@@ -33,11 +31,13 @@ export class PathCreator {
   getDetailPath(owner: string, scoreName: string): string {
     return `/home/${owner}/${scoreName}/`;
   }
-  getUpdatePath(owner: string, scoreName: string): string {
-    return `/home/${owner}/${scoreName}/update/`;
+  getEditPropertyPath(owner: string, scoreName: string): string {
+    const action: PathActionType = "edit";
+    return `/home/${owner}/${scoreName}/${action}/`;
   }
   getVersionPath(owner: string, scoreName: string, version: string): string {
-    return `/home/${owner}/${scoreName}/version/${version}/`;
+    const action: PathActionType = "version";
+    return `/home/${owner}/${scoreName}/${action}/${version}/`;
   }
   getPagePath(
     owner: string,
@@ -45,7 +45,8 @@ export class PathCreator {
     version: string,
     pageIndex: number
   ): string {
-    return `/home/${owner}/${scoreName}/version/${version}/${pageIndex}/`;
+    const action: PathActionType = "version";
+    return `/home/${owner}/${scoreName}/${action}/${version}/${pageIndex}/`;
   }
 }
 
@@ -73,9 +74,13 @@ const useStyles = makeStyles((theme: Theme) =>
 const HomePage = () => {
   const classes = useStyles();
 
-  const [scoreSet, setScoreSet] = useState<ScoreV2LatestSet>({});
-  const [versionObject, setVersionObject] = useState<ScoreV2VersionObject>();
-  const [pages, setPages] = useState<ScoreV2PageObject[]>([]);
+  const [scoreSet, setScoreSet] = useState<ScoreSummarySet>({});
+  const [versions, setVersions] = useState<string[]>([]);
+  const [pages, setPages] = useState<ScorePage[]>([]);
+
+  const [loadScoreSetError, setLoadScoreSetError] = useState<string>();
+  const [loadVersionSetError, setLoadVersionsError] = useState<string>();
+  const [loadPagesError, setLoadPagesError] = useState<string>();
 
   const history = useHistory();
   const urlMatch = useRouteMatch<{
@@ -90,43 +95,61 @@ const HomePage = () => {
 
   const owner = urlMatch?.params?.owner;
   const scoreName = urlMatch?.params?.scoreName;
-  const score =
-    owner && scoreName ? scoreSet[`${owner}/${scoreName}`] : undefined;
+  const action = urlMatch?.params?.action as PathActionType | undefined;
 
   const version = urlMatch?.params.version;
   const pageIndexText = urlMatch?.params.pageIndex;
   const pageIndex =
     pageIndexText !== undefined ? parseInt(pageIndexText) : undefined;
 
-  const action = urlMatch?.params?.action;
+  const score =
+    owner && scoreName ? scoreSet[`${owner}/${scoreName}`] : undefined;
+  const property = score?.property ?? {};
+
+  const loadScoreSet = async () => {
+    try {
+      const scoreSummarys = await scoreClient.getScores();
+      setScoreSet(scoreSummarys);
+      setLoadScoreSetError(undefined);
+    } catch (err) {
+      setLoadScoreSetError(`楽譜の一覧取得に失敗しました`);
+      console.log(err);
+    }
+  };
+
+  const loadVersionSet = async (owner: string, scoreName: string) => {
+    try {
+      const versions = await scoreClient.getVersions(owner, scoreName);
+      setVersions(versions);
+      setLoadVersionsError(undefined);
+    } catch (err) {
+      setLoadVersionsError(`楽譜のバージョン一覧の取得に失敗しました`);
+      console.log(err);
+    }
+  };
+
+  const loadPages = async (
+    owner: string,
+    scoreName: string,
+    version: string
+  ) => {
+    try {
+      const pages = await scoreClient.getPages(owner, scoreName, version);
+      setPages(pages);
+      setLoadPagesError(undefined);
+    } catch (err) {
+      setLoadPagesError(`ページの情報取得に失敗しました`);
+      console.log(err);
+    }
+  };
 
   const handleOnCardClick = (owner: string, scoreName: string) => {
     history.push(pathCreator.getDetailPath(owner, scoreName));
   };
 
-  const [versionSet, setVersionSet] = useState<ScoreV2VersionSet>({});
-
-  const loadScoreSet = async () => {
-    try {
-      const scoreSet = await scoreClient.getScores();
-      setScoreSet(scoreSet);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
   useEffect(() => {
     loadScoreSet();
   }, []);
-
-  const loadVersionSet = async (owner: string, scoreName: string) => {
-    try {
-      const versionSet = await scoreClient.getVersions(owner, scoreName);
-      setVersionSet(versionSet);
-    } catch (err) {
-      console.log(err);
-    }
-  };
 
   useEffect(() => {
     if (!owner) return;
@@ -134,53 +157,12 @@ const HomePage = () => {
     loadVersionSet(owner, scoreName);
   }, [owner, scoreName]);
 
-  const loadVersion = async (
-    owner: string,
-    scoreName: string,
-    hash: string
-  ) => {
-    try {
-      const versionObject = await scoreClient.getVersion(
-        owner,
-        scoreName,
-        hash
-      );
-      setVersionObject(versionObject);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
   useEffect(() => {
     if (!owner) return;
     if (!scoreName) return;
     if (!version) return;
-    if (!versionSet) return;
-
-    var hash = versionSet[version];
-    if (!hash) return;
-
-    loadVersion(owner, scoreName, hash);
-  }, [owner, scoreName, version, versionSet]);
-
-  const loadPages = async (
-    owner: string,
-    scoreName: string,
-    version: ScoreV2VersionObject
-  ) => {
-    try {
-      const pages = await scoreClient.getPages(owner, scoreName, version);
-      setPages(pages);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-  useEffect(() => {
-    if (!owner) return;
-    if (!scoreName) return;
-    if (!versionObject) return;
-    loadPages(owner, scoreName, versionObject);
-  }, [owner, scoreName, versionObject]);
+    loadPages(owner, scoreName, version);
+  }, [owner, scoreName, version]);
 
   const handleOnRefreshClick = async () => {
     await loadScoreSet();
@@ -197,8 +179,8 @@ const HomePage = () => {
             <ScoreVersionDetailContent
               owner={owner}
               scoreName={scoreName}
+              property={property}
               version={version}
-              versionObject={versionObject}
               pages={pages}
               pageIndex={pageIndex}
             />
@@ -208,8 +190,8 @@ const HomePage = () => {
           <ScoreVersionDetailContent
             owner={owner}
             scoreName={scoreName}
+            property={property}
             version={version}
-            versionObject={versionObject}
             pages={pages}
           />
         );
@@ -217,10 +199,10 @@ const HomePage = () => {
 
       return (
         <ScoreDetailContent
-          score={score}
           owner={owner}
           scoreName={scoreName}
-          versionSet={versionSet}
+          property={property}
+          versions={versions}
           pathCreator={pathCreator}
         />
       );
@@ -246,7 +228,6 @@ const HomePage = () => {
     </Button>,
   ];
   if (owner && scoreName) {
-    if (score) {
       breadcrumbList.push(
         <Button
           key={breadcrumbList.length}
@@ -271,13 +252,38 @@ const HomePage = () => {
         );
       }
     }
-  }
 
   return (
     <GenericTemplate>
+      <Grid container>
+        <Grid item xs={12}>
+          {loadScoreSetError ? (
+            <Alert severity="error">{loadScoreSetError}</Alert>
+          ) : (
+            <></>
+          )}
+        </Grid>
+        <Grid item xs={12}>
+          {loadVersionSetError ? (
+            <Alert severity="error">{loadVersionSetError}</Alert>
+          ) : (
+            <></>
+          )}
+        </Grid>
+        <Grid item xs={12}>
+          {loadPagesError ? (
+            <Alert severity="error">{loadPagesError}</Alert>
+          ) : (
+            <></>
+          )}
+        </Grid>
+        <Grid item xs={12}>
       <Breadcrumbs>{breadcrumbList}</Breadcrumbs>
-
+        </Grid>
+        <Grid item xs={12}>
       <Content />
+        </Grid>
+      </Grid>
     </GenericTemplate>
   );
 };

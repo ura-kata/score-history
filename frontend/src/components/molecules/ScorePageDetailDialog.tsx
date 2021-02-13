@@ -14,12 +14,12 @@ import {
   Theme,
   Typography,
 } from "@material-ui/core";
-import { ScoreV2PageObject } from "../../PracticeManagerApiClient";
 import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
+import { ScorePage } from "../../ScoreClient";
 
 export interface ScorePageDetailDialogProps {
-  page?: ScoreV2PageObject;
+  page?: ScorePage;
   open: boolean;
   onClose?: () => void;
   onPrev?: () => void;

@@ -15,16 +15,13 @@ import {
 } from "@material-ui/core";
 import React from "react";
 import { Link } from "react-router-dom";
-import {
-  ScoreV2Latest,
-  ScoreV2LatestSet,
-} from "../../PracticeManagerApiClient";
 import RefreshIcon from "@material-ui/icons/Refresh";
+import { ScoreSummary, ScoreSummarySet } from "../../ScoreClient";
 
 // ------------------------------------------------------------------------------------------
 interface ScoreListViewProps {
-  scoreSet: ScoreV2LatestSet;
-  onClick?: (owner: string, scoreName: string, score: ScoreV2Latest) => void;
+  scoreSet: ScoreSummarySet;
+  onClick?: (owner: string, scoreName: string, score: ScoreSummary) => void;
 }
 
 const ScoreListView = (props: ScoreListViewProps) => {
@@ -52,7 +49,7 @@ const ScoreListView = (props: ScoreListViewProps) => {
         const os = ownerAndScoreName.split("/");
         const owner = os[0];
         const scoreName = os[1];
-        const property = score.head.property;
+        const property = score.property;
 
         return (
           <Card key={i.toString()} className={classes.scoreCard}>
@@ -81,12 +78,8 @@ const ScoreListView = (props: ScoreListViewProps) => {
 // ------------------------------------------------------------------------------------------
 
 export interface ScoreListContentProps {
-  scoreSet: ScoreV2LatestSet;
-  onCardClick?: (
-    owner: string,
-    scoreName: string,
-    score: ScoreV2Latest
-  ) => void;
+  scoreSet: ScoreSummarySet;
+  onCardClick?: (owner: string, scoreName: string, score: ScoreSummary) => void;
   onRefreshClick?: () => void;
 }
 
@@ -98,39 +91,43 @@ const SocreListContent = (props: ScoreListContentProps) => {
   const handleScoreOnClick = (
     owner: string,
     scoreName: string,
-    socre: ScoreV2Latest
+    socre: ScoreSummary
   ) => {
     if (_onCardClick) _onCardClick(owner, scoreName, socre);
   };
 
   return (
-    <>
-      <Grid container>
-        <Grid item xs>
-          <Typography variant="h4">スコア一覧</Typography>
-        </Grid>
-        <Grid item xs>
-          <Grid container alignItems="center" justify="flex-end" spacing={1}>
-            <Grid item>
-              <IconButton onClick={_onRefreshClick}>
-                <RefreshIcon />
-              </IconButton>
-            </Grid>
-            <Grid item>
-              <ButtonGroup color="primary" style={{ float: "right" }}>
-                <Button component={Link} to="/new">
-                  新規
-                </Button>
-              </ButtonGroup>
+    <Grid container spacing={2}>
+      <Grid item xs={12}>
+        <Grid container alignItems="center">
+          <Grid item xs>
+            <Typography variant="h4">スコア一覧</Typography>
+          </Grid>
+          <Grid item xs>
+            <Grid container alignItems="center" justify="flex-end" spacing={1}>
+              <Grid item>
+                <IconButton onClick={_onRefreshClick}>
+                  <RefreshIcon />
+                </IconButton>
+              </Grid>
+              <Grid item>
+                <ButtonGroup color="primary" style={{ float: "right" }}>
+                  <Button component={Link} to="/new">
+                    新規
+                  </Button>
+                </ButtonGroup>
+              </Grid>
             </Grid>
           </Grid>
         </Grid>
       </Grid>
-
-      <Divider />
-
-      <ScoreListView scoreSet={_scoreSet} onClick={handleScoreOnClick} />
-    </>
+      <Grid item xs={12}>
+        <Divider />
+      </Grid>
+      <Grid item xs={12}>
+        <ScoreListView scoreSet={_scoreSet} onClick={handleScoreOnClick} />
+      </Grid>
+    </Grid>
   );
 };
 

@@ -5,22 +5,23 @@ import {
   ScoreV2PageObject,
   ScoreV2VersionObject,
 } from "../../PracticeManagerApiClient";
+import { ScorePage, ScoreProperty } from "../../ScoreClient";
 import ScorePageDetailDialog from "../molecules/ScorePageDetailDialog";
 
 export interface ScoreVersionDetailContentProps {
   owner: string;
   scoreName: string;
+  property: ScoreProperty;
   version: string;
-  versionObject?: ScoreV2VersionObject;
   pageIndex?: number;
-  pages?: ScoreV2PageObject[];
+  pages?: ScorePage[];
 }
 
 const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
   const _owner = props.owner;
   const _scoreName = props.scoreName;
+  const _property = props.property;
   const _version = props.version;
-  const _versionObject = props.versionObject;
   const _pageIndex = props.pageIndex;
   const _pages = props.pages;
 
@@ -28,7 +29,7 @@ const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
 
   const actionsAndPageList = useMemo(() => {
     const ret = [] as {
-      page: ScoreV2PageObject;
+      page: ScorePage;
       onPrev?: () => void;
       onNext?: () => void;
     }[];
@@ -97,13 +98,11 @@ const ScoreVersionDetailContent = (props: ScoreVersionDetailContentProps) => {
     history.push(`/home/${_owner}/${_scoreName}/version/${_version}/`);
   };
 
-  const property = _versionObject?.property;
-
   return (
     <>
       <Grid container>
         <Grid item xs>
-          <Typography variant="h4">{property?.title}</Typography>
+          <Typography variant="h4">{_property.title}</Typography>
         </Grid>
       </Grid>
 

@@ -16,35 +16,28 @@ import {
 } from "@material-ui/lab";
 import React from "react";
 import { Link, useHistory } from "react-router-dom";
-import {
-  ScoreV2Latest,
-  ScoreV2VersionSet,
-} from "../../PracticeManagerApiClient";
+import { ScoreProperty } from "../../ScoreClient";
 import { PathCreator } from "../pages/HomePage";
 
 interface ScoreDetailContentProps {
   owner: string;
   scoreName: string;
-  score?: ScoreV2Latest;
-  versionSet?: ScoreV2VersionSet;
+  property: ScoreProperty;
+  versions?: string[];
   pathCreator: PathCreator;
 }
 
 const ScoreDetailContent = (props: ScoreDetailContentProps) => {
   const _owner = props.owner;
   const _scoreName = props.scoreName;
-  const _score = props.score;
+  const _property = props.property;
   const _pathCreator = props.pathCreator;
 
   const history = useHistory();
 
-  const property = _score?.head.property ?? {
-    title: "",
-    description: "",
-  };
-  const _versionSet = props.versionSet ?? {};
+  const _versions = props.versions ?? [];
 
-  const versions = Object.entries(_versionSet).map(([key, value]) => key);
+  const versions = _versions.reverse();
 
   const VersionTimeLine = () => (
     <Grid
@@ -95,21 +88,44 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
     </Grid>
   );
 
-  const handleOnScoreUpdate = () => {
-    history.push(_pathCreator.getUpdatePath(_owner, _scoreName));
+  const handleOnEditProperty = () => {
+    history.push(_pathCreator.getEditPropertyPath(_owner, _scoreName));
   };
+
+  const handleOnInitializePages = () => {
+    history.push(_pathCreator.getEditPropertyPath(_owner, _scoreName));
+  };
+
+  const InitialVersionButton = () => (
+    <Grid container direction="column" alignItems="center">
+      <Grid item>
+        <Button variant="outlined" onClick={handleOnInitializePages}>
+          新しくページを登録する
+        </Button>
+      </Grid>
+    </Grid>
+  );
+
+  // TODO 最新のバージョンを表示することにする
+  // version が選択されていない場合は最新のバージョンを表示することにする
 
   return (
     <Grid container spacing={2}>
       <Grid item xs={12}>
         <Grid container alignItems="center">
           <Grid item xs>
-            <Typography variant="h4">{property.title ?? _scoreName}</Typography>
+            <Typography variant="h4">
+              {_property.title ?? _scoreName}
+            </Typography>
           </Grid>
-          <Grid item>
-            <ButtonGroup>
-              <Button onClick={handleOnScoreUpdate}>楽譜更新</Button>
-            </ButtonGroup>
+          <Grid item xs>
+            <Grid container alignItems="center" justify="flex-end" spacing={1}>
+              <Grid item>
+                <ButtonGroup color="primary">
+                  <Button onClick={handleOnEditProperty}>編集</Button>
+                </ButtonGroup>
+              </Grid>
+            </Grid>
           </Grid>
         </Grid>
       </Grid>
@@ -124,14 +140,18 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
                 <Typography variant="h5">説明</Typography>
               </Grid>
               <Grid item xs={12}>
-                {property.description?.split("\n").map((t, index) => (
+                {_property.description?.split("\n").map((t, index) => (
                   <Typography key={index}>{t}</Typography>
                 ))}
               </Grid>
             </Grid>
           </Grid>
           <Grid item xs={5}>
-            <VersionTimeLine />
+            {0 < versions.length ? (
+              <VersionTimeLine />
+            ) : (
+              <InitialVersionButton />
+            )}
           </Grid>
         </Grid>
       </Grid>
