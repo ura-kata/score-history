@@ -184,17 +184,17 @@ export interface CommitObject {
     | "update_comment"
     | "delete_comment";
 
-  insert_page: InsertPageCommitObject;
-  add_page: AddPageCommitObject;
-  update_page: UpdatePageCommitObject;
-  delete_page: DeletePageCommitObject;
+  insert_page?: InsertPageCommitObject;
+  add_page?: AddPageCommitObject;
+  update_page?: UpdatePageCommitObject;
+  delete_page?: DeletePageCommitObject;
 
-  update_property: UpdatePropertyCommitObject;
+  update_property?: UpdatePropertyCommitObject;
 
-  insert_comment: InsertCommentCommitObject;
-  add_comment: AddCommentCommitObject;
-  update_comment: UpdateCommentCommitObject;
-  delete_comment: DeleteCommentCommitObject;
+  insert_comment?: InsertCommentCommitObject;
+  add_comment?: AddCommentCommitObject;
+  update_comment?: UpdateCommentCommitObject;
+  delete_comment?: DeleteCommentCommitObject;
 }
 export interface CommitRequest {
   /** 変更する Version Object の Hash */
@@ -648,12 +648,15 @@ export default class PracticeManagerApiClient {
       throw new Error(`'parent' を指定してください`);
     }
 
-    const url = new URL(`api/v1/score_v2/${owner}/${scoreName}`, this.baseUrl);
+    const url = new URL(
+      `api/v1/score_v2/${owner}/${scoreName}/commit`,
+      this.baseUrl
+    );
 
     const requestUrl = url.toString();
     try {
       const response = await fetch(requestUrl, {
-        method: "PATCH",
+        method: "POST",
         headers: patchHeaders,
         body: JSON.stringify(commits),
       });
