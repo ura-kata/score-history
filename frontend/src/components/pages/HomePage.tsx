@@ -170,8 +170,15 @@ const HomePage = () => {
 
   const Content = () => {
     if (owner && scoreName) {
-      if ("update" === action) {
-        return <UpdateScoreContent />;
+      if ("edit" === action) {
+        return (
+          <EditScorePropertyContent
+            owner={owner}
+            scoreName={scoreName}
+            title={property.title}
+            description={property.description}
+          />
+        );
       }
       if ("version" === action && version) {
         if (pageIndex) {
@@ -228,30 +235,30 @@ const HomePage = () => {
     </Button>,
   ];
   if (owner && scoreName) {
+    breadcrumbList.push(
+      <Button
+        key={breadcrumbList.length}
+        className={classes.breadcrumbsLink}
+        component={Link}
+        to={pathCreator.getDetailPath(owner, scoreName)}
+      >
+        <Typography> {`${scoreName} (${owner})`}</Typography>
+      </Button>
+    );
+
+    if (version) {
       breadcrumbList.push(
         <Button
           key={breadcrumbList.length}
           className={classes.breadcrumbsLink}
           component={Link}
-          to={pathCreator.getDetailPath(owner, scoreName)}
+          to={pathCreator.getVersionPath(owner, scoreName, version)}
         >
-          <Typography> {`${scoreName} (${owner})`}</Typography>
+          version {version}
         </Button>
       );
-
-      if (version) {
-        breadcrumbList.push(
-          <Button
-            key={breadcrumbList.length}
-            className={classes.breadcrumbsLink}
-            component={Link}
-            to={pathCreator.getVersionPath(owner, scoreName, version)}
-          >
-            version {version}
-          </Button>
-        );
-      }
     }
+  }
 
   return (
     <GenericTemplate>
@@ -278,10 +285,10 @@ const HomePage = () => {
           )}
         </Grid>
         <Grid item xs={12}>
-      <Breadcrumbs>{breadcrumbList}</Breadcrumbs>
+          <Breadcrumbs>{breadcrumbList}</Breadcrumbs>
         </Grid>
         <Grid item xs={12}>
-      <Content />
+          <Content />
         </Grid>
       </Grid>
     </GenericTemplate>
