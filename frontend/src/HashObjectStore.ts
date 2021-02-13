@@ -84,18 +84,19 @@ export default class HashObjectStore {
       return result;
     }
     try {
-      const response = await this.apiClient.getHashObjects(
-        owner,
-        scoreName,
-        notExistedOnLocal
-      );
-
-      Object.entries(response).forEach(([key, value]) => {
-        localStorage.setItem(
-          createLocalStorageKey(owner, scoreName, key),
-          JSON.stringify(value)
+      notExistedOnLocal.forEach(async (hash) => {
+        const response = await this.apiClient.getHashObjects(
+          owner,
+          scoreName,
+          hash
         );
-        result[key] = value;
+
+        const json = JSON.stringify(response);
+        localStorage.setItem(
+          createLocalStorageKey(owner, scoreName, hash),
+          json
+        );
+        result[hash] = json;
       });
 
       return result;
