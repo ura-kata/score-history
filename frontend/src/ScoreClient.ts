@@ -15,11 +15,35 @@ import PracticeManagerApiClient, {
 export interface NewScoreData {
   owner: string;
   scoreName: string;
-  property: ScoreV2PropertyItem;
+  property: ScoreProperty;
+}
+
+export interface ScoreProperty {
+  title?: string;
+  description?: string;
+}
+
+export interface ScoreSummary {
+  owner: string;
+  scoreName: string;
+  property: ScoreProperty;
+}
+
+export interface ScoreSummarySet {
+  [ownerAndScoreName: string]: ScoreSummary;
+}
+
+export interface ScorePage {
+  number: string;
+  image: string;
+  thumbnail: string;
 }
 
 /** サーバーのスコアにアクセスするためのクライアント */
 export default class ScoreClient {
+  scoreSet: ScoreV2LatestSet = {};
+  versionSetCollection: { [ownerAndScoreName: string]: ScoreV2VersionSet } = {};
+
   /** コンストラクタ */
   constructor(
     private apiClient: PracticeManagerApiClient,
@@ -27,10 +51,11 @@ export default class ScoreClient {
   ) {}
 
   /** スコアのサマリー一覧を取得する */
-  async getScores(): Promise<ScoreV2LatestSet> {
+  async getScores(): Promise<ScoreSummarySet> {
     try {
       var scoreSet = await this.apiClient.getScoreV2Set();
 
+      const reuslt: ScoreSummarySet = {};
       Object.entries(scoreSet).forEach(([key, value]) => {
         const ownerAndScoreName = key.split("/");
         const owner = ownerAndScoreName[0];
@@ -41,15 +66,27 @@ export default class ScoreClient {
           value.head_hash,
           JSON.stringify(value.head)
         );
+        const property = value.head.property;
+        reuslt[key] = {
+          owner: owner,
+          scoreName: scoreName,
+          property: {
+            title: property.title ?? undefined,
+            description: property.description ?? undefined,
+          },
+        };
       });
-      return scoreSet;
+
+      this.scoreSet = scoreSet;
+
+      return reuslt;
     } catch (err) {
       console.log(err);
       throw new Error(`楽譜を取得することができませんでした`);
     }
   }
 
-  async createScore(newSocreData: NewScoreData): Promise<ScoreV2Latest> {
+  async createScore(newSocreData: NewScoreData): Promise<ScoreSummary> {
     const owner = newSocreData.owner;
     const scoreName = newSocreData.scoreName;
 
@@ -70,48 +107,119 @@ export default class ScoreClient {
       newSocre.head_hash,
       JSON.stringify(newSocre.head)
     );
-    return newSocre;
+
+    const result: ScoreSummary = {
+      owner: owner,
+      scoreName: scoreName,
+      property: {
+        title: newSocre?.head?.property.title,
+        description: newSocre?.head?.property.description,
+      },
+    };
+    return result;
   }
 
-  async getVersions(
-    owner: string,
-    scoreName: string
-  ): Promise<ScoreV2VersionSet> {
-    const versionSet = await this.apiClient.getScoreV2Versions(
-      owner,
-      scoreName
-    );
+  async getVersions(owner: string, scoreName: string): Promise<string[]> {
+    try {
+      const versionSet = await this.apiClient.getScoreV2Versions(
+        owner,
+        scoreName
+      );
 
-    return versionSet;
-  }
+      this.versionSetCollection[`${owner}/${scoreName}`] = versionSet;
 
-  async getVersion(
-    owner: string,
-    scoreName: string,
-    hash: string
-  ): Promise<ScoreV2VersionObject> {
-    const versionObject = await this.objectStore.getVersionObjects(
-      owner,
-      scoreName,
-      [hash]
-    );
-
-    return versionObject[hash];
+      const versions = Object.entries(versionSet).map(([key, _]) => key);
+      return versions;
+    } catch (err) {
+      throw new Error(`楽譜のバージョンの取得に失敗しました`);
+    }
   }
 
   async getPages(
     owner: string,
     scoreName: string,
-    versionObject: ScoreV2VersionObject
-  ): Promise<ScoreV2PageObject[]> {
-    const hash = versionObject.pages;
+    version: string
+  ): Promise<ScorePage[]> {
+    const versionSet = this.versionSetCollection[`${owner}/${scoreName}`];
+    const hash = versionSet ? versionSet[version] : undefined;
+    if (!hash) {
+      throw new Error(`'${version}' は存在しません`);
+    }
+    try {
+      const versionObjectSet = await this.objectStore.getVersionObjects(
+        owner,
+        scoreName,
+        [hash]
+      );
+      const versionObject = versionObjectSet[hash];
+      const pageSet = await this.objectStore.getPageObjects(
+        owner,
+        scoreName,
+        versionObject.pages
+      );
 
-    const pageSet = await this.objectStore.getPageObjects(
+      return versionObject.pages
+        .map((h) => pageSet[h])
+        .map((p) => ({
+          image: p.image,
+          thumbnail: p.thumbnail,
+          number: p.number,
+        }));
+    } catch (err) {
+      throw new Error("ページの取得に失敗しました");
+    }
+  }
+
+  async updateProperty(
+    owner: string,
+    scoreName: string,
+    oldProperty: ScoreProperty,
+    newProperty: ScoreProperty
+  ): Promise<void> {
+    if (
+      oldProperty.title === newProperty.title &&
+      oldProperty.description === newProperty.description
+    ) {
+      throw new Error(`プロパティの変更がありません`);
+    }
+    const ownerAndScoreName = `${owner}/${scoreName}`;
+    const score = this.scoreSet[ownerAndScoreName];
+
+    const commits: CommitRequest = {
+      parent: score.head_hash,
+      commits: [
+        {
+          type: "update_property",
+          update_property: {
+            title:
+              oldProperty.title !== newProperty.title
+                ? newProperty.title
+                : undefined,
+            description:
+              oldProperty.description !== newProperty.description
+                ? newProperty.description
+                : undefined,
+          },
+        },
+      ],
+    };
+
+    try {
+      await this.apiClient.commit(owner, scoreName, commits);
+    } catch (err) {
+      console.log(err);
+      throw new Error(
+        `変更元のデータが古いです。更新してから再度実行してください。`
+      );
+    }
+
+    // バージョンを更新する
+    const newVersion = await this.apiClient.createScoreV2Version(
       owner,
-      scoreName,
-      hash
+      scoreName
     );
 
-    return hash.map((h) => pageSet[h]);
+    const versionSet = this.versionSetCollection[ownerAndScoreName];
+    versionSet[newVersion.version.toString()] = newVersion.hash;
   }
 }
