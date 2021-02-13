@@ -605,32 +605,18 @@ export default class PracticeManagerApiClient {
     /** 楽譜名 */
     scoreName: string,
     /** 取得する Hash のリスト */
-    hash: string[]
-  ): Promise<{ [hash: string]: any }> {
+    hash: string
+  ): Promise<any> {
     assertArgumentUndefined(owner, "owner");
     assertArgumentUndefined(scoreName, "scoreName");
     assertArgumentUndefined(hash, "hash");
 
-    if (0 === hash.length) {
-      throw new Error(`'hash' is empty`);
-    }
-    if (100 < hash.length) {
-      throw new Error(`1 <= 'hash.length' <= 100 (${hash.length})`);
-    }
-
-    const url = new URL(`api/v1/score_v2/${owner}/${scoreName}`, this.baseUrl);
-
-    const requestUrl = queryString.stringifyUrl(
-      {
-        url: url.toString(),
-        query: {
-          hash: hash,
-        },
-      },
-      {
-        arrayFormat: "comma",
-      }
+    const url = new URL(
+      `api/v1/score_v2/${owner}/${scoreName}/object/${hash}`,
+      this.baseUrl
     );
+
+    const requestUrl = url.toString();
     try {
       const response = await fetch(requestUrl, {
         method: "GET",
@@ -639,7 +625,7 @@ export default class PracticeManagerApiClient {
       if (!response.ok) {
         throw new Error(`オブジェクトの取得に失敗しました`);
       }
-      return (await response.json()) as { [hash: string]: any };
+      return await response.json();
     } catch (err) {
       throw err;
     }

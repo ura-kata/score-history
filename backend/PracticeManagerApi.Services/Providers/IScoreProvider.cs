@@ -23,7 +23,7 @@ namespace PracticeManagerApi.Services.Providers
             string targetPage, string[] hashList);
         void UpdateComments(string owner, string scoreName, string parentVersionHash, PatchScoreV2Comment[] comments);
 
-        ScoreV2ObjectSet GetObjects(string owner, string scoreName, string[] hashList);
+        string GetObject(string owner, string scoreName, string hash);
 
         ScoreV2Version CreateVersionRef(string owner, string scoreName);
 

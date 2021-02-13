@@ -210,7 +210,7 @@ namespace PracticeManagerApi.Controllers.v1
 
             try
             {
-                return _scoreProvider.GetObjects(owner, scoreName, hashList).ToJson();
+                return _scoreProvider.GetObject(owner, scoreName, hashList).ToJson();
             }
             catch (Exception ex)
             {

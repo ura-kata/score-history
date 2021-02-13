@@ -961,31 +961,26 @@ namespace PracticeManagerApi.Services.Providers
         /// </summary>
         /// <param name="owner">所有者</param>
         /// <param name="scoreName">楽譜名</param>
-        /// <param name="hashList">Hash リスト</param>
-        /// <returns>Key: Object Hash , Value: JSON</returns>
+        /// <param name="hash">ハッシュ値</param>
+        /// <returns>JSON</returns>
         /// <exception cref="InvalidOperationException"></exception>
-        public ScoreV2ObjectSet GetObjects(string owner, string scoreName, string[] hashList)
+        public string GetObject(string owner, string scoreName, string hash)
         {
-            var result = new ScoreV2ObjectSet();
 
-            foreach (var hash in hashList)
+            var objectKey = CreateObjectKey(owner, scoreName, hash);
+
+            // Object がなければここで例外が発生する
+            try
             {
-                var objectKey = CreateObjectKey(owner, scoreName, hash);
+                var json = _storage.GetObjectString(objectKey);
 
-                // Object がなければここで例外が発生する
-                try
-                {
-                    var json = _storage.GetObjectString(objectKey);
-
-                    result[hash] = json;
-                }
-                catch (Exception ex)
-                {
-                    throw new InvalidOperationException($"'{hash}' is not found in objects.", ex);
-                }
+                return json;
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"'{hash}' is not found in objects.", ex);
             }
 
-            return result;
         }
 
         /// <summary>
