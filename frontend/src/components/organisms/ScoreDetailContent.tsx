@@ -1,30 +1,58 @@
 import {
   Button,
   ButtonGroup,
+  colors,
+  createStyles,
   Divider,
   Grid,
+  makeStyles,
   Paper,
+  Theme,
   Typography,
 } from "@material-ui/core";
-import {
-  Timeline,
-  TimelineConnector,
-  TimelineContent,
-  TimelineDot,
-  TimelineItem,
-  TimelineSeparator,
-} from "@material-ui/lab";
 import React from "react";
 import { Link, useHistory } from "react-router-dom";
-import { ScoreProperty } from "../../ScoreClient";
+import { ScorePage, ScoreProperty } from "../../ScoreClient";
+import ScorePageDetailDialog from "../molecules/ScorePageDetailDialog";
 import { PathCreator } from "../pages/HomePage";
+
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    versionButtonContainer: {
+      overflow: "auto",
+      display: "flex",
+      padding: "5px",
+    },
+    versionButtonRoot: {
+      display: "flex",
+      alignItems: "center",
+    },
+    versionButton: {
+      borderRadius: "30px",
+      width: "60px",
+      height: "60px",
+      fontSize: "1.4rem",
+    },
+    versionButtonJoin: {
+      display: "inline-block",
+      width: "50px",
+      height: "2px",
+      backgroundColor: colors.grey[400],
+      borderColor: colors.grey[400],
+      border: "1px solid",
+    },
+  })
+);
 
 interface ScoreDetailContentProps {
   owner: string;
   scoreName: string;
   property: ScoreProperty;
   versions?: string[];
+  selectedVersion?: string;
   pathCreator: PathCreator;
+  pages?: ScorePage[];
+  selectedPageIndex?: number;
 }
 
 const ScoreDetailContent = (props: ScoreDetailContentProps) => {
@@ -32,58 +60,50 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
   const _scoreName = props.scoreName;
   const _property = props.property;
   const _pathCreator = props.pathCreator;
+  const _pages = props.pages ?? [];
+  const _selectedPageIndex = props.selectedPageIndex;
 
+  const classes = useStyles();
   const history = useHistory();
 
   const _versions = props.versions ?? [];
+  const _selectedVersion = props.selectedVersion;
 
-  const versions = _versions.reverse();
+  const versions = _versions.slice().reverse();
 
   const VersionTimeLine = () => (
-    <Grid
-      container
-      direction="column"
-      alignItems="center"
-      justify="center"
-      spacing={3}
-    >
+    <Grid container direction="row" alignItems="center" justify="center">
       <Grid item xs={12}>
-        <Typography variant="h5">バージョン</Typography>
-      </Grid>
-      <Grid item xs={12}>
-        {/* Todo バージョンは長くなることが良そうされるのでスクロールできるようにする */}
-        <Timeline align="left">
-          {versions.reverse().map((version, index) => {
+        <div className={classes.versionButtonContainer}>
+          {versions.map((v, index) => {
             return (
-              <TimelineItem key={index}>
-                <TimelineSeparator>
-                  <TimelineDot>
-                    {/* Todo チェックしたかどうかをアイコンで表示する */}
-                  </TimelineDot>
-                  {index !== versions.length - 1 ? (
-                    <TimelineConnector />
-                  ) : (
-                    <></>
-                  )}
-                </TimelineSeparator>
-                <TimelineContent>
-                  <Button
-                    component={Link}
-                    to={_pathCreator.getVersionPath(
+              <div
+                key={`${index}-version`}
+                className={classes.versionButtonRoot}
+              >
+                <Button
+                  onClick={() => {
+                    const path = _pathCreator.getVersionPath(
                       _owner,
                       _scoreName,
-                      version
-                    )}
-                  >
-                    <Paper elevation={3} style={{ padding: "6px 16px" }}>
-                      <Typography>version {version}</Typography>
-                    </Paper>
-                  </Button>
-                </TimelineContent>
-              </TimelineItem>
+                      v
+                    );
+                    history.push(path);
+                  }}
+                  variant={_selectedVersion === v ? "contained" : "outlined"}
+                  className={classes.versionButton}
+                >
+                  {v}
+                </Button>
+                {index < versions.length - 1 ? (
+                  <div className={classes.versionButtonJoin} />
+                ) : (
+                  <></>
+                )}
+              </div>
             );
           })}
-        </Timeline>
+        </div>
       </Grid>
     </Grid>
   );
@@ -109,6 +129,84 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
   // TODO 最新のバージョンを表示することにする
   // version が選択されていない場合は最新のバージョンを表示することにする
 
+  const thumbnailContents = _selectedVersion ? (
+    <Grid container>
+      {_pages.map((page, index) => {
+        return (
+          <Grid item key={index}>
+            <Button
+              component={Link}
+              to={_pathCreator.getPagePath(
+                _owner,
+                _scoreName,
+                _selectedVersion,
+                index
+              )}
+            >
+              <Paper>
+                <Grid container justify="center">
+                  <Grid item xs={12} style={{ textAlign: "center" }}>
+                    <img
+                      src={page.thumbnail ?? page.image}
+                      height={"200px"}
+                      alt={page.number}
+                      style={{ userSelect: "none" }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography align="center">p. {page.number}</Typography>
+                  </Grid>
+                </Grid>
+              </Paper>
+            </Button>
+          </Grid>
+        );
+      })}
+    </Grid>
+  ) : (
+    <></>
+  );
+
+  const selectedPage =
+    _selectedPageIndex !== undefined ? _pages[_selectedPageIndex] : undefined;
+
+  const handleOnPageClose = () => {
+    if (!_selectedVersion) return;
+    history.push(
+      _pathCreator.getVersionPath(_owner, _scoreName, _selectedVersion)
+    );
+  };
+  const handleOnPagePrev =
+    _selectedVersion &&
+    _selectedPageIndex !== undefined &&
+    0 < _selectedPageIndex
+      ? () => {
+          history.push(
+            _pathCreator.getPagePath(
+              _owner,
+              _scoreName,
+              _selectedVersion,
+              _selectedPageIndex - 1
+            )
+          );
+        }
+      : undefined;
+  const handleOnPageNext =
+    _selectedVersion &&
+    _selectedPageIndex !== undefined &&
+    _selectedPageIndex < _pages.length - 1
+      ? () => {
+          history.push(
+            _pathCreator.getPagePath(
+              _owner,
+              _scoreName,
+              _selectedVersion,
+              _selectedPageIndex + 1
+            )
+          );
+        }
+      : undefined;
+
   return (
     <Grid container spacing={2}>
       <Grid item xs={12}>
@@ -133,27 +231,31 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
         <Divider />
       </Grid>
       <Grid item xs={12}>
+        {0 < versions.length ? <VersionTimeLine /> : <InitialVersionButton />}
+      </Grid>
+      <Grid item xs={12}>
         <Grid container spacing={3}>
-          <Grid item xs>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Typography variant="h5">説明</Typography>
-              </Grid>
-              <Grid item xs={12}>
-                {_property.description?.split("\n").map((t, index) => (
-                  <Typography key={index}>{t}</Typography>
-                ))}
-              </Grid>
-            </Grid>
+          <Grid item xs={12}>
+            <Typography variant="h5">説明</Typography>
           </Grid>
-          <Grid item xs={5}>
-            {0 < versions.length ? (
-              <VersionTimeLine />
-            ) : (
-              <InitialVersionButton />
-            )}
+          <Grid item xs={12}>
+            {_property.description?.split("\n").map((t, index) => (
+              <Typography key={index}>{t}</Typography>
+            ))}
           </Grid>
         </Grid>
+      </Grid>
+      <Grid item xs={12}>
+        {thumbnailContents}
+      </Grid>
+      <Grid item xs={12}>
+        <ScorePageDetailDialog
+          open={selectedPage !== undefined}
+          page={selectedPage}
+          onClose={handleOnPageClose}
+          onPrev={handleOnPagePrev}
+          onNext={handleOnPageNext}
+        />
       </Grid>
     </Grid>
   );

@@ -14,9 +14,11 @@ import {
   Typography,
 } from "@material-ui/core";
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import RefreshIcon from "@material-ui/icons/Refresh";
 import { ScoreSummary, ScoreSummarySet } from "../../ScoreClient";
+import { scoreClient } from "../../global";
+import { PathCreator } from "../pages/HomePage";
 
 // ------------------------------------------------------------------------------------------
 interface ScoreListViewProps {
@@ -79,21 +81,34 @@ const ScoreListView = (props: ScoreListViewProps) => {
 
 export interface ScoreListContentProps {
   scoreSet: ScoreSummarySet;
-  onCardClick?: (owner: string, scoreName: string, score: ScoreSummary) => void;
-  onRefreshClick?: () => void;
+  pathCreator: PathCreator;
+  onLoadedScoreSummarySet?: (scoreSummarySet: ScoreSummarySet) => void;
 }
 
 const SocreListContent = (props: ScoreListContentProps) => {
   const _scoreSet = props.scoreSet;
-  const _onCardClick = props.onCardClick;
-  const _onRefreshClick = props.onRefreshClick;
+  const _pathCreator = props.pathCreator;
+  const onLoadedScoreSummarySet = props.onLoadedScoreSummarySet;
+
+  const history = useHistory();
 
   const handleScoreOnClick = (
     owner: string,
     scoreName: string,
     socre: ScoreSummary
   ) => {
-    if (_onCardClick) _onCardClick(owner, scoreName, socre);
+    history.push(_pathCreator.getDetailPath(owner, scoreName));
+  };
+
+  const handleOnRefreshClick = async () => {
+    if (onLoadedScoreSummarySet) {
+      try {
+        const scoreSet = await scoreClient.getScores();
+        onLoadedScoreSummarySet(scoreSet);
+      } catch (err) {
+        console.log(err);
+      }
+    }
   };
 
   return (
@@ -106,7 +121,7 @@ const SocreListContent = (props: ScoreListContentProps) => {
           <Grid item xs>
             <Grid container alignItems="center" justify="flex-end" spacing={1}>
               <Grid item>
-                <IconButton onClick={_onRefreshClick}>
+                <IconButton onClick={handleOnRefreshClick}>
                   <RefreshIcon />
                 </IconButton>
               </Grid>

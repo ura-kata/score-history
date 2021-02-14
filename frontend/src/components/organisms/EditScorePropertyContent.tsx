@@ -5,11 +5,13 @@ import {
   makeStyles,
   TextField,
   Theme,
-  Typography,
 } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
 import React, { useState } from "react";
+import { useHistory } from "react-router-dom";
 import { scoreClient } from "../../global";
+import { ScoreSummarySet } from "../../ScoreClient";
+import { PathCreator } from "../pages/HomePage";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -24,6 +26,11 @@ export interface EditScorePropertyContentProps {
   scoreName: string;
   title?: string;
   description?: string;
+  pathCreator: PathCreator;
+  onLoadedScoreData?: (
+    scoreSummarySet: ScoreSummarySet,
+    versions: string[]
+  ) => void;
 }
 
 const EditScorePropertyContent = (props: EditScorePropertyContentProps) => {
@@ -31,12 +38,16 @@ const EditScorePropertyContent = (props: EditScorePropertyContentProps) => {
 
   const _owner = props.owner;
   const _scoreName = props.scoreName;
-
   const _title = props.title;
   const _description = props.description;
+  const _pathCreator = props.pathCreator;
+  const _onLoadedScoreData = props.onLoadedScoreData;
+
   const [title, setTitle] = useState(_title);
   const [description, setDescription] = useState(_description);
   const [errorMessage, setErrorMessage] = useState<string>();
+
+  const history = useHistory();
 
   const handleOnChangeTitle = (event: any) => {
     setTitle(event.target.value);
@@ -61,7 +72,15 @@ const EditScorePropertyContent = (props: EditScorePropertyContentProps) => {
         oldProperty,
         newProperty
       );
+
+      if (_onLoadedScoreData) {
+        const scoreSet = await scoreClient.getScores();
+        const versions = await scoreClient.getVersions(_owner, _scoreName);
+        _onLoadedScoreData(scoreSet, versions);
+      }
       setErrorMessage(undefined);
+
+      history.replace(_pathCreator.getDetailPath(_owner, _scoreName));
     } catch (err) {
       console.log(err);
       setErrorMessage("変更に失敗しました");

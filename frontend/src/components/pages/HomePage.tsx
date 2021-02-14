@@ -8,17 +8,13 @@ import {
   Typography,
   Button,
   Breadcrumbs,
-  withStyles,
   Grid,
 } from "@material-ui/core";
-import { Link, useHistory, useRouteMatch } from "react-router-dom";
-import ScoreDetailContent from "../organisms/ScoreDetailContent";
-import ScoreVersionDetailContent from "../organisms/ScoreVersionDetailContent";
-import SocreListContent from "../organisms/SocreListContent";
+import { Link, useRouteMatch } from "react-router-dom";
 import { scoreClient } from "../../global";
-import EditScorePropertyContent from "../organisms/EditScorePropertyContent";
 import { Alert } from "@material-ui/lab";
 import { ScorePage, ScoreSummarySet } from "../../ScoreClient";
+import HomeContent from "../organisms/HomePageContent";
 
 // ------------------------------------------------------------------------------------------
 
@@ -82,7 +78,6 @@ const HomePage = () => {
   const [loadVersionSetError, setLoadVersionsError] = useState<string>();
   const [loadPagesError, setLoadPagesError] = useState<string>();
 
-  const history = useHistory();
   const urlMatch = useRouteMatch<{
     owner?: string;
     scoreName?: string;
@@ -97,7 +92,7 @@ const HomePage = () => {
   const scoreName = urlMatch?.params?.scoreName;
   const action = urlMatch?.params?.action as PathActionType | undefined;
 
-  const version = urlMatch?.params.version;
+  const version = urlMatch?.params.version ?? (versions ?? []).slice(-1)[0];
   const pageIndexText = urlMatch?.params.pageIndex;
   const pageIndex =
     pageIndexText !== undefined ? parseInt(pageIndexText) : undefined;
@@ -143,10 +138,6 @@ const HomePage = () => {
     }
   };
 
-  const handleOnCardClick = (owner: string, scoreName: string) => {
-    history.push(pathCreator.getDetailPath(owner, scoreName));
-  };
-
   useEffect(() => {
     loadScoreSet();
   }, []);
@@ -164,64 +155,16 @@ const HomePage = () => {
     loadPages(owner, scoreName, version);
   }, [owner, scoreName, version]);
 
-  const handleOnRefreshClick = async () => {
-    await loadScoreSet();
+  const handleOnLoadedScoreSummarySet = (scoreSet: ScoreSummarySet) => {
+    setScoreSet(scoreSet);
   };
 
-  const Content = () => {
-    if (owner && scoreName) {
-      if ("edit" === action) {
-        return (
-          <EditScorePropertyContent
-            owner={owner}
-            scoreName={scoreName}
-            title={property.title}
-            description={property.description}
-          />
-        );
-      }
-      if ("version" === action && version) {
-        if (pageIndex) {
-          return (
-            <ScoreVersionDetailContent
-              owner={owner}
-              scoreName={scoreName}
-              property={property}
-              version={version}
-              pages={pages}
-              pageIndex={pageIndex}
-            />
-          );
-        }
-        return (
-          <ScoreVersionDetailContent
-            owner={owner}
-            scoreName={scoreName}
-            property={property}
-            version={version}
-            pages={pages}
-          />
-        );
-      }
+  const handleOnLoadedVersions = (versions: string[]) => {
+    setVersions(versions.slice());
+  };
 
-      return (
-        <ScoreDetailContent
-          owner={owner}
-          scoreName={scoreName}
-          property={property}
-          versions={versions}
-          pathCreator={pathCreator}
-        />
-      );
-    }
-
-    return (
-      <SocreListContent
-        scoreSet={scoreSet}
-        onCardClick={handleOnCardClick}
-        onRefreshClick={handleOnRefreshClick}
-      />
-    );
+  const handleOnLoadedPages = (pages: ScorePage[]) => {
+    setPages(pages.slice());
   };
 
   const breadcrumbList = [
@@ -288,7 +231,21 @@ const HomePage = () => {
           <Breadcrumbs>{breadcrumbList}</Breadcrumbs>
         </Grid>
         <Grid item xs={12}>
-          <Content />
+          <HomeContent
+            scoreSummarySet={scoreSet}
+            owner={owner}
+            scoreName={scoreName}
+            property={property}
+            versions={versions}
+            selectedVersion={version}
+            pages={pages}
+            selectedPageIndex={pageIndex}
+            onLoadedScoreSummarySet={handleOnLoadedScoreSummarySet}
+            onLoadedVersions={handleOnLoadedVersions}
+            onLoadedPages={handleOnLoadedPages}
+            pathCreator={pathCreator}
+            type={action}
+          />
         </Grid>
       </Grid>
     </GenericTemplate>
