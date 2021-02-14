@@ -77,7 +77,6 @@ export interface ScoreV2VersionObject {
   create_at: Date;
   author: string;
   //--------------------------------------
-  property: ScoreV2PropertyItem;
   pages: string[];
   parent?: string;
   message: string;
