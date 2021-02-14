@@ -1,14 +1,9 @@
 import HashObjectStore from "./HashObjectStore";
 import PracticeManagerApiClient, {
-  AddPageCommitObject,
-  CommitObject,
-  CommitRequest,
   ScoreV2Latest,
   ScoreV2LatestSet,
-  ScoreV2PageObject,
-  ScoreV2PropertyItem,
-  ScoreV2VersionObject,
   ScoreV2VersionSet,
+  UpdatePropertyRequest,
 } from "./PracticeManagerApiClient";
 
 /** 新しいスコア */
@@ -64,9 +59,9 @@ export default class ScoreClient {
           owner,
           scoreName,
           value.head_hash,
-          JSON.stringify(value.head)
+          value.head
         );
-        const property = value.head.property;
+        const property = value.property;
         reuslt[key] = {
           owner: owner,
           scoreName: scoreName,
@@ -105,15 +100,15 @@ export default class ScoreClient {
       owner,
       scoreName,
       newSocre.head_hash,
-      JSON.stringify(newSocre.head)
+      newSocre.head
     );
 
     const result: ScoreSummary = {
       owner: owner,
       scoreName: scoreName,
       property: {
-        title: newSocre?.head?.property.title,
-        description: newSocre?.head?.property.description,
+        title: newSocre?.property.title,
+        description: newSocre?.property.description,
       },
     };
     return result;
@@ -185,41 +180,27 @@ export default class ScoreClient {
     const ownerAndScoreName = `${owner}/${scoreName}`;
     const score = this.scoreSet[ownerAndScoreName];
 
-    const commits: CommitRequest = {
-      parent: score.head_hash,
-      commits: [
-        {
-          type: "update_property",
-          update_property: {
-            title:
-              oldProperty.title !== newProperty.title
-                ? newProperty.title
-                : undefined,
-            description:
-              oldProperty.description !== newProperty.description
-                ? newProperty.description
-                : undefined,
-          },
-        },
-      ],
+    const request: UpdatePropertyRequest = {
+      parent: score.property_hash,
+      property: {
+        title:
+          oldProperty.title !== newProperty.title
+            ? newProperty.title
+            : undefined,
+        description:
+          oldProperty.description !== newProperty.description
+            ? newProperty.description
+            : undefined,
+      },
     };
 
     try {
-      await this.apiClient.commit(owner, scoreName, commits);
+      await this.apiClient.updateScoreV2Property(owner, scoreName, request);
     } catch (err) {
       console.log(err);
       throw new Error(
         `変更元のデータが古いです。更新してから再度実行してください。`
       );
     }
-
-    // バージョンを更新する
-    const newVersion = await this.apiClient.createScoreV2Version(
-      owner,
-      scoreName
-    );
-
-    const versionSet = this.versionSetCollection[ownerAndScoreName];
-    versionSet[newVersion.version.toString()] = newVersion.hash;
   }
 }
