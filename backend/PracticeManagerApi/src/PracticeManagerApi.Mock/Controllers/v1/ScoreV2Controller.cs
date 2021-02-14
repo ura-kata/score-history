@@ -308,5 +308,36 @@ namespace PracticeManagerApi.Mock.Controllers.v1
                 throw new InvalidOperationException("Version のリストの取得に失敗しました", ex);
             }
         }
+
+
+        [HttpPatch]
+        [Route("{owner}/{score_name}/property")]
+        public ScoreV2Latest PatchPropertyWithOwner(
+            [FromRoute(Name = "owner")]
+            [MaxLength(128, ErrorMessage = "{0} は 128 文字以内です")]
+            [MinLength(1, ErrorMessage = "{0} は 1 文字以上です")]
+            [RegularExpression(@"^[a-zA-Z0-9\-_]+$",ErrorMessage = "{0} は 半角英数字 , - , _ が使用できます", MatchTimeoutInMilliseconds = 1000)]
+            string owner,
+            [FromRoute(Name = "score_name")]
+            [MaxLength(128, ErrorMessage = "{0} は 128 文字以内です")]
+            [MinLength(1, ErrorMessage = "{0} は 1 文字以上です")]
+            [RegularExpression(@"^[a-zA-Z0-9\-_]+$",ErrorMessage = "{0} は 半角英数字 , - , _ が使用できます", MatchTimeoutInMilliseconds = 1000)]
+            string scoreName,
+            [FromBody]
+            UpdatePropertyRequest request)
+        {
+
+            try
+            {
+                var response = _scoreProvider.UpdateProperty(owner, scoreName, request?.Parent, request?.Property);
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                throw new InvalidOperationException("Version の作成に失敗しました", ex);
+            }
+        }
     }
 }

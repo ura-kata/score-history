@@ -1,10 +1,11 @@
 using System.Text.Json.Serialization;
 
-namespace PracticeManagerApi.Services.Providers
+namespace PracticeManagerApi.Services.Objects
 {
-    public class UpdatePropertyCommitObject
+    public class ScoreV2PropertyObject : ScoreV2Object
     {
-        public const string CommitType = "update_property";
+        [JsonPropertyName("parent")]
+        public string Parent { get; set; }
 
         [JsonPropertyName("title")]
         public string Title { get; set; }

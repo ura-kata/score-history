@@ -10,5 +10,11 @@ namespace PracticeManagerApi.Services.Providers
 
         [JsonPropertyName("head")]
         public ScoreV2VersionObject Head { get; set; }
+
+        [JsonPropertyName("property_hash")]
+        public string PropertyHash { get; set; }
+
+        [JsonPropertyName("property")]
+        public ScoreV2PropertyObject Property { get; set; }
     }
 }

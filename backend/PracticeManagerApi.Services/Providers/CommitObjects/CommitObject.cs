@@ -21,12 +21,7 @@ namespace PracticeManagerApi.Services.Providers
         public DeletePageCommitObject DeletePage { get; set; }
 
 
-
-        [JsonPropertyName(UpdatePropertyCommitObject.CommitType)]
-        public UpdatePropertyCommitObject UpdateProperty { get; set; }
-
-
-
+        
         [JsonPropertyName(InsertCommentCommitObject.CommitType)]
         public InsertCommentCommitObject InsertComment { get; set; }
 

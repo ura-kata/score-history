@@ -9,7 +9,7 @@ namespace PracticeManagerApi.Services.Providers
         ScoreV2LatestSet GetScores(string owner);
         ScoreV2LatestSet GetScores();
 
-        ScoreV2Latest UpdateProperty(string owner, string scoreName, string parentVersionHash,
+        ScoreV2Latest UpdateProperty(string owner, string scoreName, string parentObjectHash,
             PatchScoreV2Property property);
 
         void DeleteScore(string owner, string scoreName);

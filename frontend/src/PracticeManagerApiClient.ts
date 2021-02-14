@@ -99,17 +99,31 @@ export interface ScoreV2CommentObject {
   //--------------------------------------
   comment: string;
 }
+export interface ScoreV2PropertyObject {
+  create_at: Date;
+  author: string;
+  //--------------------------------------
+  title?: string;
+  description?: string;
+}
 export interface ScoreV2Latest {
   head_hash: string;
   head: ScoreV2VersionObject;
+  property_hash: string;
+  property: ScoreV2PropertyObject;
 }
 export interface ScoreV2LatestSet {
   [scoreName: string]: ScoreV2Latest;
 }
 
-export interface PatchScoreV2PropertyItem {
+export interface PatchScoreV2Property {
   title?: string;
   description?: string;
+}
+
+export interface UpdatePropertyRequest {
+  parent: string;
+  property: PatchScoreV2Property;
 }
 
 /** ページを挿入するコミット */
@@ -138,12 +152,6 @@ export interface UpdatePageCommitObject {
 /** ページを削除するコミット */
 export interface DeletePageCommitObject {
   index: number;
-}
-
-/** 楽譜のプロパティを更新するコミット */
-export interface UpdatePropertyCommitObject {
-  title?: string;
-  description?: string;
 }
 
 /** コメントを挿入するコミット */
@@ -178,7 +186,6 @@ export interface CommitObject {
     | "add_page"
     | "update_page"
     | "delete_page"
-    | "update_property"
     | "insert_comment"
     | "add_comment"
     | "update_comment"
@@ -188,8 +195,6 @@ export interface CommitObject {
   add_page?: AddPageCommitObject;
   update_page?: UpdatePageCommitObject;
   delete_page?: DeletePageCommitObject;
-
-  update_property?: UpdatePropertyCommitObject;
 
   insert_comment?: InsertCommentCommitObject;
   add_comment?: AddCommentCommitObject;
@@ -573,20 +578,23 @@ export default class PracticeManagerApiClient {
     /** 楽譜名 */
     scoreName: string,
     /** 更新するプロパティ 更新しないものは undefined にする */
-    propery: PatchScoreV2PropertyItem
+    request: UpdatePropertyRequest
   ): Promise<ScoreV2Latest> {
     assertArgumentUndefined(owner, "owner");
     assertArgumentUndefined(scoreName, "scoreName");
-    assertArgumentUndefined(propery, "property");
+    assertArgumentUndefined(request, "request");
 
-    const url = new URL(`api/v1/score_v2/${owner}/${scoreName}`, this.baseUrl);
+    const url = new URL(
+      `api/v1/score_v2/${owner}/${scoreName}/property`,
+      this.baseUrl
+    );
 
     const requestUrl = url.toString();
     try {
       const response = await fetch(requestUrl, {
         method: "PATCH",
         headers: patchHeaders,
-        body: JSON.stringify(propery),
+        body: JSON.stringify(request),
       });
 
       if (!response.ok) {
@@ -625,7 +633,8 @@ export default class PracticeManagerApiClient {
       if (!response.ok) {
         throw new Error(`オブジェクトの取得に失敗しました`);
       }
-      return await response.json();
+      const json = await response.json();
+      return json;
     } catch (err) {
       throw err;
     }

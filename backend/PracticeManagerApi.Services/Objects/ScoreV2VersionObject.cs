@@ -5,9 +5,6 @@ namespace PracticeManagerApi.Services.Objects
 {
     public class ScoreV2VersionObject : ScoreV2Object
     {
-        [JsonPropertyName("property")]
-        public ScoreV2PropertyItem Property { get; set; }
-
         [JsonPropertyName("pages")]
         public string[] Pages { get; set; }
 

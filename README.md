@@ -87,6 +87,7 @@
           - versions
             - ${0000000000} (Version Ref Object)
         - HEAD
+        - PROPERTY
         - contents
           - ${UUID}@${original_name} (Content File)
         - shared
@@ -128,6 +129,10 @@ HEAD ファイルは 最新の Version Object の hash を1つだけ記述する
 ${Version Object hash}
 
 ```
+
+#### PROPERTY
+
+PROPERTY ファイルは 最新の Property Object の hash を1つだけ記述するテキストファイル
 
 #### Object
 
@@ -174,6 +179,17 @@ ${Version Object hash}
   "create_at": "${ISO 8601 UTC 拡張形式}",
   "author": "${ユーザー名}",
   "comment": "${コメント}"
+}
+```
+
+##### Property Object
+
+```json
+{
+  "create_at": "${ISO 8601 UTC 拡張形式}",
+  "author": "${ユーザー名}",
+  "title": "${タイトル}",
+  "description": "${説明}"
 }
 ```
 
