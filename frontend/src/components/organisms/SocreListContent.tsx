@@ -13,12 +13,13 @@ import {
   Theme,
   Typography,
 } from "@material-ui/core";
-import React from "react";
+import React, { useState } from "react";
 import { Link, useHistory } from "react-router-dom";
 import RefreshIcon from "@material-ui/icons/Refresh";
 import { ScoreSummary, ScoreSummarySet } from "../../ScoreClient";
 import { scoreClient } from "../../global";
 import { PathCreator } from "../pages/HomePage";
+import { Alert } from "@material-ui/lab";
 
 // ------------------------------------------------------------------------------------------
 interface ScoreListViewProps {
@@ -90,6 +91,8 @@ const SocreListContent = (props: ScoreListContentProps) => {
   const _pathCreator = props.pathCreator;
   const onLoadedScoreSummarySet = props.onLoadedScoreSummarySet;
 
+  const [loadScoreSetError, setLoadScoreSetError] = useState<string>();
+
   const history = useHistory();
 
   const handleScoreOnClick = (
@@ -104,8 +107,10 @@ const SocreListContent = (props: ScoreListContentProps) => {
     if (onLoadedScoreSummarySet) {
       try {
         const scoreSet = await scoreClient.getScores();
+        setLoadScoreSetError(undefined);
         onLoadedScoreSummarySet(scoreSet);
       } catch (err) {
+        setLoadScoreSetError(`楽譜の一覧取得に失敗しました`);
         console.log(err);
       }
     }
@@ -138,6 +143,13 @@ const SocreListContent = (props: ScoreListContentProps) => {
       </Grid>
       <Grid item xs={12}>
         <Divider />
+      </Grid>
+      <Grid item xs={12}>
+        {loadScoreSetError ? (
+          <Alert severity="error">{loadScoreSetError}</Alert>
+        ) : (
+          <></>
+        )}
       </Grid>
       <Grid item xs={12}>
         <ScoreListView scoreSet={_scoreSet} onClick={handleScoreOnClick} />
