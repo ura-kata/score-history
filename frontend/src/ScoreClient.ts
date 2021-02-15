@@ -130,6 +130,28 @@ export default class ScoreClient {
     }
   }
 
+  async createVersions(owner: string, scoreName: string): Promise<string[]> {
+    try {
+      const version = await this.apiClient.createScoreV2Version(
+        owner,
+        scoreName
+      );
+
+      let versionSet = this.versionSetCollection[`${owner}/${scoreName}`];
+      if (!versionSet) {
+        await this.getVersions(owner, scoreName);
+        versionSet = this.versionSetCollection[`${owner}/${scoreName}`];
+      }
+
+      versionSet[version.version.toString()] = version.hash;
+
+      const versions = Object.entries(versionSet).map(([key, _]) => key);
+      return versions;
+    } catch (err) {
+      throw new Error(`楽譜のバージョンの取得に失敗しました`);
+    }
+  }
+
   async getPages(
     owner: string,
     scoreName: string,
