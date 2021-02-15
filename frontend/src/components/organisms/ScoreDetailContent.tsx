@@ -113,7 +113,7 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
   };
 
   const handleOnInitializePages = () => {
-    history.push(_pathCreator.getEditPropertyPath(_owner, _scoreName));
+    history.push(_pathCreator.getEditPagePath(_owner, _scoreName));
   };
 
   const InitialVersionButton = () => (
@@ -121,6 +121,15 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
       <Grid item>
         <Button variant="outlined" onClick={handleOnInitializePages}>
           新しくページを登録する
+        </Button>
+      </Grid>
+    </Grid>
+  );
+  const UpdateVersionButton = () => (
+    <Grid container direction="column" alignItems="center">
+      <Grid item>
+        <Button variant="outlined" onClick={handleOnInitializePages}>
+          ページを更新する
         </Button>
       </Grid>
     </Grid>
@@ -231,9 +240,6 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
         <Divider />
       </Grid>
       <Grid item xs={12}>
-        {0 < versions.length ? <VersionTimeLine /> : <InitialVersionButton />}
-      </Grid>
-      <Grid item xs={12}>
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <Typography variant="h5">説明</Typography>
@@ -246,7 +252,13 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
         </Grid>
       </Grid>
       <Grid item xs={12}>
+        {0 < versions.length ? <VersionTimeLine /> : <InitialVersionButton />}
+      </Grid>
+      <Grid item xs={12}>
         {thumbnailContents}
+      </Grid>
+      <Grid item xs={12}>
+        {0 < versions.length ? <UpdateVersionButton /> : <></>}
       </Grid>
       <Grid item xs={12}>
         <ScorePageDetailDialog
