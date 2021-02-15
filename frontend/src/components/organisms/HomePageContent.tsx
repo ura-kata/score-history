@@ -5,6 +5,7 @@ import { PathCreator } from "../pages/HomePage";
 import EditScorePropertyContent from "./EditScorePropertyContent";
 import ScoreDetailContent from "./ScoreDetailContent";
 import SocreListContent from "./SocreListContent";
+import UpdatePageContent from "./UpdatePageContent";
 
 export type HomeActionType = "edit" | "version" | "edit-page";
 export interface HomeContentProps {
@@ -61,6 +62,17 @@ const HomeContent = (props: HomeContentProps) => {
           description={_property.description}
           pathCreator={_pathCreator}
           onLoadedScoreData={handleOnLoadedScoreData}
+        />
+      );
+    }
+
+    if ("edit-page" === _type) {
+      return (
+        <UpdatePageContent
+          owner={_owner}
+          scoreName={_scorename}
+          pages={_pages}
+          pathCreator={_pathCreator}
         />
       );
     }
