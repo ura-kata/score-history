@@ -1,5 +1,8 @@
 import HashObjectStore from "./HashObjectStore";
 import PracticeManagerApiClient, {
+  CommitObject,
+  CommitRequest,
+  ScoreV2CommentObject,
   ScoreV2Latest,
   ScoreV2LatestSet,
   ScoreV2VersionSet,
@@ -32,6 +35,15 @@ export interface ScorePage {
   number: string;
   image: string;
   thumbnail: string;
+}
+
+export type PageOperationType = "add" | "insert" | "remove" | "update";
+export interface PageOperation {
+  type: PageOperationType;
+  image?: string;
+  thumbnail?: string;
+  number?: string;
+  index?: number;
 }
 
 /** サーバーのスコアにアクセスするためのクライアント */
@@ -218,6 +230,84 @@ export default class ScoreClient {
 
     try {
       await this.apiClient.updateScoreV2Property(owner, scoreName, request);
+    } catch (err) {
+      console.log(err);
+      throw new Error(
+        `変更元のデータが古いです。更新してから再度実行してください。`
+      );
+    }
+  }
+
+  async updatePages(
+    owner: string,
+    scoreName: string,
+    pageOperations: PageOperation[]
+  ): Promise<void> {
+    if (!(0 < pageOperations.length)) {
+      throw new Error(`更新操作がありません`);
+    }
+    const ownerAndScoreName = `${owner}/${scoreName}`;
+    const score = this.scoreSet[ownerAndScoreName];
+
+    const commits: CommitObject[] = [];
+
+    pageOperations.forEach((ope, index) => {
+      switch (ope.type) {
+        case "add": {
+          const newCommit: CommitObject = {
+            type: "add_page",
+            add_page: {
+              image: ope.image,
+              thumbnail: ope.thumbnail,
+              number: ope.number,
+            },
+          };
+          commits.push(newCommit);
+          break;
+        }
+        case "insert": {
+          if (ope.index === undefined) {
+            throw new Error(`index is undefined.`);
+          }
+          const newCommit: CommitObject = {
+            type: "insert_page",
+            insert_page: {
+              index: ope.index,
+              image: ope.image,
+              thumbnail: ope.thumbnail,
+              number: ope.number,
+            },
+          };
+          commits.push(newCommit);
+          break;
+        }
+        case "remove": {
+          if (ope.index === undefined) {
+            throw new Error(`index is undefined.`);
+          }
+          const newCommit: CommitObject = {
+            type: "delete_page",
+            delete_page: {
+              index: ope.index,
+            },
+          };
+          commits.push(newCommit);
+          break;
+        }
+        case "update": {
+          break;
+        }
+      }
+    });
+
+    const commitRequest: CommitRequest = {
+      parent: score.head_hash,
+      commits: commits,
+    };
+    try {
+      await this.apiClient.commit(owner, scoreName, commitRequest);
+
+      await this.createVersions(owner, scoreName);
     } catch (err) {
       console.log(err);
       throw new Error(
