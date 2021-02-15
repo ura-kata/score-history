@@ -6,7 +6,7 @@ import EditScorePropertyContent from "./EditScorePropertyContent";
 import ScoreDetailContent from "./ScoreDetailContent";
 import SocreListContent from "./SocreListContent";
 
-export type HomeActionType = "edit" | "version";
+export type HomeActionType = "edit" | "version" | "edit-page";
 export interface HomeContentProps {
   scoreSummarySet: ScoreSummarySet;
   owner?: string;
