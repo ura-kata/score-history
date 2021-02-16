@@ -27,6 +27,11 @@ export interface ScoreSummary {
   property: ScoreProperty;
 }
 
+export interface ScoreData {
+  scoreSummary: ScoreSummary;
+  versions: string[];
+}
+
 export interface ScoreSummarySet {
   [ownerAndScoreName: string]: ScoreSummary;
 }
@@ -90,6 +95,44 @@ export default class ScoreClient {
     } catch (err) {
       console.log(err);
       throw new Error(`楽譜を取得することができませんでした`);
+    }
+  }
+  async getScore(owner: string, scoreName: string): Promise<ScoreData> {
+    try {
+      const response = await this.apiClient.getScoreV2(owner, scoreName);
+
+      this.objectStore.setObjectToLocal(
+        owner,
+        scoreName,
+        response.head_hash,
+        response.head
+      );
+
+      this.scoreSet[`${owner}/${scoreName}`] = response;
+
+      const versionsResponse = await this.apiClient.getScoreV2Versions(
+        owner,
+        scoreName
+      );
+
+      this.versionSetCollection[`${owner}.${scoreName}`] = versionsResponse;
+
+      const versions = Object.entries(versionsResponse).map(([key, _]) => key);
+
+      return {
+        scoreSummary: {
+          owner: owner,
+          scoreName: scoreName,
+          property: {
+            title: response.property.title,
+            description: response.property.description,
+          },
+        },
+        versions: versions,
+      };
+    } catch (err) {
+      console.log(err);
+      throw new Error(`スコアの取得に失敗しました`);
     }
   }
 
