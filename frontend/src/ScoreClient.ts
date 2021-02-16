@@ -30,6 +30,7 @@ export interface ScoreSummary {
 export interface ScoreData {
   scoreSummary: ScoreSummary;
   versions: string[];
+  pages: ScorePage[];
 }
 
 export interface ScoreSummarySet {
@@ -115,9 +116,26 @@ export default class ScoreClient {
         scoreName
       );
 
-      this.versionSetCollection[`${owner}.${scoreName}`] = versionsResponse;
+      this.versionSetCollection[`${owner}/${scoreName}`] = versionsResponse;
 
       const versions = Object.entries(versionsResponse).map(([key, _]) => key);
+
+      const pagesResponse = await this.objectStore.getPageObjects(
+        owner,
+        scoreName,
+        response.head.pages
+      );
+
+      const pages = response.head.pages
+        .map((hash) => pagesResponse[hash])
+        .map(
+          (page) =>
+            ({
+              image: page.image,
+              thumbnail: page.thumbnail,
+              number: page.number,
+            } as ScorePage)
+        );
 
       return {
         scoreSummary: {
@@ -129,6 +147,7 @@ export default class ScoreClient {
           },
         },
         versions: versions,
+        pages: pages,
       };
     } catch (err) {
       console.log(err);
