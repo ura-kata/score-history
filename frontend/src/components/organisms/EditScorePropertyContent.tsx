@@ -7,10 +7,10 @@ import {
   Theme,
 } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { scoreClient } from "../../global";
-import { ScoreSummarySet } from "../../ScoreClient";
+import { ScoreProperty, ScoreSummarySet } from "../../ScoreClient";
 import { PathCreator } from "../pages/HomePage";
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -24,13 +24,7 @@ const useStyles = makeStyles((theme: Theme) =>
 export interface EditScorePropertyContentProps {
   owner: string;
   scoreName: string;
-  title?: string;
-  description?: string;
   pathCreator: PathCreator;
-  onLoadedScoreData?: (
-    scoreSummarySet: ScoreSummarySet,
-    versions: string[]
-  ) => void;
 }
 
 const EditScorePropertyContent = (props: EditScorePropertyContentProps) => {
@@ -38,46 +32,48 @@ const EditScorePropertyContent = (props: EditScorePropertyContentProps) => {
 
   const _owner = props.owner;
   const _scoreName = props.scoreName;
-  const _title = props.title;
-  const _description = props.description;
   const _pathCreator = props.pathCreator;
-  const _onLoadedScoreData = props.onLoadedScoreData;
 
-  const [title, setTitle] = useState(_title);
-  const [description, setDescription] = useState(_description);
+  const [property, setProperty] = useState<ScoreProperty>({});
+  const [newProperty, setNewProperty] = useState<ScoreProperty>({});
   const [errorMessage, setErrorMessage] = useState<string>();
+  const [loadScoreDataError, setLoadScoreDataError] = useState<string>();
 
   const history = useHistory();
 
+  const loadScoreData = async (owner: string, scoreName: string) => {
+    try {
+      const scoreData = await scoreClient.getScore(owner, scoreName);
+      setProperty(scoreData.scoreSummary.property);
+      setNewProperty({ ...scoreData.scoreSummary.property });
+      setLoadScoreDataError(undefined);
+    } catch (err) {
+      setLoadScoreDataError(`楽譜の情報取得に失敗しました`);
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    loadScoreData(_owner, _scoreName);
+  }, [_owner, _scoreName]);
+
   const handleOnChangeTitle = (event: any) => {
-    setTitle(event.target.value);
+    setNewProperty({ ...newProperty, title: event.target.value });
   };
   const handleOnChangeDescription = (event: any) => {
-    setDescription(event.target.value);
+    setNewProperty({ ...newProperty, description: event.target.value });
   };
 
   const handleOnClickUpdate = async () => {
-    const oldProperty = {
-      title: props.title,
-      description: props.description,
+    const op = {
+      ...property,
     };
-    const newProperty = {
-      title: title,
-      description: description,
+    const np = {
+      ...newProperty,
     };
     try {
-      await scoreClient.updateProperty(
-        _owner,
-        _scoreName,
-        oldProperty,
-        newProperty
-      );
+      await scoreClient.updateProperty(_owner, _scoreName, op, np);
 
-      if (_onLoadedScoreData) {
-        const scoreSet = await scoreClient.getScores();
-        const versions = await scoreClient.getVersions(_owner, _scoreName);
-        _onLoadedScoreData(scoreSet, versions);
-      }
       setErrorMessage(undefined);
 
       history.replace(_pathCreator.getDetailPath(_owner, _scoreName));
@@ -88,8 +84,8 @@ const EditScorePropertyContent = (props: EditScorePropertyContentProps) => {
   };
 
   const disableUpdateButton =
-    (_title ?? "") === (title ?? "") &&
-    (_description ?? "") === (description ?? "");
+    (property.title ?? "") === (newProperty.title ?? "") &&
+    (property.description ?? "") === (newProperty.description ?? "");
 
   return (
     <Grid container spacing={3}>
@@ -97,7 +93,7 @@ const EditScorePropertyContent = (props: EditScorePropertyContentProps) => {
         <TextField
           label="楽譜のタイトル"
           className={classes.textField}
-          value={title}
+          value={newProperty.title}
           onChange={handleOnChangeTitle}
         />
       </Grid>
@@ -106,7 +102,7 @@ const EditScorePropertyContent = (props: EditScorePropertyContentProps) => {
           label="楽譜の説明"
           multiline
           className={classes.textField}
-          value={description}
+          value={newProperty.description}
           onChange={handleOnChangeDescription}
         />
       </Grid>

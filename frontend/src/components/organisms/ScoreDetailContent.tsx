@@ -10,8 +10,9 @@ import {
   Theme,
   Typography,
 } from "@material-ui/core";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useHistory } from "react-router-dom";
+import { scoreClient } from "../../global";
 import { ScorePage, ScoreProperty } from "../../ScoreClient";
 import ScorePageDetailDialog from "../molecules/ScorePageDetailDialog";
 import { PathCreator } from "../pages/HomePage";
@@ -47,35 +48,80 @@ const useStyles = makeStyles((theme: Theme) =>
 interface ScoreDetailContentProps {
   owner: string;
   scoreName: string;
-  property: ScoreProperty;
-  versions?: string[];
   selectedVersion?: string;
   pathCreator: PathCreator;
-  pages?: ScorePage[];
   selectedPageIndex?: number;
 }
 
 const ScoreDetailContent = (props: ScoreDetailContentProps) => {
   const _owner = props.owner;
   const _scoreName = props.scoreName;
-  const _property = props.property;
   const _pathCreator = props.pathCreator;
-  const _pages = props.pages ?? [];
   const _selectedPageIndex = props.selectedPageIndex;
 
   const classes = useStyles();
   const history = useHistory();
 
-  const _versions = props.versions ?? [];
   const _selectedVersion = props.selectedVersion;
 
-  const versions = _versions.slice().reverse();
+  const [loadScoreDataError, setLoadScoreDataError] = useState<string>();
+  const [loadPagesError, setLoadPagesError] = useState<string>();
+
+  const [property, setProperty] = useState<ScoreProperty>({});
+  const [versions, setVersions] = useState<string[]>([]);
+  const [pages, setPages] = useState<ScorePage[]>([]);
+  const [loadedScoreData, setLoadedScoreData] = useState(false);
+
+  const version = _selectedVersion ?? (versions ?? []).slice(-1)[0];
+
+  const loadScoreData = async (owner: string, scoreName: string) => {
+    try {
+      const scoreData = await scoreClient.getScore(owner, scoreName);
+      setProperty(scoreData.scoreSummary.property);
+      setVersions(scoreData.versions);
+      setLoadScoreDataError(undefined);
+      setLoadedScoreData(true);
+    } catch (err) {
+      setLoadScoreDataError(`楽譜の情報取得に失敗しました`);
+      console.log(err);
+    }
+  };
+
+  const loadPages = async (
+    owner: string,
+    scoreName: string,
+    version: string
+  ) => {
+    try {
+      console.log(version);
+      const pages = await scoreClient.getPages(owner, scoreName, version);
+      console.log(pages);
+      setPages(pages);
+      setLoadPagesError(undefined);
+    } catch (err) {
+      setLoadPagesError(`ページの情報取得に失敗しました`);
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    const f = async () => {
+      if (!loadedScoreData) {
+        loadScoreData(_owner, _scoreName);
+      }
+      if (!version) return;
+      loadPages(_owner, _scoreName, version);
+    };
+    f();
+  }, [_owner, _scoreName, loadedScoreData, version]);
+
+  const versionsReverse = versions.slice().reverse();
 
   const VersionTimeLine = () => (
     <Grid container direction="row" alignItems="center" justify="center">
       <Grid item xs={12}>
         <div className={classes.versionButtonContainer}>
-          {versions.map((v, index) => {
+          {versionsReverse.map((v, index) => {
             return (
               <div
                 key={`${index}-version`}
@@ -90,7 +136,7 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
                     );
                     history.push(path);
                   }}
-                  variant={_selectedVersion === v ? "contained" : "outlined"}
+                  variant={version === v ? "contained" : "outlined"}
                   className={classes.versionButton}
                 >
                   {v}
@@ -138,19 +184,14 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
   // TODO 最新のバージョンを表示することにする
   // version が選択されていない場合は最新のバージョンを表示することにする
 
-  const thumbnailContents = _selectedVersion ? (
+  const thumbnailContents = version ? (
     <Grid container>
-      {_pages.map((page, index) => {
+      {pages.map((page, index) => {
         return (
           <Grid item key={index}>
             <Button
               component={Link}
-              to={_pathCreator.getPagePath(
-                _owner,
-                _scoreName,
-                _selectedVersion,
-                index
-              )}
+              to={_pathCreator.getPagePath(_owner, _scoreName, version, index)}
             >
               <Paper>
                 <Grid container justify="center">
@@ -177,39 +218,35 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
   );
 
   const selectedPage =
-    _selectedPageIndex !== undefined ? _pages[_selectedPageIndex] : undefined;
+    _selectedPageIndex !== undefined ? pages[_selectedPageIndex] : undefined;
 
   const handleOnPageClose = () => {
-    if (!_selectedVersion) return;
-    history.push(
-      _pathCreator.getVersionPath(_owner, _scoreName, _selectedVersion)
-    );
+    if (!version) return;
+    history.push(_pathCreator.getVersionPath(_owner, _scoreName, version));
   };
   const handleOnPagePrev =
-    _selectedVersion &&
-    _selectedPageIndex !== undefined &&
-    0 < _selectedPageIndex
+    version && _selectedPageIndex !== undefined && 0 < _selectedPageIndex
       ? () => {
           history.push(
             _pathCreator.getPagePath(
               _owner,
               _scoreName,
-              _selectedVersion,
+              version,
               _selectedPageIndex - 1
             )
           );
         }
       : undefined;
   const handleOnPageNext =
-    _selectedVersion &&
+    version &&
     _selectedPageIndex !== undefined &&
-    _selectedPageIndex < _pages.length - 1
+    _selectedPageIndex < pages.length - 1
       ? () => {
           history.push(
             _pathCreator.getPagePath(
               _owner,
               _scoreName,
-              _selectedVersion,
+              version,
               _selectedPageIndex + 1
             )
           );
@@ -221,9 +258,7 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
       <Grid item xs={12}>
         <Grid container alignItems="center">
           <Grid item xs>
-            <Typography variant="h4">
-              {_property.title ?? _scoreName}
-            </Typography>
+            <Typography variant="h4">{property.title ?? _scoreName}</Typography>
           </Grid>
           <Grid item xs>
             <Grid container alignItems="center" justify="flex-end" spacing={1}>
@@ -245,7 +280,7 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
             <Typography variant="h5">説明</Typography>
           </Grid>
           <Grid item xs={12}>
-            {_property.description?.split("\n").map((t, index) => (
+            {property.description?.split("\n").map((t, index) => (
               <Typography key={index}>{t}</Typography>
             ))}
           </Grid>

@@ -11,10 +11,10 @@ import {
 } from "@material-ui/core";
 import { AddIcon } from "@material-ui/data-grid";
 import { Alert } from "@material-ui/lab";
-import React from "react";
+import React, { useEffect } from "react";
 import { useHistory } from "react-router-dom";
 import { scoreClient } from "../../global";
-import { PageOperation, ScorePage } from "../../ScoreClient";
+import { PageOperation, ScorePage, ScoreSummarySet } from "../../ScoreClient";
 import PageItem, { UploadedItem } from "../molecules/PageItem";
 import { PathCreator } from "../pages/HomePage";
 
@@ -41,21 +41,36 @@ const useStyles = makeStyles((theme: Theme) =>
 export interface UpdatePageContentProps {
   owner: string;
   scoreName: string;
-  pages: ScorePage[];
   pathCreator: PathCreator;
 }
 
 const UpdatePageContent = (props: UpdatePageContentProps) => {
   const _owner = props.owner;
   const _scoreName = props.scoreName;
-  const _pages = props.pages;
   const _pathCreator = props.pathCreator;
+  const [pages, setPages] = React.useState([] as ScorePage[]);
   const [operations, setOperations] = React.useState([] as PageOperation[]);
   const [updateErrorMessage, setUpdateErrorMessage] = React.useState<string>();
+  const [loadScoreDataError, setLoadScoreDataError] = React.useState<string>();
 
   const history = useHistory();
 
   const classes = useStyles();
+
+  const loadScoreData = async (owner: string, scoreName: string) => {
+    try {
+      const scoreData = await scoreClient.getScore(owner, scoreName);
+      setPages(scoreData.pages);
+      setLoadScoreDataError(undefined);
+    } catch (err) {
+      setLoadScoreDataError(`楽譜の情報取得に失敗しました`);
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    loadScoreData(_owner, _scoreName);
+  }, [_owner, _scoreName]);
 
   const handlerOnClickPage = () => {
     const newOperations = [...operations];
@@ -67,18 +82,19 @@ const UpdatePageContent = (props: UpdatePageContentProps) => {
     setOperations(newOperations);
   };
 
-  const handleUpdateClick = () => {
+  const handleUpdateClick = async () => {
     // ここで更新
     try {
-      scoreClient.updatePages(_owner, _scoreName, operations);
-      history.replace(_pathCreator.getDetailPath(_owner, _scoreName));
+      await scoreClient.updatePages(_owner, _scoreName, operations);
+
       setUpdateErrorMessage(undefined);
+      history.replace(_pathCreator.getDetailPath(_owner, _scoreName));
     } catch (err) {
       setUpdateErrorMessage(`ページの更新に失敗しました`);
     }
   };
 
-  const afterPages = _pages.map((page) => ({ page: page } as AfterPage));
+  const afterPages = pages.map((page) => ({ page: page } as AfterPage));
   operations.forEach((ope, index) => {
     switch (ope.type) {
       case "add": {
@@ -210,7 +226,7 @@ const UpdatePageContent = (props: UpdatePageContentProps) => {
           </Grid>
         </Grid>
       </Grid>
-      <Grid xs={12}>
+      <Grid item xs={12}>
         <Button
           variant="outlined"
           disabled={disableUpdateButton}

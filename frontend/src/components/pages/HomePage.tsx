@@ -72,13 +72,7 @@ const useStyles = makeStyles((theme: Theme) =>
 const HomePage = () => {
   const classes = useStyles();
 
-  const [scoreSet, setScoreSet] = useState<ScoreSummarySet>({});
-  const [versions, setVersions] = useState<string[]>([]);
-  const [pages, setPages] = useState<ScorePage[]>([]);
-
   const [loadScoreSetError, setLoadScoreSetError] = useState<string>();
-  const [loadVersionSetError, setLoadVersionsError] = useState<string>();
-  const [loadPagesError, setLoadPagesError] = useState<string>();
 
   const urlMatch = useRouteMatch<{
     owner?: string;
@@ -94,80 +88,10 @@ const HomePage = () => {
   const scoreName = urlMatch?.params?.scoreName;
   const action = urlMatch?.params?.action as HomeActionType | undefined;
 
-  const version = urlMatch?.params.version ?? (versions ?? []).slice(-1)[0];
+  const version = urlMatch?.params.version;
   const pageIndexText = urlMatch?.params.pageIndex;
   const pageIndex =
     pageIndexText !== undefined ? parseInt(pageIndexText) : undefined;
-
-  const score =
-    owner && scoreName ? scoreSet[`${owner}/${scoreName}`] : undefined;
-  const property = score?.property ?? {};
-
-  const loadScoreSet = async () => {
-    try {
-      const scoreSummarys = await scoreClient.getScores();
-      setScoreSet(scoreSummarys);
-      setLoadScoreSetError(undefined);
-    } catch (err) {
-      setLoadScoreSetError(`楽譜の一覧取得に失敗しました`);
-      console.log(err);
-    }
-  };
-
-  const loadVersionSet = async (owner: string, scoreName: string) => {
-    try {
-      const versions = await scoreClient.getVersions(owner, scoreName);
-      setVersions(versions);
-      setLoadVersionsError(undefined);
-    } catch (err) {
-      setLoadVersionsError(`楽譜のバージョン一覧の取得に失敗しました`);
-      console.log(err);
-    }
-  };
-
-  const loadPages = async (
-    owner: string,
-    scoreName: string,
-    version: string
-  ) => {
-    try {
-      const pages = await scoreClient.getPages(owner, scoreName, version);
-      setPages(pages);
-      setLoadPagesError(undefined);
-    } catch (err) {
-      setLoadPagesError(`ページの情報取得に失敗しました`);
-      console.log(err);
-    }
-  };
-
-  useEffect(() => {
-    loadScoreSet();
-  }, []);
-
-  useEffect(() => {
-    if (!owner) return;
-    if (!scoreName) return;
-    loadVersionSet(owner, scoreName);
-  }, [owner, scoreName]);
-
-  useEffect(() => {
-    if (!owner) return;
-    if (!scoreName) return;
-    if (!version) return;
-    loadPages(owner, scoreName, version);
-  }, [owner, scoreName, version]);
-
-  const handleOnLoadedScoreSummarySet = (scoreSet: ScoreSummarySet) => {
-    setScoreSet(scoreSet);
-  };
-
-  const handleOnLoadedVersions = (versions: string[]) => {
-    setVersions(versions.slice());
-  };
-
-  const handleOnLoadedPages = (pages: ScorePage[]) => {
-    setPages(pages.slice());
-  };
 
   const breadcrumbList = [
     <Button
@@ -216,35 +140,14 @@ const HomePage = () => {
           )}
         </Grid>
         <Grid item xs={12}>
-          {loadVersionSetError ? (
-            <Alert severity="error">{loadVersionSetError}</Alert>
-          ) : (
-            <></>
-          )}
-        </Grid>
-        <Grid item xs={12}>
-          {loadPagesError ? (
-            <Alert severity="error">{loadPagesError}</Alert>
-          ) : (
-            <></>
-          )}
-        </Grid>
-        <Grid item xs={12}>
           <Breadcrumbs>{breadcrumbList}</Breadcrumbs>
         </Grid>
         <Grid item xs={12}>
           <HomeContent
-            scoreSummarySet={scoreSet}
             owner={owner}
             scoreName={scoreName}
-            property={property}
-            versions={versions}
             selectedVersion={version}
-            pages={pages}
             selectedPageIndex={pageIndex}
-            onLoadedScoreSummarySet={handleOnLoadedScoreSummarySet}
-            onLoadedVersions={handleOnLoadedVersions}
-            onLoadedPages={handleOnLoadedPages}
             pathCreator={pathCreator}
             type={action}
           />

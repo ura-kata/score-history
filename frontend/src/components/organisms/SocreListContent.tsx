@@ -13,7 +13,7 @@ import {
   Theme,
   Typography,
 } from "@material-ui/core";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useHistory } from "react-router-dom";
 import RefreshIcon from "@material-ui/icons/Refresh";
 import { ScoreSummary, ScoreSummarySet } from "../../ScoreClient";
@@ -81,19 +81,27 @@ const ScoreListView = (props: ScoreListViewProps) => {
 // ------------------------------------------------------------------------------------------
 
 export interface ScoreListContentProps {
-  scoreSet: ScoreSummarySet;
   pathCreator: PathCreator;
-  onLoadedScoreSummarySet?: (scoreSummarySet: ScoreSummarySet) => void;
 }
 
 const SocreListContent = (props: ScoreListContentProps) => {
-  const _scoreSet = props.scoreSet;
   const _pathCreator = props.pathCreator;
-  const onLoadedScoreSummarySet = props.onLoadedScoreSummarySet;
 
   const [loadScoreSetError, setLoadScoreSetError] = useState<string>();
+  const [scoreSet, setScoreSet] = useState<ScoreSummarySet>({});
 
   const history = useHistory();
+
+  const loadScoreSet = async () => {
+    try {
+      const scoreSummarys = await scoreClient.getScores();
+      setScoreSet(scoreSummarys);
+      setLoadScoreSetError(undefined);
+    } catch (err) {
+      setLoadScoreSetError(`楽譜の一覧取得に失敗しました`);
+      console.log(err);
+    }
+  };
 
   const handleScoreOnClick = (
     owner: string,
@@ -104,17 +112,12 @@ const SocreListContent = (props: ScoreListContentProps) => {
   };
 
   const handleOnRefreshClick = async () => {
-    if (onLoadedScoreSummarySet) {
-      try {
-        const scoreSet = await scoreClient.getScores();
-        setLoadScoreSetError(undefined);
-        onLoadedScoreSummarySet(scoreSet);
-      } catch (err) {
-        setLoadScoreSetError(`楽譜の一覧取得に失敗しました`);
-        console.log(err);
-      }
-    }
+    loadScoreSet();
   };
+
+  useEffect(() => {
+    loadScoreSet();
+  }, []);
 
   return (
     <Grid container spacing={2}>
@@ -152,7 +155,7 @@ const SocreListContent = (props: ScoreListContentProps) => {
         )}
       </Grid>
       <Grid item xs={12}>
-        <ScoreListView scoreSet={_scoreSet} onClick={handleScoreOnClick} />
+        <ScoreListView scoreSet={scoreSet} onClick={handleScoreOnClick} />
       </Grid>
     </Grid>
   );
