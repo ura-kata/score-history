@@ -204,7 +204,7 @@ const ScoreDetailContent = (props: ScoreDetailContentProps) => {
                     />
                   </Grid>
                   <Grid item xs={12}>
-                    <Typography align="center">p. {page.number}</Typography>
+                    <Typography align="center">{page.number}</Typography>
                   </Grid>
                 </Grid>
               </Paper>
