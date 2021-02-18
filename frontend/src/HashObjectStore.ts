@@ -69,7 +69,7 @@ export default class HashObjectStore {
     const result: ObjectJsonSet = {};
 
     const notExistedOnLocal: string[] = [];
-    hash.forEach(async (h) => {
+    hash.forEach((h) => {
       const json = localStorage.getItem(
         createLocalStorageKey(owner, scoreName, h)
       );
@@ -84,7 +84,7 @@ export default class HashObjectStore {
       return result;
     }
     try {
-      notExistedOnLocal.forEach(async (hash) => {
+      for (let hash of notExistedOnLocal) {
         const response = await this.apiClient.getHashObjects(
           owner,
           scoreName,
@@ -97,7 +97,7 @@ export default class HashObjectStore {
           json
         );
         result[hash] = json;
-      });
+      }
 
       return result;
     } catch (err) {
