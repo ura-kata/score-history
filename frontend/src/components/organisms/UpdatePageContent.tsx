@@ -30,10 +30,19 @@ interface AfterPage {
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
-    pageItem: {
-      // TODO PageItem が 300x300 px になっているので後で外部空変更できるようにする
-      width: "300px",
-      height: "300px",
+    cardRoot: {
+      width: "250px",
+      height: "250px",
+    },
+    addPageItem: {
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: colors.grey[100],
+    },
+    addPageItemButton: {
+      height: "50px",
+      width: "50px",
     },
   })
 );
@@ -173,7 +182,7 @@ const UpdatePageContent = (props: UpdatePageContentProps) => {
 
               return (
                 <Grid item key={page.key}>
-                  <Paper className={classes.pageItem}>
+                  <Paper className={classes.cardRoot}>
                     <Grid container justify="center">
                       <Grid item xs={12} style={{ textAlign: "center" }}>
                         <img
@@ -235,6 +244,7 @@ const UpdatePageContent = (props: UpdatePageContentProps) => {
               };
               return (
                 <Grid item key={page.key}>
+                  <Paper className={classes.cardRoot}>
                   <PageItem
                     className={classes.pageItem}
                     owner={_owner}
@@ -246,9 +256,17 @@ const UpdatePageContent = (props: UpdatePageContentProps) => {
             }
           })}
           <Grid item>
-            <IconButton onClick={handlerOnClickPage}>
-              <AddIcon />
+            <Paper
+              variant="outlined"
+              className={classes.cardRoot + " " + classes.addPageItem}
+            >
+              <IconButton
+                onClick={handlerOnClickPage}
+                className={classes.addPageItemButton}
+              >
+                <AddIcon fontSize="large" />
             </IconButton>
+            </Paper>
           </Grid>
         </Grid>
       </Grid>
