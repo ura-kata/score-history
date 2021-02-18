@@ -45,6 +45,10 @@ const useStyles = makeStyles((theme: Theme) =>
       height: "50px",
       width: "50px",
     },
+    sourceImg: {
+      height: "200px",
+      userSelect: "none",
+    },
     pageItem: { height: "200px" },
   })
 );
