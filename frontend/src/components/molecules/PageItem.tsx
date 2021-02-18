@@ -1,9 +1,4 @@
 import {
-  Card,
-  CardActionArea,
-  CardActions,
-  CardHeader,
-  CardMedia,
   colors,
   createStyles,
   IconButton,
@@ -58,10 +53,41 @@ const PageItem = (props: PageItemProps) => {
           backgroundColor: colors.yellow[100],
         },
       },
-      card: {
+      cardRoot: {
         width: "100%",
         height: "100%",
+        position: "relative",
+        display: "flex",
       },
+      cardTextDiv: {
+        position: "absolute",
+        backgroundColor: "#FFFFFFEE",
+      },
+      cardImgDiv: {
+        position: "absolute",
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        justifyContent: "center",
+      },
+      cardImg: {
+        objectFit: "contain",
+      },
+      cardButtonDiv: {
+        position: "absolute",
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "flex-end",
+      },
+      cardButtonContainer: {
+        width: "100%",
+        height: "50px",
+        backgroundColor: "#FFFFFFEE",
+        display: "flex",
+        justifyContent: "flex-end",
+      },
+      cardButton: {},
     })
   )();
 
@@ -175,79 +201,77 @@ const PageItem = (props: PageItemProps) => {
         );
       case "uploading":
         return (
-          <Card className={classes.card}>
-            <CardHeader
-              title={
-                <Typography variant="subtitle1">画像アップロード中</Typography>
-              }
-              subheader={
-                <Typography variant="caption" display="block">
-                  {file?.name}
-                </Typography>
-              }
-            />
-            <CardActionArea>
-              <CardMedia component="img" height="100em" image={localUrl} />
-              {/* <CardContent>
-                <Typography>画像アップロード中</Typography>
-              </CardContent> */}
-            </CardActionArea>
-          </Card>
+          <div className={classes.cardRoot}>
+            <div className={classes.cardTextDiv}>
+              <Typography variant="subtitle1" align="center">
+                画像アップロード中
+              </Typography>
+              <Typography variant="caption" align="center" display="block">
+                {file?.name}
+              </Typography>
+            </div>
+          </div>
         );
       case "success":
         return (
-          <Card className={classes.card}>
-            <CardHeader
-              title={
-                <Typography variant="subtitle1">アップロード完了</Typography>
-              }
-              subheader={
-                <Typography variant="caption" display="block">
-                  {file?.name}
-                </Typography>
-              }
-            />
-            <CardActionArea>
-              <CardMedia component="img" height="100em" image={localUrl} />
-              {/* <CardContent>
-                <Typography>アップロード完了</Typography>
-              </CardContent> */}
-            </CardActionArea>
-            <CardActions>
-              <IconButton aria-label="clear" onClick={clearOnClick}>
-                <ClearIcon />
-              </IconButton>
-            </CardActions>
-          </Card>
+          <div className={classes.cardRoot}>
+            <div className={classes.cardImgDiv}>
+              <img src={localUrl} alt={localUrl} className={classes.cardImg} />
+            </div>
+            <div className={classes.cardTextDiv}>
+              <Typography variant="subtitle1" align="center">
+                アップロード完了
+              </Typography>
+              <Typography variant="caption" align="center" display="block">
+                {file?.name}
+              </Typography>
+            </div>
+            <div className={classes.cardButtonDiv}>
+              <div className={classes.cardButtonContainer}>
+                <IconButton
+                  aria-label="clear"
+                  onClick={clearOnClick}
+                  className={classes.cardButton}
+                >
+                  <ClearIcon />
+                </IconButton>
+              </div>
+            </div>
+          </div>
         );
       case "error":
         return (
-          <Card className={classes.card}>
-            <CardHeader
-              title={
-                <Typography variant="subtitle1">アップロードエラー</Typography>
-              }
-              subheader={
-                <Typography variant="caption" display="block">
-                  {file?.name}
-                </Typography>
-              }
-            />
-            <CardActionArea>
-              <CardMedia component="img" height="100em" image={localUrl} />
-              {/* <CardContent>
-                <Typography>アップロードエラー</Typography>
-              </CardContent> */}
-            </CardActionArea>
-            <CardActions>
-              <IconButton aria-label="clear" onClick={clearOnClick}>
-                <ClearIcon />
-              </IconButton>
-              <IconButton aria-label="reload" onClick={reloadOnClick}>
-                <CachedIcon />
-              </IconButton>
-            </CardActions>
-          </Card>
+          <div className={classes.cardRoot}>
+            <div className={classes.cardImgDiv}>
+              <img src={localUrl} alt={localUrl} className={classes.cardImg} />
+            </div>
+            <div className={classes.cardTextDiv}>
+              <Typography variant="subtitle1" align="center">
+                アップロードエラー
+              </Typography>
+              <Typography variant="caption" align="center" display="block">
+                {file?.name}
+              </Typography>
+            </div>
+            <div className={classes.cardButtonDiv}>
+              <div className={classes.cardButtonContainer}>
+                <IconButton
+                  aria-label="clear"
+                  onClick={clearOnClick}
+                  className={classes.cardButton}
+                >
+                  <ClearIcon />
+                </IconButton>
+                <IconButton
+                  aria-label="reload"
+                  onClick={reloadOnClick}
+                  className={classes.cardButton}
+                >
+                  <CachedIcon />
+                </IconButton>
+              </div>
+            </div>
+          </div>
         );
       default:
         return <></>;
