@@ -59,7 +59,7 @@ export default class HashObjectStore {
     assertArgumentUndefined(scoreName, "scoreName");
     assertArgumentUndefined(hash, "hash");
 
-    if (hash.length <= 0) {
+    if (hash.length < 0) {
       throw new Error();
     }
     if (100 < hash.length) {
