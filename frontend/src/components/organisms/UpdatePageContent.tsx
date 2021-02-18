@@ -189,9 +189,8 @@ const UpdatePageContent = (props: UpdatePageContentProps) => {
                       <Grid item xs={12} style={{ textAlign: "center" }}>
                         <img
                           src={page.page.thumbnail ?? page.page.image}
-                          height={"200px"}
                           alt={page.page.number}
-                          style={{ userSelect: "none" }}
+                          className={classes.sourceImg}
                         />
                       </Grid>
                       <Grid item xs={12}>
