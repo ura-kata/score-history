@@ -39,23 +39,28 @@ type PageUploadState = "none" | "uploading" | "success" | "error";
 const PageItem = (props: PageItemProps) => {
   const classes = makeStyles((theme: Theme) =>
     createStyles({
-      imageDropZoneRoot: {},
+      imageDropZoneRoot: {
+        position: "relative",
+        minWidth: "100%",
+        minHeight: "100%",
+      },
       imageDropZone: {
-        width: "300px",
-        height: "300px",
+        position: "absolute",
+        width: "100%",
+        height: "100%",
         cursor: "pointer",
-        backgroundColor: colors.grey[200],
         textAlign: "center",
         justifyContent: "center",
         alignItems: "center",
         display: "flex",
+        backgroundColor: colors.grey[200],
         "&:hover": {
           backgroundColor: colors.yellow[100],
         },
       },
       card: {
-        width: "300px",
-        height: "300px",
+        width: "100%",
+        height: "100%",
       },
     })
   )();
@@ -159,11 +164,12 @@ const PageItem = (props: PageItemProps) => {
       case "none":
         return (
           <div className={classes.imageDropZoneRoot}>
-            <div {...updateDrop.getRootProps()}>
+            <div
+              {...updateDrop.getRootProps()}
+              className={classes.imageDropZone}
+            >
               <input {...updateDrop.getInputProps()} />
-              <div className={classes.imageDropZone}>
-                <Typography>画像をアップロードしてください</Typography>
-              </div>
+              <Typography>画像をアップロードしてください</Typography>
             </div>
           </div>
         );
@@ -181,7 +187,7 @@ const PageItem = (props: PageItemProps) => {
               }
             />
             <CardActionArea>
-              <CardMedia component="img" height="100" image={localUrl} />
+              <CardMedia component="img" height="100em" image={localUrl} />
               {/* <CardContent>
                 <Typography>画像アップロード中</Typography>
               </CardContent> */}
@@ -202,7 +208,7 @@ const PageItem = (props: PageItemProps) => {
               }
             />
             <CardActionArea>
-              <CardMedia component="img" height="100" image={localUrl} />
+              <CardMedia component="img" height="100em" image={localUrl} />
               {/* <CardContent>
                 <Typography>アップロード完了</Typography>
               </CardContent> */}
@@ -228,7 +234,7 @@ const PageItem = (props: PageItemProps) => {
               }
             />
             <CardActionArea>
-              <CardMedia component="img" height="100" image={localUrl} />
+              <CardMedia component="img" height="100em" image={localUrl} />
               {/* <CardContent>
                 <Typography>アップロードエラー</Typography>
               </CardContent> */}
