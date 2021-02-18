@@ -17,6 +17,7 @@ import { scoreClient } from "../../global";
 import { PageOperation, ScorePage, ScoreSummarySet } from "../../ScoreClient";
 import PageItem, { UploadedItem } from "../molecules/PageItem";
 import { PathCreator } from "../pages/HomePage";
+import DeleteIcon from "@material-ui/icons/Delete";
 
 interface AfterPage {
   page?: ScorePage;
@@ -24,6 +25,7 @@ interface AfterPage {
     operation: PageOperation;
     index: number;
   };
+  key: string;
 }
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -90,11 +92,14 @@ const UpdatePageContent = (props: UpdatePageContentProps) => {
       setUpdateErrorMessage(undefined);
       history.replace(_pathCreator.getDetailPath(_owner, _scoreName));
     } catch (err) {
+      console.log(err);
       setUpdateErrorMessage(`ページの更新に失敗しました`);
     }
   };
 
-  const afterPages = pages.map((page) => ({ page: page } as AfterPage));
+  const afterPages = pages.map(
+    (page, index) => ({ page: page, key: `src_${index}` } as AfterPage)
+  );
   operations.forEach((ope, index) => {
     switch (ope.type) {
       case "add": {
@@ -103,6 +108,7 @@ const UpdatePageContent = (props: UpdatePageContentProps) => {
             index: index,
             operation: ope,
           },
+          key: `ope_add_${index}`,
         };
         afterPages.push(newItem);
         break;
@@ -110,7 +116,7 @@ const UpdatePageContent = (props: UpdatePageContentProps) => {
       case "remove": {
         const opeIndex = ope.index;
         if (opeIndex === undefined) break;
-        afterPages.splice(index, 1);
+        afterPages.splice(opeIndex, 1);
         break;
       }
       case "insert": {
@@ -121,6 +127,7 @@ const UpdatePageContent = (props: UpdatePageContentProps) => {
             index: index,
             operation: ope,
           },
+          key: `ope_insert_${index}`,
         };
         afterPages.splice(opeIndex, 0, newItem);
         break;
@@ -154,8 +161,18 @@ const UpdatePageContent = (props: UpdatePageContentProps) => {
         <Grid container spacing={2}>
           {afterPages.map((page, index) => {
             if (page.page) {
+              const handleOnDeleteClick = () => {
+                const removeOpe: PageOperation = {
+                  type: "remove",
+                  index: index,
+                };
+                const newOperations = [...operations];
+                newOperations.push(removeOpe);
+                setOperations(newOperations);
+              };
+
               return (
-                <Grid item key={index}>
+                <Grid item key={page.key}>
                   <Paper className={classes.pageItem}>
                     <Grid container justify="center">
                       <Grid item xs={12} style={{ textAlign: "center" }}>
@@ -168,8 +185,17 @@ const UpdatePageContent = (props: UpdatePageContentProps) => {
                       </Grid>
                       <Grid item xs={12}>
                         <Typography align="center">
-                          p. {page.page.number}
+                          {page.page.number}
                         </Typography>
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Grid container justify="flex-end">
+                          <Grid item>
+                            <IconButton onClick={handleOnDeleteClick}>
+                              <DeleteIcon />
+                            </IconButton>
+                          </Grid>
+                        </Grid>
                       </Grid>
                     </Grid>
                   </Paper>
@@ -208,7 +234,7 @@ const UpdatePageContent = (props: UpdatePageContentProps) => {
                 }
               };
               return (
-                <Grid item key={index}>
+                <Grid item key={page.key}>
                   <PageItem
                     className={classes.pageItem}
                     owner={_owner}
