@@ -247,15 +247,38 @@ const UpdatePageContent = (props: UpdatePageContentProps) => {
                   setOperations(newOperations);
                 }
               };
+              const handleOnDeleteClick = () => {
+                const removeOpe: PageOperation = {
+                  type: "remove",
+                  index: index,
+                };
+                const newOperations = [...operations];
+                newOperations.push(removeOpe);
+                setOperations(newOperations);
+              };
               return (
                 <Grid item key={page.key}>
                   <Paper className={classes.cardRoot}>
-                  <PageItem
-                    className={classes.pageItem}
-                    owner={_owner}
-                    scoreName={_scoreName}
-                    onUploaded={handleOnUploaded}
-                  />
+                    <Grid container justify="center">
+                      <Grid item xs={12} style={{ textAlign: "center" }}>
+                        <PageItem
+                          className={classes.pageItem}
+                          owner={_owner}
+                          scoreName={_scoreName}
+                          onUploaded={handleOnUploaded}
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Grid container justify="flex-end">
+                          <Grid item>
+                            <IconButton onClick={handleOnDeleteClick}>
+                              <DeleteIcon />
+                            </IconButton>
+                          </Grid>
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  </Paper>
                 </Grid>
               );
             }
@@ -270,7 +293,7 @@ const UpdatePageContent = (props: UpdatePageContentProps) => {
                 className={classes.addPageItemButton}
               >
                 <AddIcon fontSize="large" />
-            </IconButton>
+              </IconButton>
             </Paper>
           </Grid>
         </Grid>
