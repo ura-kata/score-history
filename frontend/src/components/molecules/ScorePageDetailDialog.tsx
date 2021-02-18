@@ -289,7 +289,7 @@ const ScorePageDetailDialog = (props: ScorePageDetailDialogProps) => {
               <div className={classes.zoomArea}>
                 <img
                   src={_page?.image}
-                  alt={_page?.number.toString()}
+                  alt={_page?.number}
                   className={classes.zoomImage}
                   onLoad={zoomImageOnLoaded}
                   ref={zoomImageRef}
