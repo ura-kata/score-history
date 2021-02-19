@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useState } from "react";
+import React, { useEffect, useMemo, useReducer, useState } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import UploadScorePage from "./components/pages/UploadScorePage";
 import DisplayPage from "./components/pages/DisplayPage";
@@ -9,6 +9,7 @@ import HomePage from "./components/pages/HomePage";
 import { apiClient } from "./global";
 import NewScorePage from "./components/pages/NewScorePage";
 import ScoreListPage from "./components/pages/ScoreListPage";
+import ScoreDetailPage from "./components/pages/ScoreDetailPage";
 
 const App = () => {
   const [state, dispatch] = useAppReducer();
@@ -33,7 +34,14 @@ const App = () => {
             <Route path="/" component={ScoreListPage} exact />
             <Route path="/home/" component={ScoreListPage} exact />
             <Route
-              path="/home/:owner?/:scoreName?/:action?/:version?/:pageIndex?"
+              path={[
+                "/home/:owner?/:scoreName?/",
+                "/home/:owner?/:scoreName?/version/:version?/:pageIndex?/",
+              ]}
+              component={ScoreDetailPage}
+            />
+            <Route
+              path="/home/:owner?/:scoreName?/:action?/"
               component={HomePage}
             />
             <Route path="/new" component={NewScorePage} />
