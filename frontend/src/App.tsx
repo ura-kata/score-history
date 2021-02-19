@@ -10,6 +10,7 @@ import { apiClient } from "./global";
 import NewScorePage from "./components/pages/NewScorePage";
 import ScoreListPage from "./components/pages/ScoreListPage";
 import ScoreDetailPage from "./components/pages/ScoreDetailPage";
+import EditScorePropertyPage from "./components/pages/EditScorePropertyPage";
 
 const App = () => {
   const [state, dispatch] = useAppReducer();
@@ -33,6 +34,10 @@ const App = () => {
           <Switch>
             <Route path="/" component={ScoreListPage} exact />
             <Route path="/home/" component={ScoreListPage} exact />
+            <Route
+              path="/home/:owner?/:scoreName?/edit/"
+              component={EditScorePropertyPage}
+            />
             <Route
               path={[
                 "/home/:owner?/:scoreName?/",
