@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useReducer, useState } from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import UploadScorePage from "./components/pages/UploadScorePage";
 import DisplayPage from "./components/pages/DisplayPage";
