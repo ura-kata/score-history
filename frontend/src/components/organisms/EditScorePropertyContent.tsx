@@ -10,8 +10,8 @@ import { Alert } from "@material-ui/lab";
 import React, { useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { scoreClient } from "../../global";
+import PathCreator from "../../PathCreator";
 import { ScoreProperty, ScoreSummarySet } from "../../ScoreClient";
-import { PathCreator } from "../pages/HomePage";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

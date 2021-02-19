@@ -1,13 +1,12 @@
 import React from "react";
 import { useHistory } from "react-router-dom";
+import PathCreator, { HomeActionType } from "../../PathCreator";
 import { ScorePage, ScoreProperty, ScoreSummarySet } from "../../ScoreClient";
-import { PathCreator } from "../pages/HomePage";
 import EditScorePropertyContent from "./EditScorePropertyContent";
 import ScoreDetailContent from "./ScoreDetailContent";
 import SocreListContent from "./SocreListContent";
 import UpdatePageContent from "./UpdatePageContent";
 
-export type HomeActionType = "edit" | "version" | "edit-page";
 export interface HomeContentProps {
   owner?: string;
   scoreName?: string;

@@ -1,5 +1,5 @@
 import { useRouteMatch } from "react-router-dom";
-import { HomeActionType } from "../../components/organisms/HomePageContent";
+import { HomeActionType } from "../../PathCreator";
 
 export interface ScorePathParameter {
   owner?: string;

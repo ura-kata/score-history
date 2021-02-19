@@ -13,9 +13,9 @@ import {
 import React, { useEffect, useState } from "react";
 import { Link, useHistory } from "react-router-dom";
 import { scoreClient } from "../../global";
+import PathCreator from "../../PathCreator";
 import { ScorePage, ScoreProperty } from "../../ScoreClient";
 import ScorePageDetailDialog from "../molecules/ScorePageDetailDialog";
-import { PathCreator } from "../pages/HomePage";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

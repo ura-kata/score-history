@@ -17,8 +17,8 @@ import { useHistory } from "react-router-dom";
 import { scoreClient } from "../../global";
 import { PageOperation, ScorePage, ScoreSummarySet } from "../../ScoreClient";
 import PageItem, { UploadedItem } from "../molecules/PageItem";
-import { PathCreator } from "../pages/HomePage";
 import DeleteIcon from "@material-ui/icons/Delete";
+import PathCreator from "../../PathCreator";
 
 interface AfterPage {
   page?: ScorePage;

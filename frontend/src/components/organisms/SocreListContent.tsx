@@ -18,8 +18,8 @@ import { Link, useHistory } from "react-router-dom";
 import RefreshIcon from "@material-ui/icons/Refresh";
 import { ScoreSummary, ScoreSummarySet } from "../../ScoreClient";
 import { scoreClient } from "../../global";
-import { PathCreator } from "../pages/HomePage";
 import { Alert } from "@material-ui/lab";
+import PathCreator from "../../PathCreator";
 
 // ------------------------------------------------------------------------------------------
 interface ScoreListViewProps {

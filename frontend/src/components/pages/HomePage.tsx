@@ -14,39 +14,10 @@ import { Link, useRouteMatch } from "react-router-dom";
 import { scoreClient } from "../../global";
 import { Alert } from "@material-ui/lab";
 import { ScorePage, ScoreSummarySet } from "../../ScoreClient";
-import HomeContent, { HomeActionType } from "../organisms/HomePageContent";
+import HomeContent from "../organisms/HomePageContent";
+import PathCreator, { HomeActionType } from "../../PathCreator";
 
 // ------------------------------------------------------------------------------------------
-
-export class PathCreator {
-  getHomePath(): string {
-    return `/`;
-  }
-  getDetailPath(owner: string, scoreName: string): string {
-    return `/home/${owner}/${scoreName}/`;
-  }
-  getEditPropertyPath(owner: string, scoreName: string): string {
-    const action: HomeActionType = "edit";
-    return `/home/${owner}/${scoreName}/${action}/`;
-  }
-  getEditPagePath(owner: string, scoreName: string): string {
-    const action: HomeActionType = "edit-page";
-    return `/home/${owner}/${scoreName}/${action}/`;
-  }
-  getVersionPath(owner: string, scoreName: string, version: string): string {
-    const action: HomeActionType = "version";
-    return `/home/${owner}/${scoreName}/${action}/${version}/`;
-  }
-  getPagePath(
-    owner: string,
-    scoreName: string,
-    version: string,
-    pageIndex: number
-  ): string {
-    const action: HomeActionType = "version";
-    return `/home/${owner}/${scoreName}/${action}/${version}/${pageIndex}/`;
-  }
-}
 
 // ------------------------------------------------------------------------------------------
 

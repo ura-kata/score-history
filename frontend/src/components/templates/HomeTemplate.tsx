@@ -11,7 +11,7 @@ import {
 import React from "react";
 import { Link } from "react-router-dom";
 import { useScorePathParameter } from "../../hooks/scores/useScorePathParameter";
-import { PathCreator } from "../pages/HomePage";
+import PathCreator from "../../PathCreator";
 import GenericTemplate from "./GenericTemplate";
 
 // ---------------------------------------------------------------------------
