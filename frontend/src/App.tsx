@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import UploadScorePage from "./components/pages/UploadScorePage";
 import DisplayPage from "./components/pages/DisplayPage";
 import ApiTestPage from "./components/pages/ApiTestPage";
-import ScorePage from "./components/pages/ScorePage";
 
 import useAppReducer, { AppContextDispatch, AppContext } from "./AppContext";
 import HomePage from "./components/pages/HomePage";
