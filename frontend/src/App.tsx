@@ -11,6 +11,7 @@ import NewScorePage from "./components/pages/NewScorePage";
 import ScoreListPage from "./components/pages/ScoreListPage";
 import ScoreDetailPage from "./components/pages/ScoreDetailPage";
 import EditScorePropertyPage from "./components/pages/EditScorePropertyPage";
+import UpdateScorePagePage from "./components/pages/UpdateScorePagePage";
 
 const App = () => {
   const [state, dispatch] = useAppReducer();
@@ -37,6 +38,10 @@ const App = () => {
             <Route
               path="/home/:owner?/:scoreName?/edit/"
               component={EditScorePropertyPage}
+            />
+            <Route
+              path="/home/:owner?/:scoreName?/edit-page/"
+              component={UpdateScorePagePage}
             />
             <Route
               path={[
