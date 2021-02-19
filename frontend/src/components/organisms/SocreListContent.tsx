@@ -20,63 +20,9 @@ import { ScoreSummary, ScoreSummarySet } from "../../ScoreClient";
 import { scoreClient } from "../../global";
 import { Alert } from "@material-ui/lab";
 import PathCreator from "../../PathCreator";
+import ScoreListView from "../molecules/ScoreListView";
 
 // ------------------------------------------------------------------------------------------
-interface ScoreListViewProps {
-  scoreSet: ScoreSummarySet;
-  onClick?: (owner: string, scoreName: string, score: ScoreSummary) => void;
-}
-
-const ScoreListView = (props: ScoreListViewProps) => {
-  const _scoreSet = props.scoreSet;
-  const _onClick = props.onClick;
-
-  const classes = makeStyles((theme: Theme) =>
-    createStyles({
-      scoreCard: {
-        width: "300px",
-        margin: theme.spacing(1),
-      },
-      scoreCardName: {
-        color: colors.grey[400],
-      },
-      scoreCardContainer: {
-        margin: theme.spacing(3, 0, 0),
-      },
-    })
-  )();
-
-  return (
-    <Grid container className={classes.scoreCardContainer}>
-      {Object.entries(_scoreSet).map(([ownerAndScoreName, score], i) => {
-        const os = ownerAndScoreName.split("/");
-        const owner = os[0];
-        const scoreName = os[1];
-        const property = score.property;
-
-        return (
-          <Card key={i.toString()} className={classes.scoreCard}>
-            <CardActionArea
-              onClick={() => {
-                if (_onClick) _onClick(owner, scoreName, score);
-              }}
-            >
-              <CardContent>
-                <Typography variant="h5">{property?.title}</Typography>
-                <Typography variant="caption" className={classes.scoreCardName}>
-                  {scoreName}
-                </Typography>
-                <Typography variant="subtitle1" gutterBottom>
-                  {property?.description}
-                </Typography>
-              </CardContent>
-            </CardActionArea>
-          </Card>
-        );
-      })}
-    </Grid>
-  );
-};
 
 // ------------------------------------------------------------------------------------------
 

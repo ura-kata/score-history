@@ -8,6 +8,7 @@ import useAppReducer, { AppContextDispatch, AppContext } from "./AppContext";
 import HomePage from "./components/pages/HomePage";
 import { apiClient } from "./global";
 import NewScorePage from "./components/pages/NewScorePage";
+import ScoreListPage from "./components/pages/ScoreListPage";
 
 const App = () => {
   const [state, dispatch] = useAppReducer();
@@ -29,7 +30,8 @@ const App = () => {
       <AppContextDispatch.Provider value={dispatch}>
         <Router>
           <Switch>
-            <Route path="/" component={HomePage} exact />
+            <Route path="/" component={ScoreListPage} exact />
+            <Route path="/home/" component={ScoreListPage} exact />
             <Route
               path="/home/:owner?/:scoreName?/:action?/:version?/:pageIndex?"
               component={HomePage}
