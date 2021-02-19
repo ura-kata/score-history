@@ -12,6 +12,7 @@ import ScoreListPage from "./components/pages/ScoreListPage";
 import ScoreDetailPage from "./components/pages/ScoreDetailPage";
 import EditScorePropertyPage from "./components/pages/EditScorePropertyPage";
 import UpdateScorePagePage from "./components/pages/UpdateScorePagePage";
+import { HomeActionType } from "./PathCreator";
 
 const App = () => {
   const [state, dispatch] = useAppReducer();
@@ -36,17 +37,20 @@ const App = () => {
             <Route path="/" component={ScoreListPage} exact />
             <Route path="/home/" component={ScoreListPage} exact />
             <Route
-              path="/home/:owner?/:scoreName?/edit/"
+              path={`/home/:owner?/:scoreName?/${((): HomeActionType =>
+                "edit")()}/`}
               component={EditScorePropertyPage}
             />
             <Route
-              path="/home/:owner?/:scoreName?/edit-page/"
+              path={`/home/:owner?/:scoreName?/${((): HomeActionType =>
+                "edit-page")()}/`}
               component={UpdateScorePagePage}
             />
             <Route
               path={[
                 "/home/:owner?/:scoreName?/",
-                "/home/:owner?/:scoreName?/version/:version?/:pageIndex?/",
+                `/home/:owner?/:scoreName?/${((): HomeActionType =>
+                  "version")()}/:version?/:pageIndex?/`,
               ]}
               component={ScoreDetailPage}
             />
