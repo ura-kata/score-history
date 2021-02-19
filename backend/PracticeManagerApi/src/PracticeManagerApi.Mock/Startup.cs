@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using PracticeManagerApi.Services.Storage;
 
 namespace PracticeManagerApi.Mock
 {
@@ -21,6 +22,9 @@ namespace PracticeManagerApi.Mock
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddScoped<IScoreStorage>(provider =>
+                new ScoreFileSystemStorage(Configuration["ScoreS3Directory"]));
+            
             services.AddControllers()
                 .AddJsonOptions(option =>
                 {

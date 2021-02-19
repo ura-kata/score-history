@@ -1,1 +1,7 @@
-Contents/IMSLP*
+Contents/**/*.png
+Contents/**/*.jpg
+Contents/**/*.jpeg
+
+Scores/
+S3-Scores/
+S3-Users/

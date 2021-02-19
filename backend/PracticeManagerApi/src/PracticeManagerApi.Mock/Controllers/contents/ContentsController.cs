@@ -26,7 +26,7 @@ namespace PracticeManagerApi.Mock.Controllers.contents
 
 
         [HttpGet]
-        [Route("{filename}")]
+        [Route("{**filename}")]
         public IActionResult GetFile(
             [FromRoute(Name = "filename")] string fileName)
         {
