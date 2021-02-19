@@ -5,7 +5,6 @@ import DisplayPage from "./components/pages/DisplayPage";
 import ApiTestPage from "./components/pages/ApiTestPage";
 
 import useAppReducer, { AppContextDispatch, AppContext } from "./AppContext";
-import HomePage from "./components/pages/HomePage";
 import { apiClient } from "./global";
 import NewScorePage from "./components/pages/NewScorePage";
 import ScoreListPage from "./components/pages/ScoreListPage";
@@ -52,10 +51,6 @@ const App = () => {
                   "version")()}/:version?/:pageIndex?/`,
               ]}
               component={ScoreDetailPage}
-            />
-            <Route
-              path="/home/:owner?/:scoreName?/:action?/"
-              component={HomePage}
             />
             <Route path="/new" component={NewScorePage} />
             <Route path="/upload" component={UploadScorePage} />
