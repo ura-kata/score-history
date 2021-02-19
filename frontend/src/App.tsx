@@ -1,13 +1,17 @@
-import React, { useEffect, useReducer, useState } from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import UploadScorePage from "./components/pages/UploadScorePage";
 import DisplayPage from "./components/pages/DisplayPage";
 import ApiTestPage from "./components/pages/ApiTestPage";
 
 import useAppReducer, { AppContextDispatch, AppContext } from "./AppContext";
-import HomePage from "./components/pages/HomePage";
 import { apiClient } from "./global";
 import NewScorePage from "./components/pages/NewScorePage";
+import ScoreListPage from "./components/pages/ScoreListPage";
+import ScoreDetailPage from "./components/pages/ScoreDetailPage";
+import EditScorePropertyPage from "./components/pages/EditScorePropertyPage";
+import UpdateScorePagePage from "./components/pages/UpdateScorePagePage";
+import { HomeActionType } from "./PathCreator";
 
 const App = () => {
   const [state, dispatch] = useAppReducer();
@@ -29,10 +33,24 @@ const App = () => {
       <AppContextDispatch.Provider value={dispatch}>
         <Router>
           <Switch>
-            <Route path="/" component={HomePage} exact />
+            <Route path={["/", "/home/"]} component={ScoreListPage} exact />
             <Route
-              path="/home/:owner?/:scoreName?/:action?/:version?/:pageIndex?"
-              component={HomePage}
+              path={`/home/:owner?/:scoreName?/${((): HomeActionType =>
+                "edit")()}/`}
+              component={EditScorePropertyPage}
+            />
+            <Route
+              path={`/home/:owner?/:scoreName?/${((): HomeActionType =>
+                "edit-page")()}/`}
+              component={UpdateScorePagePage}
+            />
+            <Route
+              path={[
+                "/home/:owner?/:scoreName?/",
+                `/home/:owner?/:scoreName?/${((): HomeActionType =>
+                  "version")()}/:version?/:pageIndex?/`,
+              ]}
+              component={ScoreDetailPage}
             />
             <Route path="/new" component={NewScorePage} />
             <Route path="/upload" component={UploadScorePage} />
