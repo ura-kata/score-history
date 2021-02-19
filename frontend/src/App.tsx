@@ -34,8 +34,7 @@ const App = () => {
       <AppContextDispatch.Provider value={dispatch}>
         <Router>
           <Switch>
-            <Route path="/" component={ScoreListPage} exact />
-            <Route path="/home/" component={ScoreListPage} exact />
+            <Route path={["/", "/home/"]} component={ScoreListPage} exact />
             <Route
               path={`/home/:owner?/:scoreName?/${((): HomeActionType =>
                 "edit")()}/`}
