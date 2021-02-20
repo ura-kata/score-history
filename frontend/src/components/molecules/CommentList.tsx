@@ -27,12 +27,12 @@ const useStyles = makeStyles((theme: Theme) =>
     root: {
       display: "flex",
       flexDirection: "column",
+      height: "100%",
     },
     mainContainer: {
       flexGrow: 1,
-      display: "flex",
       overflowY: "auto",
-      flexDirection: "column",
+      paddingRight: "10px",
     },
     alartContainer: {},
     commentContainer: {},
