@@ -43,6 +43,10 @@ export interface ScorePage {
   thumbnail: string;
 }
 
+export interface ScoreComment {
+  comment: string;
+}
+
 export type PageOperationType = "add" | "insert" | "remove" | "update";
 export interface PageOperation {
   type: PageOperationType;
@@ -375,6 +379,48 @@ export default class ScoreClient {
       throw new Error(
         `変更元のデータが古いです。更新してから再度実行してください。`
       );
+    }
+  }
+
+  async getComments(
+    owner: string,
+    scoreName: string,
+    version: string,
+    pageIndex: number
+  ): Promise<ScoreComment[]> {
+    const versionSet = this.versionSetCollection[`${owner}/${scoreName}`];
+    const hash = versionSet ? versionSet[version] : undefined;
+    if (!hash) {
+      throw new Error(`'${version}' は存在しません`);
+    }
+    try {
+      const versionObjectSet = await this.objectStore.getVersionObjects(
+        owner,
+        scoreName,
+        [hash]
+      );
+      const versionObject = versionObjectSet[hash];
+
+      const pageHash = versionObject.pages[pageIndex];
+      if (!pageHash) return [];
+      const commentHashList = versionObject.comments[pageHash];
+      if (!commentHashList || commentHashList.length === 0) {
+        return [];
+      }
+
+      const commentSet = await this.objectStore.getCommentObjects(
+        owner,
+        scoreName,
+        commentHashList
+      );
+
+      return commentHashList
+        .map((commentHash) => {
+          return commentSet[commentHash];
+        })
+        .map((comment) => ({ comment: comment.comment }));
+    } catch (err) {
+      throw new Error("コメントの取得に失敗しました");
     }
   }
 }
