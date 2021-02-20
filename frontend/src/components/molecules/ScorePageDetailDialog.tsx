@@ -19,6 +19,19 @@ import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import { ScorePage } from "../../ScoreClient";
 import CommentList from "./CommentList";
 
+// -----------------------------
+
+function DialogPaperComponent(props: PaperProps) {
+  return (
+    <Paper
+      {...props}
+      // コメントをスクロールするために高さを指定する
+      style={{ height: "100%" }}
+    />
+  );
+}
+
+// -----------------------------
 export interface ScorePageDetailDialogProps {
   page?: ScorePage;
   open: boolean;
@@ -110,6 +123,13 @@ const ScorePageDetailDialog = (props: ScorePageDetailDialogProps) => {
         width: "344px",
         overflow: "hidden",
       },
+      dialogContentRoot: { display: "flex", height: "100%", width: "100%" },
+      imageArea: {
+        width: "60%",
+        display: "flex",
+        justifyContent: "center",
+      },
+      commentArea: { width: "40%" },
     })
   )();
 
@@ -234,15 +254,19 @@ const ScorePageDetailDialog = (props: ScorePageDetailDialogProps) => {
 
   return (
     <>
-      <Dialog onClose={_onClose} open={_open} fullWidth={true} maxWidth={"md"}>
+      <Dialog
+        onClose={_onClose}
+        open={_open}
+        fullWidth={true}
+        maxWidth={"md"}
+        PaperComponent={DialogPaperComponent}
+      >
         <DialogTitle>
           <Typography align="center">{_page?.number}</Typography>
         </DialogTitle>
         <DialogContent dividers className={classes.dialogContent}>
-          <Grid container>
-            <Grid item xs={8}>
-              <Grid container justify="center" alignContent="center">
-                <Grid item xs style={{ textAlign: "center" }}>
+          <div className={classes.dialogContentRoot}>
+            <div className={classes.imageArea}>
                   <div
                     id="lense-container"
                     ref={lensContainerRef}
@@ -259,13 +283,11 @@ const ScorePageDetailDialog = (props: ScorePageDetailDialogProps) => {
                     />
                     <div id="lense" ref={lensRef} className={classes.lens} />
                   </div>
-                </Grid>
-              </Grid>
-            </Grid>
-            <Grid item xs={4}>
+            </div>
+            <div className={classes.commentArea}>
               <CommentList />
-            </Grid>
-          </Grid>
+            </div>
+          </div>
           <Popper
             open={openLenseArea}
             anchorEl={anchorEl}
