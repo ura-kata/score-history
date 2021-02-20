@@ -17,6 +17,7 @@ import {
 import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import { ScorePage } from "../../ScoreClient";
+import CommentList from "./CommentList";
 
 export interface ScorePageDetailDialogProps {
   page?: ScorePage;
@@ -262,21 +263,7 @@ const ScorePageDetailDialog = (props: ScorePageDetailDialogProps) => {
               </Grid>
             </Grid>
             <Grid item xs={4}>
-              <Grid
-                container
-                justify="flex-start"
-                direction="row"
-                alignItems="flex-start"
-                alignContent="flex-start"
-                spacing={3}
-              >
-                <Grid item xs={12}>
-                  <Typography>ここにコメントなど表示</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography>ここにコメントなど表示</Typography>
-                </Grid>
-              </Grid>
+              <CommentList />
             </Grid>
           </Grid>
           <Popper
