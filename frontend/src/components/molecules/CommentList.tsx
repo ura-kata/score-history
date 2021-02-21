@@ -12,7 +12,7 @@ import { Alert } from "@material-ui/lab";
 import React, { useEffect, useState } from "react";
 import { scoreClient } from "../../global";
 import { useScorePathParameter } from "../../hooks/scores/useScorePathParameter";
-import { ScoreComment } from "../../ScoreClient";
+import { CommentOperation, ScoreComment } from "../../ScoreClient";
 import EditIcon from "@material-ui/icons/Edit";
 import SaveIcon from "@material-ui/icons/Save";
 import CancelIcon from "@material-ui/icons/Cancel";
@@ -20,6 +20,7 @@ import AddIcon from "@material-ui/icons/Add";
 import DeleteIcon from "@material-ui/icons/Delete";
 import CheckIcon from "@material-ui/icons/Check";
 import ClearIcon from "@material-ui/icons/Clear";
+import { AddComment } from "@material-ui/icons";
 
 const loadComments = async (
   owner: string,
@@ -28,6 +29,7 @@ const loadComments = async (
 ): Promise<ScoreComment[]> => {
   try {
     console.log("loadComments");
+    console.log({ owner, scoreName });
     return await scoreClient.getComments(owner, scoreName, pageIndex);
   } catch (err) {
     console.log(err);
@@ -131,13 +133,47 @@ export default function CommentList(props: CommentListProps) {
     commentLoadedErrorMessage,
     setCommentLoadedErrorMessage,
   ] = useState<string>();
+  const [operations, setOperations] = useState<CommentOperation[]>([]);
+  const [addCommentText, setAddCommentText] = useState("");
 
   const pathParam = useScorePathParameter();
   const owner = pathParam.owner;
-  const scoreName = pathParam.owner;
+  const scoreName = pathParam.scoreName;
   const pageIndex = pathParam.pageIndex;
 
   const edit = Boolean(_edit);
+
+  const afterComments = [...comments];
+  operations.forEach((ope, index) => {
+    switch (ope.type) {
+      case "add": {
+        const addComment: ScoreComment = {
+          comment: ope.comment ?? "",
+        };
+        afterComments.push(addComment);
+        break;
+      }
+      case "insert": {
+        if (ope.index === undefined) return;
+        const insertComment: ScoreComment = {
+          comment: ope.comment ?? "",
+        };
+        afterComments.splice(ope.index, 0, insertComment);
+        break;
+      }
+      case "remove": {
+        if (ope.index === undefined) return;
+        afterComments.splice(ope.index, 1);
+        break;
+      }
+    }
+  });
+
+  const resetState = () => {
+    setOperations([]);
+    setAddCommentText("");
+    setAdding(false);
+  };
 
   useEffect(() => {
     if (!owner) return;
@@ -147,6 +183,7 @@ export default function CommentList(props: CommentListProps) {
       try {
         const c = await loadComments(owner, scoreName, pageIndex);
         setComments(c);
+        resetState();
         setCommentLoadedErrorMessage(undefined);
       } catch (err) {
         setCommentLoadedErrorMessage(err.message);
@@ -160,35 +197,66 @@ export default function CommentList(props: CommentListProps) {
     if (!_onEditChange) return;
     _onEditChange(true);
   };
-  const handleOnSaveClick = () => {
+  const handleOnSaveClick = async () => {
     try {
-      // TODO 更新
+      if (owner && scoreName && pageIndex !== undefined) {
+        await scoreClient.updateComments(
+          owner,
+          scoreName,
+          pageIndex,
+          operations
+        );
+
+        const c = await loadComments(owner, scoreName, pageIndex);
+        setComments(c);
+        resetState();
+      }
+
+      resetState();
     } catch (err) {
       console.log(err);
       return;
     }
-    if (_onUpdated) {
-      _onUpdated();
-    }
+
     if (_onEditChange) {
       _onEditChange(false);
     }
+    if (_onUpdated) {
+      _onUpdated();
+    }
   };
   const handleOnCancelClick = () => {
+    resetState();
+
     if (!_onEditChange) return;
     _onEditChange(false);
   };
 
   const handleOnAddClick = () => {
+    setAddCommentText("");
     setAdding(true);
   };
 
   const handleCommentAddOk = () => {
+    const newOperations = [...operations];
+    newOperations.push({
+      type: "add",
+      comment: addCommentText,
+    });
+    setOperations(newOperations);
+    setAddCommentText("");
     setAdding(false);
   };
 
   const handleCommentAddCancel = () => {
+    setAddCommentText("");
     setAdding(false);
+  };
+
+  const handleAddCommentChnage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setAddCommentText(event.target.value ?? "");
   };
 
   return (
@@ -214,6 +282,8 @@ export default function CommentList(props: CommentListProps) {
                       multiline
                       variant="outlined"
                       className={classes.commentAddField}
+                      value={addCommentText}
+                      onChange={handleAddCommentChnage}
                     />
                   </form>
                 </Grid>
@@ -233,9 +303,21 @@ export default function CommentList(props: CommentListProps) {
                 </Grid>
               </Grid>
             </Grid>
+          ) : afterComments.length === 0 ? (
+            <Grid item>
+              <Typography>コメントがありません</Typography>
+            </Grid>
           ) : (
-            comments.map((comment, index) => {
-              const handleOnRemoveClick = () => {};
+            afterComments.map((comment, index) => {
+              const handleOnRemoveClick = () => {
+                const newOperations = [...operations];
+
+                newOperations.push({
+                  type: "remove",
+                  index: index,
+                });
+                setOperations(newOperations);
+              };
               return (
                 <Grid item xs={12} key={index}>
                   <CommentCard
