@@ -70,6 +70,7 @@ const ScorePageDetailDialog = (props: ScorePageDetailDialogProps) => {
     if (!_onPrev) return;
     _onPrev();
   };
+
   const onNext = () => {
     setCommentEdit(false);
     if (!_onNext) return;
