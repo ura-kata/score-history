@@ -59,23 +59,17 @@ export default function ScoreDetailPage() {
   const classes = useStyles();
   const history = useHistory();
 
-  const _selectedVersion = pathParam.version;
-
   const [loadScoreDataError, setLoadScoreDataError] = useState<string>();
   const [loadPagesError, setLoadPagesError] = useState<string>();
 
   const [property, setProperty] = useState<ScoreProperty>({});
-  const [versions, setVersions] = useState<string[]>([]);
   const [pages, setPages] = useState<ScorePage[]>([]);
   const [loadedScoreData, setLoadedScoreData] = useState(false);
-
-  const version = _selectedVersion ?? (versions ?? []).slice(-1)[0];
 
   const loadScoreData = async (owner: string, scoreName: string) => {
     try {
       const scoreData = await scoreClient.getScore(owner, scoreName);
       setProperty(scoreData.scoreSummary.property);
-      setVersions(scoreData.versions);
       setLoadScoreDataError(undefined);
       setLoadedScoreData(true);
     } catch (err) {
@@ -84,15 +78,9 @@ export default function ScoreDetailPage() {
     }
   };
 
-  const loadPages = async (
-    owner: string,
-    scoreName: string,
-    version: string
-  ) => {
+  const loadPages = async (owner: string, scoreName: string) => {
     try {
-      console.log(version);
-      const pages = await scoreClient.getPages(owner, scoreName, version);
-      console.log(pages);
+      const pages = await scoreClient.getPages(owner, scoreName);
       setPages(pages);
       setLoadPagesError(undefined);
     } catch (err) {
@@ -108,52 +96,10 @@ export default function ScoreDetailPage() {
       if (!loadedScoreData) {
         loadScoreData(_owner, _scoreName);
       }
-      if (!version) return;
-      loadPages(_owner, _scoreName, version);
+      loadPages(_owner, _scoreName);
     };
     f();
-  }, [_owner, _scoreName, loadedScoreData, version]);
-
-  const versionsReverse = versions.slice().reverse();
-
-  const VersionTimeLine = () => (
-    <Grid container direction="row" alignItems="center" justify="center">
-      <Grid item xs={12}>
-        <div className={classes.versionButtonContainer}>
-          {versionsReverse.map((v, index) => {
-            return (
-              <div
-                key={`${index}-version`}
-                className={classes.versionButtonRoot}
-              >
-                <Button
-                  onClick={() => {
-                    if (!_owner) return;
-                    if (!_scoreName) return;
-                    const path = _pathCreator.getVersionPath(
-                      _owner,
-                      _scoreName,
-                      v
-                    );
-                    history.push(path);
-                  }}
-                  variant={version === v ? "contained" : "outlined"}
-                  className={classes.versionButton}
-                >
-                  {v}
-                </Button>
-                {index < versions.length - 1 ? (
-                  <div className={classes.versionButtonJoin} />
-                ) : (
-                  <></>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </Grid>
-    </Grid>
-  );
+  }, [_owner, _scoreName, loadedScoreData]);
 
   const handleOnEditProperty = () => {
     if (!_owner) return;
@@ -190,19 +136,14 @@ export default function ScoreDetailPage() {
   // version が選択されていない場合は最新のバージョンを表示することにする
 
   const thumbnailContents =
-    _owner && _scoreName && version ? (
+    _owner && _scoreName ? (
       <Grid container>
         {pages.map((page, index) => {
           return (
             <Grid item key={index}>
               <Button
                 component={Link}
-                to={_pathCreator.getPagePath(
-                  _owner,
-                  _scoreName,
-                  version,
-                  index
-                )}
+                to={_pathCreator.getPagePath(_owner, _scoreName, index)}
               >
                 <Paper>
                   <Grid container justify="center">
@@ -234,40 +175,27 @@ export default function ScoreDetailPage() {
   const handleOnPageClose = () => {
     if (!_owner) return;
     if (!_scoreName) return;
-    if (!version) return;
-    history.push(_pathCreator.getVersionPath(_owner, _scoreName, version));
+    history.push(_pathCreator.getDetailPath(_owner, _scoreName));
   };
   const handleOnPagePrev =
     _owner &&
     _scoreName &&
-    version &&
     _selectedPageIndex !== undefined &&
     0 < _selectedPageIndex
       ? () => {
           history.push(
-            _pathCreator.getPagePath(
-              _owner,
-              _scoreName,
-              version,
-              _selectedPageIndex - 1
-            )
+            _pathCreator.getPagePath(_owner, _scoreName, _selectedPageIndex - 1)
           );
         }
       : undefined;
   const handleOnPageNext =
     _owner &&
     _scoreName &&
-    version &&
     _selectedPageIndex !== undefined &&
     _selectedPageIndex < pages.length - 1
       ? () => {
           history.push(
-            _pathCreator.getPagePath(
-              _owner,
-              _scoreName,
-              version,
-              _selectedPageIndex + 1
-            )
+            _pathCreator.getPagePath(_owner, _scoreName, _selectedPageIndex + 1)
           );
         }
       : undefined;
@@ -328,13 +256,10 @@ export default function ScoreDetailPage() {
           </Grid>
         </Grid>
         <Grid item xs={12}>
-          {0 < versions.length ? <VersionTimeLine /> : <InitialVersionButton />}
+          {0 < pages.length ? thumbnailContents : <InitialVersionButton />}
         </Grid>
         <Grid item xs={12}>
-          {thumbnailContents}
-        </Grid>
-        <Grid item xs={12}>
-          {0 < versions.length ? <UpdateVersionButton /> : <></>}
+          {0 < pages.length ? <UpdateVersionButton /> : <></>}
         </Grid>
         <Grid item xs={12}>
           <ScorePageDetailDialog

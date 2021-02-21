@@ -5,7 +5,6 @@ export interface ScorePathParameter {
   owner?: string;
   scoreName?: string;
   action?: HomeActionType;
-  version?: string;
   pageIndex?: number;
 }
 export function useScorePathParameter(): ScorePathParameter {
@@ -13,15 +12,13 @@ export function useScorePathParameter(): ScorePathParameter {
     owner?: string;
     scoreName?: string;
     action?: string;
-    version?: string;
     pageIndex?: string;
-  }>("/home/:owner?/:scoreName?/:action?/:version?/:pageIndex?");
+  }>("/home/:owner?/:scoreName?/:action?/:pageIndex?");
 
   const owner = urlMatch?.params?.owner;
   const scoreName = urlMatch?.params?.scoreName;
   const action = urlMatch?.params?.action as HomeActionType | undefined;
 
-  const version = urlMatch?.params.version;
   const pageIndexText = urlMatch?.params.pageIndex;
   const pageIndex =
     pageIndexText !== undefined ? parseInt(pageIndexText) : undefined;
@@ -30,7 +27,6 @@ export function useScorePathParameter(): ScorePathParameter {
     owner: owner,
     scoreName: scoreName,
     action: action,
-    version: version,
     pageIndex: pageIndex,
   };
 }

@@ -24,12 +24,11 @@ import ClearIcon from "@material-ui/icons/Clear";
 const loadComments = async (
   owner: string,
   scoreName: string,
-  version: string,
   pageIndex: number
 ): Promise<ScoreComment[]> => {
   try {
     console.log("loadComments");
-    return await scoreClient.getComments(owner, scoreName, version, pageIndex);
+    return await scoreClient.getComments(owner, scoreName, pageIndex);
   } catch (err) {
     console.log(err);
     throw new Error(`コメントの取得に失敗しました`);
@@ -136,7 +135,6 @@ export default function CommentList(props: CommentListProps) {
   const pathParam = useScorePathParameter();
   const owner = pathParam.owner;
   const scoreName = pathParam.owner;
-  const version = pathParam.version;
   const pageIndex = pathParam.pageIndex;
 
   const edit = Boolean(_edit);
@@ -144,11 +142,10 @@ export default function CommentList(props: CommentListProps) {
   useEffect(() => {
     if (!owner) return;
     if (!scoreName) return;
-    if (!version) return;
     if (pageIndex === undefined) return;
     const f = async () => {
       try {
-        const c = await loadComments(owner, scoreName, version, pageIndex);
+        const c = await loadComments(owner, scoreName, pageIndex);
         setComments(c);
         setCommentLoadedErrorMessage(undefined);
       } catch (err) {
@@ -157,7 +154,7 @@ export default function CommentList(props: CommentListProps) {
     };
 
     f();
-  }, [owner, pageIndex, scoreName, version]);
+  }, [owner, pageIndex, scoreName]);
 
   const handleOnEditClick = () => {
     if (!_onEditChange) return;

@@ -237,30 +237,18 @@ export default class ScoreClient {
     }
   }
 
-  async getPages(
-    owner: string,
-    scoreName: string,
-    version: string
-  ): Promise<ScorePage[]> {
-    const versionSet = this.versionSetCollection[`${owner}/${scoreName}`];
-    const hash = versionSet ? versionSet[version] : undefined;
-    if (!hash) {
-      throw new Error(`'${version}' は存在しません`);
-    }
+  async getPages(owner: string, scoreName: string): Promise<ScorePage[]> {
+    const ownerAndScoreName = `${owner}/${scoreName}`;
+    const score = this.scoreSet[ownerAndScoreName];
+
     try {
-      const versionObjectSet = await this.objectStore.getVersionObjects(
-        owner,
-        scoreName,
-        [hash]
-      );
-      const versionObject = versionObjectSet[hash];
       const pageSet = await this.objectStore.getPageObjects(
         owner,
         scoreName,
-        versionObject.pages
+        score.head.pages
       );
 
-      return versionObject.pages
+      return score.head.pages
         .map((h) => pageSet[h])
         .map((p) => ({
           image: p.image,
@@ -392,25 +380,14 @@ export default class ScoreClient {
   async getComments(
     owner: string,
     scoreName: string,
-    version: string,
     pageIndex: number
   ): Promise<ScoreComment[]> {
-    const versionSet = this.versionSetCollection[`${owner}/${scoreName}`];
-    const hash = versionSet ? versionSet[version] : undefined;
-    if (!hash) {
-      throw new Error(`'${version}' は存在しません`);
-    }
+    const ownerAndScoreName = `${owner}/${scoreName}`;
+    const score = this.scoreSet[ownerAndScoreName];
     try {
-      const versionObjectSet = await this.objectStore.getVersionObjects(
-        owner,
-        scoreName,
-        [hash]
-      );
-      const versionObject = versionObjectSet[hash];
-
-      const pageHash = versionObject.pages[pageIndex];
+      const pageHash = score.head.pages[pageIndex];
       if (!pageHash) return [];
-      const commentHashList = versionObject.comments[pageHash];
+      const commentHashList = score.head.comments[pageHash];
       if (!commentHashList || commentHashList.length === 0) {
         return [];
       }

@@ -1,4 +1,4 @@
-export type HomeActionType = "edit" | "version" | "edit-page";
+export type HomeActionType = "edit" | "page" | "edit-page";
 
 export default class PathCreator {
   getHomePath(): string {
@@ -15,17 +15,8 @@ export default class PathCreator {
     const action: HomeActionType = "edit-page";
     return `/home/${owner}/${scoreName}/${action}/`;
   }
-  getVersionPath(owner: string, scoreName: string, version: string): string {
-    const action: HomeActionType = "version";
-    return `/home/${owner}/${scoreName}/${action}/${version}/`;
-  }
-  getPagePath(
-    owner: string,
-    scoreName: string,
-    version: string,
-    pageIndex: number
-  ): string {
-    const action: HomeActionType = "version";
-    return `/home/${owner}/${scoreName}/${action}/${version}/${pageIndex}/`;
+  getPagePath(owner: string, scoreName: string, pageIndex: number): string {
+    const action: HomeActionType = "page";
+    return `/home/${owner}/${scoreName}/${action}/${pageIndex}/`;
   }
 }

@@ -44,12 +44,8 @@ export default class ScoreClientMock {
     return await this._socreClient.createVersions(owner, scoreName);
   }
 
-  async getPages(
-    owner: string,
-    scoreName: string,
-    version: string
-  ): Promise<ScorePage[]> {
-    return await this._socreClient.getPages(owner, scoreName, version);
+  async getPages(owner: string, scoreName: string): Promise<ScorePage[]> {
+    return await this._socreClient.getPages(owner, scoreName);
   }
 
   async updateProperty(
@@ -77,13 +73,12 @@ export default class ScoreClientMock {
   async getComments(
     owner: string,
     scoreName: string,
-    version: string,
     pageIndex: number
   ): Promise<ScoreComment[]> {
     return new Promise<ScoreComment[]>((resolve) => {
       resolve(
         [...Array(50)].map((item, index) => ({
-          comment: `${owner}: ${scoreName}: ${version}: ${pageIndex}: ${index} テスト用のコメント1\n改行したコメント\nなどなど`,
+          comment: `${owner}: ${scoreName}: ${pageIndex}: ${index} テスト用のコメント1\n改行したコメント\nなどなど`,
         }))
       );
     });

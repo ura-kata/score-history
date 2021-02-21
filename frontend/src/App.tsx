@@ -48,7 +48,7 @@ const App = () => {
               path={[
                 "/home/:owner?/:scoreName?/",
                 `/home/:owner?/:scoreName?/${((): HomeActionType =>
-                  "version")()}/:version?/:pageIndex?/`,
+                  "page")()}/:pageIndex?/`,
               ]}
               component={ScoreDetailPage}
             />
