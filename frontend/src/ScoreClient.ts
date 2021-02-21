@@ -239,8 +239,11 @@ export default class ScoreClient {
 
   async getPages(owner: string, scoreName: string): Promise<ScorePage[]> {
     const ownerAndScoreName = `${owner}/${scoreName}`;
-    const score = this.scoreSet[ownerAndScoreName];
-
+    let score = this.scoreSet[ownerAndScoreName];
+    if (!score) {
+      await this.getScore(owner, scoreName);
+      score = this.scoreSet[ownerAndScoreName];
+    }
     try {
       const pageSet = await this.objectStore.getPageObjects(
         owner,
@@ -265,7 +268,7 @@ export default class ScoreClient {
     scoreName: string,
     oldProperty: ScoreProperty,
     newProperty: ScoreProperty
-  ): Promise<void> {
+  ): Promise<ScoreData> {
     if (
       oldProperty.title === newProperty.title &&
       oldProperty.description === newProperty.description
@@ -273,6 +276,9 @@ export default class ScoreClient {
       throw new Error(`プロパティの変更がありません`);
     }
     const ownerAndScoreName = `${owner}/${scoreName}`;
+
+    // scoreSet 更新し最新のデータを取得するために getScore を呼ぶ
+    await this.getScore(owner, scoreName);
     const score = this.scoreSet[ownerAndScoreName];
 
     const request: UpdatePropertyRequest = {
@@ -291,6 +297,7 @@ export default class ScoreClient {
 
     try {
       await this.apiClient.updateScoreV2Property(owner, scoreName, request);
+      return await this.getScore(owner, scoreName);
     } catch (err) {
       console.log(err);
       throw new Error(
@@ -303,11 +310,14 @@ export default class ScoreClient {
     owner: string,
     scoreName: string,
     pageOperations: PageOperation[]
-  ): Promise<void> {
+  ): Promise<ScoreData> {
     if (!(0 < pageOperations.length)) {
       throw new Error(`更新操作がありません`);
     }
     const ownerAndScoreName = `${owner}/${scoreName}`;
+
+    // scoreSet 更新し最新のデータを取得するために getScore を呼ぶ
+    await this.getScore(owner, scoreName);
     const score = this.scoreSet[ownerAndScoreName];
 
     const commits: CommitObject[] = [];
@@ -368,7 +378,7 @@ export default class ScoreClient {
     try {
       await this.apiClient.commit(owner, scoreName, commitRequest);
 
-      await this.createVersions(owner, scoreName);
+      return await this.getScore(owner, scoreName);
     } catch (err) {
       console.log(err);
       throw new Error(
@@ -383,9 +393,15 @@ export default class ScoreClient {
     pageIndex: number
   ): Promise<ScoreComment[]> {
     const ownerAndScoreName = `${owner}/${scoreName}`;
-    const score = this.scoreSet[ownerAndScoreName];
+    let score = this.scoreSet[ownerAndScoreName];
+    if (!score) {
+      await this.getScore(owner, scoreName);
+      score = this.scoreSet[ownerAndScoreName];
+    }
+
     try {
       const pageHash = score.head.pages[pageIndex];
+
       if (!pageHash) return [];
       const commentHashList = score.head.comments[pageHash];
       if (!commentHashList || commentHashList.length === 0) {
@@ -413,11 +429,14 @@ export default class ScoreClient {
     scoreName: string,
     pageIndex: number,
     commentOperations: CommentOperation[]
-  ): Promise<void> {
+  ): Promise<ScoreData> {
     if (!(0 < commentOperations.length)) {
       throw new Error(`更新操作がありません`);
     }
     const ownerAndScoreName = `${owner}/${scoreName}`;
+
+    // scoreSet 更新し最新のデータを取得するために getScore を呼ぶ
+    await this.getScore(owner, scoreName);
     const score = this.scoreSet[ownerAndScoreName];
 
     const pagehash = score.head.pages[pageIndex];
@@ -482,7 +501,7 @@ export default class ScoreClient {
     try {
       await this.apiClient.commit(owner, scoreName, commitRequest);
 
-      await this.createVersions(owner, scoreName);
+      return await this.getScore(owner, scoreName);
     } catch (err) {
       console.log(err);
       throw new Error(
