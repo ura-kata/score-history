@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Button,
   createStyles,
@@ -61,19 +61,37 @@ const ScorePageDetailDialog = (props: ScorePageDetailDialogProps) => {
   const _onPrev = props.onPrev;
   const _onNext = props.onNext;
 
+  const [commentEdit, setCommentEdit] = useState(false);
+
   const classes = useStyle();
 
   const onPrev = () => {
-    if (_onPrev) _onPrev();
+    setCommentEdit(false);
+    if (!_onPrev) return;
+    _onPrev();
   };
   const onNext = () => {
-    if (_onNext) _onNext();
+    setCommentEdit(false);
+    if (!_onNext) return;
+    _onNext();
   };
+
+  const onClose = () => {
+    console.log("dialog close");
+    setCommentEdit(false);
+    if (!_onClose) return;
+    _onClose();
+  };
+
+  const handleOnCommentEditChange = (edit: boolean) => {
+    setCommentEdit(edit);
+  };
+  const handleOnCommentUpdated = () => {};
 
   return (
     <>
       <Dialog
-        onClose={_onClose}
+        onClose={onClose}
         open={_open}
         fullWidth={true}
         maxWidth={"md"}
@@ -88,7 +106,11 @@ const ScorePageDetailDialog = (props: ScorePageDetailDialogProps) => {
               <ImageLense src={_page?.image} />
             </div>
             <div className={classes.commentArea}>
-              <CommentList />
+              <CommentList
+                edit={commentEdit}
+                onEditChange={handleOnCommentEditChange}
+                onUpdated={handleOnCommentUpdated}
+              />
             </div>
           </div>
         </DialogContent>
@@ -119,7 +141,7 @@ const ScorePageDetailDialog = (props: ScorePageDetailDialogProps) => {
             <Grid item xs={4}>
               <Grid container justify="flex-end">
                 <Grid item xs style={{ textAlign: "right" }}>
-                  <Button onClick={_onClose} color="primary">
+                  <Button onClick={onClose} color="primary">
                     Close
                   </Button>
                 </Grid>
