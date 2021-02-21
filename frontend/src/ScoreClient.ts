@@ -43,12 +43,23 @@ export interface ScorePage {
   thumbnail: string;
 }
 
+export interface ScoreComment {
+  comment: string;
+}
+
 export type PageOperationType = "add" | "insert" | "remove" | "update";
 export interface PageOperation {
   type: PageOperationType;
   image?: string;
   thumbnail?: string;
   number?: string;
+  index?: number;
+}
+
+export type CommentOperationType = "add" | "insert" | "remove" | "update";
+export interface CommentOperation {
+  type: CommentOperationType;
+  comment?: string;
   index?: number;
 }
 
@@ -226,30 +237,21 @@ export default class ScoreClient {
     }
   }
 
-  async getPages(
-    owner: string,
-    scoreName: string,
-    version: string
-  ): Promise<ScorePage[]> {
-    const versionSet = this.versionSetCollection[`${owner}/${scoreName}`];
-    const hash = versionSet ? versionSet[version] : undefined;
-    if (!hash) {
-      throw new Error(`'${version}' は存在しません`);
+  async getPages(owner: string, scoreName: string): Promise<ScorePage[]> {
+    const ownerAndScoreName = `${owner}/${scoreName}`;
+    let score = this.scoreSet[ownerAndScoreName];
+    if (!score) {
+      await this.getScore(owner, scoreName);
+      score = this.scoreSet[ownerAndScoreName];
     }
     try {
-      const versionObjectSet = await this.objectStore.getVersionObjects(
-        owner,
-        scoreName,
-        [hash]
-      );
-      const versionObject = versionObjectSet[hash];
       const pageSet = await this.objectStore.getPageObjects(
         owner,
         scoreName,
-        versionObject.pages
+        score.head.pages
       );
 
-      return versionObject.pages
+      return score.head.pages
         .map((h) => pageSet[h])
         .map((p) => ({
           image: p.image,
@@ -266,7 +268,7 @@ export default class ScoreClient {
     scoreName: string,
     oldProperty: ScoreProperty,
     newProperty: ScoreProperty
-  ): Promise<void> {
+  ): Promise<ScoreData> {
     if (
       oldProperty.title === newProperty.title &&
       oldProperty.description === newProperty.description
@@ -274,6 +276,9 @@ export default class ScoreClient {
       throw new Error(`プロパティの変更がありません`);
     }
     const ownerAndScoreName = `${owner}/${scoreName}`;
+
+    // scoreSet 更新し最新のデータを取得するために getScore を呼ぶ
+    await this.getScore(owner, scoreName);
     const score = this.scoreSet[ownerAndScoreName];
 
     const request: UpdatePropertyRequest = {
@@ -292,6 +297,7 @@ export default class ScoreClient {
 
     try {
       await this.apiClient.updateScoreV2Property(owner, scoreName, request);
+      return await this.getScore(owner, scoreName);
     } catch (err) {
       console.log(err);
       throw new Error(
@@ -304,11 +310,14 @@ export default class ScoreClient {
     owner: string,
     scoreName: string,
     pageOperations: PageOperation[]
-  ): Promise<void> {
+  ): Promise<ScoreData> {
     if (!(0 < pageOperations.length)) {
       throw new Error(`更新操作がありません`);
     }
     const ownerAndScoreName = `${owner}/${scoreName}`;
+
+    // scoreSet 更新し最新のデータを取得するために getScore を呼ぶ
+    await this.getScore(owner, scoreName);
     const score = this.scoreSet[ownerAndScoreName];
 
     const commits: CommitObject[] = [];
@@ -369,7 +378,130 @@ export default class ScoreClient {
     try {
       await this.apiClient.commit(owner, scoreName, commitRequest);
 
-      await this.createVersions(owner, scoreName);
+      return await this.getScore(owner, scoreName);
+    } catch (err) {
+      console.log(err);
+      throw new Error(
+        `変更元のデータが古いです。更新してから再度実行してください。`
+      );
+    }
+  }
+
+  async getComments(
+    owner: string,
+    scoreName: string,
+    pageIndex: number
+  ): Promise<ScoreComment[]> {
+    const ownerAndScoreName = `${owner}/${scoreName}`;
+    let score = this.scoreSet[ownerAndScoreName];
+    if (!score) {
+      await this.getScore(owner, scoreName);
+      score = this.scoreSet[ownerAndScoreName];
+    }
+
+    try {
+      const pageHash = score.head.pages[pageIndex];
+
+      if (!pageHash) return [];
+      const commentHashList = score.head.comments[pageHash];
+      if (!commentHashList || commentHashList.length === 0) {
+        return [];
+      }
+
+      const commentSet = await this.objectStore.getCommentObjects(
+        owner,
+        scoreName,
+        commentHashList
+      );
+
+      return commentHashList
+        .map((commentHash) => {
+          return commentSet[commentHash];
+        })
+        .map((comment) => ({ comment: comment.comment }));
+    } catch (err) {
+      throw new Error("コメントの取得に失敗しました");
+    }
+  }
+
+  async updateComments(
+    owner: string,
+    scoreName: string,
+    pageIndex: number,
+    commentOperations: CommentOperation[]
+  ): Promise<ScoreData> {
+    if (!(0 < commentOperations.length)) {
+      throw new Error(`更新操作がありません`);
+    }
+    const ownerAndScoreName = `${owner}/${scoreName}`;
+
+    // scoreSet 更新し最新のデータを取得するために getScore を呼ぶ
+    await this.getScore(owner, scoreName);
+    const score = this.scoreSet[ownerAndScoreName];
+
+    const pagehash = score.head.pages[pageIndex];
+
+    if (!pagehash) {
+      throw new Error(`ページが存在しません`);
+    }
+    const commits: CommitObject[] = [];
+
+    commentOperations.forEach((ope, index) => {
+      switch (ope.type) {
+        case "add": {
+          const newCommit: CommitObject = {
+            type: "add_comment",
+            add_comment: {
+              page: pagehash,
+              comment: ope.comment,
+            },
+          };
+          commits.push(newCommit);
+          break;
+        }
+        case "insert": {
+          if (ope.index === undefined) {
+            throw new Error(`index is undefined.`);
+          }
+          const newCommit: CommitObject = {
+            type: "insert_comment",
+            insert_comment: {
+              page: pagehash,
+              index: ope.index,
+              comment: ope.comment,
+            },
+          };
+          commits.push(newCommit);
+          break;
+        }
+        case "remove": {
+          if (ope.index === undefined) {
+            throw new Error(`index is undefined.`);
+          }
+          const newCommit: CommitObject = {
+            type: "delete_comment",
+            delete_comment: {
+              page: pagehash,
+              index: ope.index,
+            },
+          };
+          commits.push(newCommit);
+          break;
+        }
+        case "update": {
+          break;
+        }
+      }
+    });
+
+    const commitRequest: CommitRequest = {
+      parent: score.head_hash,
+      commits: commits,
+    };
+    try {
+      await this.apiClient.commit(owner, scoreName, commitRequest);
+
+      return await this.getScore(owner, scoreName);
     } catch (err) {
       console.log(err);
       throw new Error(

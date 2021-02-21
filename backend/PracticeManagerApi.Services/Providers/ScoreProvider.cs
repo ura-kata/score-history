@@ -1172,12 +1172,16 @@ namespace PracticeManagerApi.Services.Providers
                                 throw new ArgumentException(
                                     $"[{index}].{nameof(commitObject.AddComment)}.{addComment.Page} is empty.");
 
-
+                            if (versionObjectObject.Pages.Contains(addComment.Page) == false)
+                            {
+                                throw new ArgumentException(
+                                    $"[{index}].{nameof(commitObject.DeleteComment)}[{addComment.Page}] is not found. ({addComment.Page})");
+                            }
+                            
                             var commentHashSet = versionObjectObject.Comments ?? new Dictionary<string, string[]>();
 
-                            if (false == commentHashSet.TryGetValue(addComment.Page, out var commentHashList))
-                                throw new ArgumentException(
-                                    $"[{index}].{nameof(commitObject.AddComment)}.{addComment.Page} is not found. ({addComment.Page})");
+                            commentHashSet.TryGetValue(addComment.Page, out var commentHashList);
+
                             var newCommentHashList = commentHashList?.ToList() ?? new List<string>();
 
                             var newCommentObject = new ScoreV2CommentObject()
@@ -1245,12 +1249,15 @@ namespace PracticeManagerApi.Services.Providers
                                 throw new ArgumentException(
                                     $"[{index}].{nameof(commitObject.InsertComment)}[{insertComment.Page}] is empty.");
 
+                            if (versionObjectObject.Pages.Contains(insertComment.Page) == false)
+                            {
+                                throw new ArgumentException(
+                                    $"[{index}].{nameof(commitObject.DeleteComment)}[{insertComment.Page}] is not found. ({insertComment.Page})");
+                            }
 
                             var commentHashSet = versionObjectObject.Comments ?? new Dictionary<string, string[]>();
 
-                            if (false == commentHashSet.TryGetValue(insertComment.Page, out var commentHashList))
-                                throw new ArgumentException(
-                                    $"[{index}].{nameof(commitObject.InsertComment)}[{insertComment.Page}] is not found. ({insertComment.Page})");
+                            commentHashSet.TryGetValue(insertComment.Page, out var commentHashList);
 
                             var newCommentHashList = commentHashList?.ToList() ?? new List<string>();
 
@@ -1328,17 +1335,19 @@ namespace PracticeManagerApi.Services.Providers
                                 throw new ArgumentException(
                                     $"[{index}].{nameof(commitObject.DeleteComment)}[{deleteComment.Page}] is empty.");
 
+                            if (versionObjectObject.Pages.Contains(deleteComment.Page) == false)
+                            {
+                                throw new ArgumentException(
+                                    $"[{index}].{nameof(commitObject.DeleteComment)}[{deleteComment.Page}] is not found. ({deleteComment.Page})");
+                            }
 
                             var commentHashSet = versionObjectObject.Comments ?? new Dictionary<string, string[]>();
 
-                            if (false == commentHashSet.TryGetValue(deleteComment.Page, out var commentHashList))
-                                throw new ArgumentException(
-                                    $"[{index}].{nameof(commitObject.DeleteComment)}[{deleteComment.Page}] is not found. ({deleteComment.Page})");
+                            commentHashSet.TryGetValue(deleteComment.Page, out var commentHashList);
 
                             var newCommentHashList = commentHashList?.ToList() ?? new List<string>();
 
-                            if (deleteComment.Index < newCommentHashList.Count ||
-                                newCommentHashList.Count <= deleteComment.Index)
+                            if (deleteComment.Index < 0 || newCommentHashList.Count <= deleteComment.Index)
                                 throw new ArgumentException(
                                     $"[{index}].{nameof(commitObject.DeleteComment)}[{deleteComment.Index}] out of range. ({deleteComment.Page})");
 
@@ -1382,12 +1391,15 @@ namespace PracticeManagerApi.Services.Providers
                                 throw new ArgumentException(
                                     $"[{index}].{nameof(commitObject.UpdateComment)}[{updateComment.Page}] is empty.");
 
+                            if (versionObjectObject.Pages.Contains(updateComment.Page) == false)
+                            {
+                                throw new ArgumentException(
+                                    $"[{index}].{nameof(commitObject.DeleteComment)}[{updateComment.Page}] is not found. ({updateComment.Page})");
+                            }
 
                             var commentHashSet = versionObjectObject.Comments ?? new Dictionary<string, string[]>();
 
-                            if (false == commentHashSet.TryGetValue(updateComment.Page, out var commentHashList))
-                                throw new ArgumentException(
-                                    $"[{index}].{nameof(commitObject.UpdateComment)}[{updateComment.Page}] is not found. ({updateComment.Page})");
+                            commentHashSet.TryGetValue(updateComment.Page, out var commentHashList);
 
                             var newCommentHashList = commentHashList?.ToList() ?? new List<string>();
 

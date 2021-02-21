@@ -46,7 +46,6 @@ export default function HomeTemplate(props: HomeTemplateProps) {
   const pathParam = useScorePathParameter();
   const owner = pathParam.owner;
   const scoreName = pathParam.scoreName;
-  const version = pathParam.version;
 
   const pathCreator = new PathCreator();
 
@@ -71,19 +70,6 @@ export default function HomeTemplate(props: HomeTemplateProps) {
         <Typography> {`${scoreName} (${owner})`}</Typography>
       </Button>
     );
-
-    if (version) {
-      breadcrumbList.push(
-        <Button
-          key={breadcrumbList.length}
-          className={classes.breadcrumbsLink}
-          component={Link}
-          to={pathCreator.getVersionPath(owner, scoreName, version)}
-        >
-          version {version}
-        </Button>
-      );
-    }
   }
 
   return (
