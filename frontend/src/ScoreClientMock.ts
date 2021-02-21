@@ -1,6 +1,7 @@
 import HashObjectStore from "./HashObjectStore";
 import PracticeManagerApiClient from "./PracticeManagerApiClient";
 import ScoreClient, {
+  CommentOperation,
   NewScoreData,
   PageOperation,
   ScoreComment,
@@ -82,9 +83,23 @@ export default class ScoreClientMock {
     return new Promise<ScoreComment[]>((resolve) => {
       resolve(
         [...Array(50)].map((item, index) => ({
-          comment: `${owner}: ${scoreName}: ${version}: ${pageIndex}: ${index} テスト用のコメント1`,
+          comment: `${owner}: ${scoreName}: ${version}: ${pageIndex}: ${index} テスト用のコメント1\n改行したコメント\nなどなど`,
         }))
       );
     });
+  }
+
+  async updateComments(
+    owner: string,
+    scoreName: string,
+    pageIndex: number,
+    commentOperations: CommentOperation[]
+  ): Promise<void> {
+    await this._socreClient.updateComments(
+      owner,
+      scoreName,
+      pageIndex,
+      commentOperations
+    );
   }
 }

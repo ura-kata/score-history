@@ -56,6 +56,13 @@ export interface PageOperation {
   index?: number;
 }
 
+export type CommentOperationType = "add" | "insert" | "remove" | "update";
+export interface CommentOperation {
+  type: CommentOperationType;
+  comment?: string;
+  index?: number;
+}
+
 /** サーバーのスコアにアクセスするためのクライアント */
 export default class ScoreClient {
   scoreSet: ScoreV2LatestSet = {};
@@ -421,6 +428,89 @@ export default class ScoreClient {
         .map((comment) => ({ comment: comment.comment }));
     } catch (err) {
       throw new Error("コメントの取得に失敗しました");
+    }
+  }
+
+  async updateComments(
+    owner: string,
+    scoreName: string,
+    pageIndex: number,
+    commentOperations: CommentOperation[]
+  ): Promise<void> {
+    if (!(0 < commentOperations.length)) {
+      throw new Error(`更新操作がありません`);
+    }
+    const ownerAndScoreName = `${owner}/${scoreName}`;
+    const score = this.scoreSet[ownerAndScoreName];
+
+    const pagehash = score.head.pages[pageIndex];
+
+    if (!pagehash) {
+      throw new Error(`ページが存在しません`);
+    }
+    const commits: CommitObject[] = [];
+
+    commentOperations.forEach((ope, index) => {
+      switch (ope.type) {
+        case "add": {
+          const newCommit: CommitObject = {
+            type: "add_comment",
+            add_comment: {
+              page: pagehash,
+              comment: ope.comment,
+            },
+          };
+          commits.push(newCommit);
+          break;
+        }
+        case "insert": {
+          if (ope.index === undefined) {
+            throw new Error(`index is undefined.`);
+          }
+          const newCommit: CommitObject = {
+            type: "insert_comment",
+            insert_comment: {
+              page: pagehash,
+              index: ope.index,
+              comment: ope.comment,
+            },
+          };
+          commits.push(newCommit);
+          break;
+        }
+        case "remove": {
+          if (ope.index === undefined) {
+            throw new Error(`index is undefined.`);
+          }
+          const newCommit: CommitObject = {
+            type: "delete_comment",
+            delete_comment: {
+              page: pagehash,
+              index: ope.index,
+            },
+          };
+          commits.push(newCommit);
+          break;
+        }
+        case "update": {
+          break;
+        }
+      }
+    });
+
+    const commitRequest: CommitRequest = {
+      parent: score.head_hash,
+      commits: commits,
+    };
+    try {
+      await this.apiClient.commit(owner, scoreName, commitRequest);
+
+      await this.createVersions(owner, scoreName);
+    } catch (err) {
+      console.log(err);
+      throw new Error(
+        `変更元のデータが古いです。更新してから再度実行してください。`
+      );
     }
   }
 }
