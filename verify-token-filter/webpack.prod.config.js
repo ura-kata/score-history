@@ -13,6 +13,7 @@ module.exports = {
     // libraryTarget: 'commonjs2',
   },
   plugins: [new Dotenv()],
+  devtool: false,
   module: {
     rules: [
       {

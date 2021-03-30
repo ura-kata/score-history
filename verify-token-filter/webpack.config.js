@@ -14,6 +14,10 @@ module.exports = {
     // libraryTarget: 'commonjs2',
   },
   plugins: [new Dotenv()],
+
+  // https://webpack.js.org/configuration/devtool/
+  // devtool: false,
+  devtool: 'source-map',
   module: {
     rules: [
       {
