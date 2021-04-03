@@ -1,6 +1,7 @@
 const path = require('path');
 const nodeExternals = require('webpack-node-externals');
 const Dotenv = require('dotenv-webpack');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = {
   mode: 'production',
@@ -12,7 +13,7 @@ module.exports = {
     filename: 'handler.js',
     // libraryTarget: 'commonjs2',
   },
-  plugins: [new Dotenv()],
+  plugins: [new Dotenv(), new CleanWebpackPlugin()],
   devtool: false,
   module: {
     rules: [
