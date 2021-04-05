@@ -5,12 +5,12 @@ const Dotenv = require('dotenv-webpack');
 module.exports = {
   mode: 'development',
   // mode: 'production',
-  entry: './src/handler.ts',
+  entry: './src/index.ts',
   target: 'node',
   // externals: [nodeExternals()],
   output: {
     path: path.resolve(__dirname, 'build'),
-    filename: 'handler.js',
+    filename: 'index.js',
     // libraryTarget: 'commonjs2',
   },
   plugins: [new Dotenv()],

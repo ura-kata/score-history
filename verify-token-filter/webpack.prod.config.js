@@ -4,14 +4,12 @@ const Dotenv = require('dotenv-webpack');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = {
-  mode: 'production',
-  entry: './src/handler.ts',
+  entry: './src/index.ts',
   target: 'node',
   // externals: [nodeExternals()],
   output: {
     path: path.resolve(__dirname, 'build'),
-    filename: 'handler.js',
-    // libraryTarget: 'commonjs2',
+    filename: 'index.js',
   },
   plugins: [new Dotenv(), new CleanWebpackPlugin()],
   devtool: false,
