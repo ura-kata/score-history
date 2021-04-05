@@ -7,6 +7,7 @@ import * as path from 'path';
 import * as dotenv from 'dotenv';
 import { HostedZone } from '@aws-cdk/aws-route53';
 import { ScoreHistoryFrontendARecord } from './ScoreHistoryFrontendARecord';
+import { ScoreHistoryFrontendLambdaEdgeFunction } from './ScoreHistoryFrontendLambdaEdgeFunction';
 
 dotenv.config();
 
@@ -31,6 +32,14 @@ export class ScoreHistoryFrontendStack extends cdk.Stack {
       identity
     );
 
+    const edgeRunction = new ScoreHistoryFrontendLambdaEdgeFunction(
+      this,
+      'ScoreHistoryFrontendLambdaEdgeFunction',
+      'ura-kata-frontend-verify-token-filter',
+      path.join(__dirname, '../../verify-token-filter/build'),
+      'ScoreHistoryFrontendEdgeFunctionStack'
+    );
+
     const signinFqdn = `${URA_KATA_APP_HOST_NAME}.${URA_KATA_APP_DOMAIN_NAME}`;
 
     const distribution = new ScoreHistoryFrontendDistribution(
@@ -39,7 +48,8 @@ export class ScoreHistoryFrontendStack extends cdk.Stack {
       bucket,
       identity,
       signinFqdn,
-      URA_KATA_CERTIFICATE_ARN
+      URA_KATA_CERTIFICATE_ARN,
+      edgeRunction
     );
 
     const hostZone = HostedZone.fromHostedZoneAttributes(
