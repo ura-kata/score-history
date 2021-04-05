@@ -14,7 +14,7 @@
     "webpack-node-externals": "^2.5.2"
   },
   "scripts": {
-    "build": "webpack --mode production --config webpack.prod.config.js",
+    "build": "webpack --config webpack.prod.config.js",
     "webpack": "webpack"
   },
   "dependencies": {
