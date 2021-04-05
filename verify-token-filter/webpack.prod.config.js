@@ -4,6 +4,8 @@ const Dotenv = require('dotenv-webpack');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = {
+  // 'production' にすると難読化、最適化されてしまう
+  mode: 'development',
   entry: './src/index.ts',
   target: 'node',
   // externals: [nodeExternals()],
