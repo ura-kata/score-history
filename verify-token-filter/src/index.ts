@@ -146,7 +146,7 @@ const findToken = (cookie: { key?: string; value: string }[]) => {
   };
 };
 
-async function handler(
+export async function handler(
   event: CloudFrontRequestEvent,
   context: any
 ): Promise<CloudFrontRequest | CloudFrontResponse> {
