@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "sourceMap": false,
+    "noImplicitAny": true,
+    "target": "es2020",
+    "module": "CommonJs",
+    "moduleResolution": "node",
+    "removeComments": true,
+    "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "strictFunctionTypes": false,
+    "declaration": false,
+    "typeRoots": ["./node_modules/@types", "./@types"],
+    "paths": {
+      "jwk": ["./@types/jwk"]
+    }
+  }
+}

@@ -4,9 +4,11 @@ import {
   PriceClass,
   SSLMethod,
   SecurityPolicyProtocol,
+  LambdaEdgeEventType,
 } from '@aws-cdk/aws-cloudfront';
 import { Construct } from '@aws-cdk/core';
 import { ScoreHistoryFrontendBucket } from './ScoreHistoryFrontendBucket';
+import { ScoreHistoryFrontendLambdaEdgeFunction } from './ScoreHistoryFrontendLambdaEdgeFunction';
 
 export class ScoreHistoryFrontendDistribution extends CloudFrontWebDistribution {
   constructor(
@@ -15,7 +17,8 @@ export class ScoreHistoryFrontendDistribution extends CloudFrontWebDistribution 
     appBucket: ScoreHistoryFrontendBucket,
     identity: OriginAccessIdentity,
     fqdn: string,
-    acmCertificateArn: string
+    acmCertificateArn: string,
+    scoreHistoryFrontendLambdaEdgeFunction: ScoreHistoryFrontendLambdaEdgeFunction
   ) {
     super(scope, id, {
       errorConfigurations: [
@@ -41,6 +44,14 @@ export class ScoreHistoryFrontendDistribution extends CloudFrontWebDistribution 
           behaviors: [
             {
               isDefaultBehavior: true,
+              lambdaFunctionAssociations: [
+                {
+                  lambdaFunction:
+                    scoreHistoryFrontendLambdaEdgeFunction.currentVersion,
+                  eventType: LambdaEdgeEventType.VIEWER_REQUEST,
+                  includeBody: false,
+                },
+              ],
             },
           ],
         },
