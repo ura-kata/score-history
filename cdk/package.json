@@ -8,7 +8,8 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "deploy-api": "cdk deploy ScoreHistoryApiStack"
   },
   "devDependencies": {
     "@aws-cdk/assert": "1.95.1",
