@@ -202,15 +202,13 @@ namespace PracticeManagerApi.Controllers.v1
             [FromRoute(Name = "hash")]
             [MaxLength(4099, ErrorMessage = "{0} は 4099 文字以内です")]
             [MinLength(1, ErrorMessage = "{0} は 1 文字以上です")]
-            [RegularExpression(@"^[a-z0-9,]+$",ErrorMessage = "{0} は 半角英数字の小文字とカンマ[,]が使用できます", MatchTimeoutInMilliseconds = 1000)]
+            [RegularExpression(@"^[a-z0-9]+$",ErrorMessage = "{0} は 半角英数字の小文字とカンマ[,]が使用できます", MatchTimeoutInMilliseconds = 1000)]
             string hash)
         {
-
-            var hashList = hash?.Split(",") ?? new string[0];
-
+            
             try
             {
-                return _scoreProvider.GetObject(owner, scoreName, hashList).ToJson();
+                return _scoreProvider.GetObject(owner, scoreName, hash);
             }
             catch (Exception ex)
             {
