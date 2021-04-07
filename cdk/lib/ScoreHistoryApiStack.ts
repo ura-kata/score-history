@@ -2,11 +2,14 @@ import * as cdk from '@aws-cdk/core';
 import * as dotenv from 'dotenv';
 import { HostedZone } from '@aws-cdk/aws-route53';
 import { Certificate } from '@aws-cdk/aws-certificatemanager';
+import { AuthorizationType } from '@aws-cdk/aws-apigateway';
 import { ScoreHistoryApiCustomDomainName } from './ScoreHistoryApiCustomDomainName';
 import { ScoreHistoryApiARecord } from './ScoreHistoryApiARecord';
 import { ScoreHistoryApiFunction } from './ScoreHistoryApiFunction';
 import { ScoreHistoryApiRestApi } from './ScoreHistoryApiRestApi';
 import { LambdaIntegration } from '@aws-cdk/aws-apigateway';
+import { ScoreHistoryApiAuthorizerFunction } from './ScoreHistoryApiAuthorizerFunction';
+import { ScoreHistoryApiRequestAuthorizer } from './ScoreHistoryApiRequestAuthorizer';
 
 dotenv.config();
 
@@ -78,12 +81,31 @@ export class ScoreHistoryApiStack extends cdk.Stack {
       basePath: apiStageName,
     });
 
+    const authorizerFunction = new ScoreHistoryApiAuthorizerFunction(
+      this,
+      'ScoreHistoryApiAuthorizerFunction',
+      'ura-kata-socre-history-api-authorizer'
+    );
+
+    const requestAuthorizer = new ScoreHistoryApiRequestAuthorizer(
+      this,
+      'ScoreHistoryApiRequestAuthorizer',
+      authorizerFunction,
+      'score-history-api-authorizer'
+    );
+
     const integration = new LambdaIntegration(lambdaFunction);
 
-    restApi.root.addMethod('ANY', integration);
+    restApi.root.addMethod('ANY', integration, {
+      authorizer: requestAuthorizer,
+      authorizationType: AuthorizationType.CUSTOM,
+    });
 
     const proxyResource = restApi.root.addResource('{proxy+}');
 
-    proxyResource.addMethod('ANY', integration);
+    proxyResource.addMethod('ANY', integration, {
+      authorizer: requestAuthorizer,
+      authorizationType: AuthorizationType.CUSTOM,
+    });
   }
 }
