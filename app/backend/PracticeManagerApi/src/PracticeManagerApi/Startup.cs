@@ -90,6 +90,12 @@ namespace PracticeManagerApi
                 {
                     config.WithMethods(corsMethods.Split(','));
                 }
+
+                var corsCredentials = Configuration["CorsCredentials"];
+                if (bool.TryParse(corsCredentials, out var allowCredentials) && allowCredentials)
+                {
+                    config.AllowCredentials();
+                }
             });
 
             //app.UseHttpsRedirection();
