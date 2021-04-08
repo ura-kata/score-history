@@ -8,12 +8,14 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "deploy-api": "cdk deploy ScoreHistoryApiStack"
   },
   "devDependencies": {
     "@aws-cdk/assert": "1.95.1",
     "@aws-cdk/aws-cloudfront": "^1.95.1",
     "@aws-cdk/aws-iam": "^1.95.1",
+    "@aws-cdk/aws-lambda-nodejs": "1.95.1",
     "@aws-cdk/aws-route53-targets": "^1.95.1",
     "@aws-cdk/aws-s3": "^1.95.1",
     "@aws-cdk/aws-s3-deployment": "^1.95.1",

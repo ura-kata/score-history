@@ -229,6 +229,7 @@ export default class PracticeManagerApiClient {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
       });
 
       const json = await response.json();
@@ -248,6 +249,7 @@ export default class PracticeManagerApiClient {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
       });
 
       const json = await response.json();
@@ -270,6 +272,7 @@ export default class PracticeManagerApiClient {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
       });
 
       const json = await response.json();
@@ -296,6 +299,7 @@ export default class PracticeManagerApiClient {
       const response = await fetch(url.href, {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
 
       if (response.ok) {
@@ -313,6 +317,7 @@ export default class PracticeManagerApiClient {
     try {
       const response = await fetch(url.href, {
         method: "GET",
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -331,6 +336,7 @@ export default class PracticeManagerApiClient {
     try {
       const response = await fetch(url.href, {
         method: "GET",
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -360,6 +366,7 @@ export default class PracticeManagerApiClient {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(newScore),
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -391,6 +398,7 @@ export default class PracticeManagerApiClient {
         //   Accept: "application/json",
         // },
         body: formData,
+        credentials: "include",
       });
 
       // throw new Error("test");
@@ -427,6 +435,7 @@ export default class PracticeManagerApiClient {
         // headers: {
         //   "Content-Type": "application/json",
         // },
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -447,6 +456,7 @@ export default class PracticeManagerApiClient {
     try {
       const response = await fetch(requestUrl, {
         method: "GET",
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -472,6 +482,7 @@ export default class PracticeManagerApiClient {
     try {
       const response = await fetch(requestUrl, {
         method: "GET",
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -500,6 +511,7 @@ export default class PracticeManagerApiClient {
     try {
       const response = await fetch(requestUrl, {
         method: "GET",
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -532,6 +544,7 @@ export default class PracticeManagerApiClient {
         method: "POST",
         headers: postHeaders,
         body: JSON.stringify(property),
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -560,6 +573,7 @@ export default class PracticeManagerApiClient {
     try {
       const response = await fetch(requestUrl, {
         method: "DELETE",
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -594,6 +608,7 @@ export default class PracticeManagerApiClient {
         method: "PATCH",
         headers: patchHeaders,
         body: JSON.stringify(request),
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -627,6 +642,7 @@ export default class PracticeManagerApiClient {
     try {
       const response = await fetch(requestUrl, {
         method: "GET",
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -667,6 +683,7 @@ export default class PracticeManagerApiClient {
         method: "POST",
         headers: patchHeaders,
         body: JSON.stringify(commits),
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -694,6 +711,7 @@ export default class PracticeManagerApiClient {
     try {
       const response = await fetch(requestUrl, {
         method: "GET",
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -722,6 +740,7 @@ export default class PracticeManagerApiClient {
       const response = await fetch(requestUrl, {
         method: "POST",
         headers: postHeaders,
+        credentials: "include",
       });
 
       if (!response.ok) {
