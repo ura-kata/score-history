@@ -214,7 +214,7 @@ export async function handler(
 ) {
   const cookie =
     event.multiValueHeaders !== null
-      ? event.multiValueHeaders['Cookie']
+      ? event.multiValueHeaders['cookie'] ?? event.multiValueHeaders['Cookie']
       : undefined;
 
   const path = event.path;
