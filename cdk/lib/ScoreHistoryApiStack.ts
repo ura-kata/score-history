@@ -23,6 +23,8 @@ const URA_KATA_SCORE_HISTORY_API_HOST_NAME = process.env
   .URA_KATA_SCORE_HISTORY_API_HOST_NAME as string;
 const URA_KATA_SCORE_HISTORY_API_STAGE_NAME = process.env
   .URA_KATA_SCORE_HISTORY_API_STAGE_NAME as string;
+const URA_KATA_SCORE_HISTORY_API_CORS_ORIGINS = process.env
+  .URA_KATA_SCORE_HISTORY_API_CORS_ORIGINS as string;
 
 export class ScoreHistoryApiStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -66,7 +68,14 @@ export class ScoreHistoryApiStack extends cdk.Stack {
     const lambdaFunction = new ScoreHistoryApiFunction(
       this,
       'ScoreHistoryApiFunction',
-      'ura-kata-score-history-api'
+      'ura-kata-score-history-api',
+      {
+        CorsOrigins: URA_KATA_SCORE_HISTORY_API_CORS_ORIGINS,
+        CorsHeaders:
+          'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,Cookie',
+        CorsMethods: 'GET,POST,DELETE,PATCH,OPTIONS',
+        CorsCredentials: 'true',
+      }
     );
 
     const apiStageName = URA_KATA_SCORE_HISTORY_API_STAGE_NAME;
