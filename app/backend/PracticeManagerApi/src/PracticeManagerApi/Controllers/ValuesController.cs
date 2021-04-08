@@ -13,7 +13,7 @@ namespace PracticeManagerApi.Controllers
         [HttpGet]
         public IEnumerable<string> Get()
         {
-            return new string[] { "value1", "value2" };
+            return new string[] { "value1", "value2", "GET" };
         }
 
         // GET api/values/5
@@ -25,8 +25,9 @@ namespace PracticeManagerApi.Controllers
 
         // POST api/values
         [HttpPost]
-        public void Post([FromBody]string value)
+        public IEnumerable<string> Post()
         {
+            return new string[] { "value1", "value2", "POST" };
         }
 
         // PUT api/values/5
