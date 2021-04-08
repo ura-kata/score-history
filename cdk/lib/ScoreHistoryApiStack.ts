@@ -105,16 +105,22 @@ export class ScoreHistoryApiStack extends cdk.Stack {
 
     const integration = new LambdaIntegration(lambdaFunction);
 
-    restApi.root.addMethod('ANY', integration, {
-      authorizer: requestAuthorizer,
-      authorizationType: AuthorizationType.CUSTOM,
+    const authorizationMethods = ['GET', 'POST', 'DELETE', 'PATCH'];
+    restApi.root.addMethod('OPTIONS', integration);
+    authorizationMethods.forEach((method) => {
+      restApi.root.addMethod(method, integration, {
+        authorizer: requestAuthorizer,
+        authorizationType: AuthorizationType.CUSTOM,
+      });
     });
 
     const proxyResource = restApi.root.addResource('{proxy+}');
-
-    proxyResource.addMethod('ANY', integration, {
-      authorizer: requestAuthorizer,
-      authorizationType: AuthorizationType.CUSTOM,
+    proxyResource.addMethod('OPTIONS', integration);
+    authorizationMethods.forEach((method) => {
+      proxyResource.addMethod(method, integration, {
+        authorizer: requestAuthorizer,
+        authorizationType: AuthorizationType.CUSTOM,
+      });
     });
   }
 }
