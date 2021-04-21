@@ -8,5 +8,9 @@
     <PackageReference Include="Amazon.Lambda.AspNetCoreServer" Version="6.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ScoreHistoryApi.AWSWrapper\ScoreHistoryApi.AWSWrapper.csproj" />
+  </ItemGroup>
+
 
 </Project>
