@@ -14,11 +14,11 @@ export class ScoreHistoryApiFunction extends Function {
       environment: environment,
       runtime: Runtime.DOTNET_CORE_3_1,
       handler:
-        'PracticeManagerApi::PracticeManagerApi.LambdaEntryPoint::FunctionHandlerAsync',
+        'ScoreHistoryApi::ScoreHistoryApi.LambdaEntryPoint::FunctionHandlerAsync',
       code: Code.fromAsset(
         path.join(
           __dirname,
-          '../../app/backend/PracticeManagerApi/src/PracticeManagerApi/bin/Release/netcoreapp3.1'
+          '../../app/backend/build'
         )
       ),
     });

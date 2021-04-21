@@ -70,11 +70,12 @@ export class ScoreHistoryApiStack extends cdk.Stack {
       'ScoreHistoryApiFunction',
       'ura-kata-score-history-api',
       {
-        CorsOrigins: URA_KATA_SCORE_HISTORY_API_CORS_ORIGINS,
-        CorsHeaders:
+        URA_KATA_CorsOrigins: URA_KATA_SCORE_HISTORY_API_CORS_ORIGINS,
+        URA_KATA_CorsHeaders:
           'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,Cookie',
-        CorsMethods: 'GET,POST,DELETE,PATCH,OPTIONS',
-        CorsCredentials: 'true',
+          URA_KATA_CorsMethods: 'GET,POST,DELETE,PATCH,OPTIONS',
+          URA_KATA_CorsCredentials: 'true',
+        URA_KATA_ApiVersion: '1.0.0',
       }
     );
 
