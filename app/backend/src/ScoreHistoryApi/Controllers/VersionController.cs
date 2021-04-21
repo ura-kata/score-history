@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using ScoreHistoryApi.Models.Version;
+using ScoreHistoryApi.Models.Versions;
 
 namespace ScoreHistoryApi.Controllers
 {

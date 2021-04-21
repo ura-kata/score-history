@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace ScoreHistoryApi.Models.Version
+namespace ScoreHistoryApi.Models.Versions
 {
     public class ApiVersion
     {

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.TestUtilities;
 using Newtonsoft.Json;
-using ScoreHistoryApi.Models.Version;
+using ScoreHistoryApi.Models.Versions;
 using Xunit;
 
 namespace ScoreHistoryApi.Tests
