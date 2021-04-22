@@ -15,7 +15,7 @@ namespace ScoreHistoryApi.Tests
         public async Task TestSuccessGetVersion()
         {
             var lambdaFunction = new LambdaEntryPoint();
-            var requestText = await File.ReadAllTextAsync("./VersionRequests/VersionController-Get.json");
+            var requestText = await File.ReadAllTextAsync("./Requests/VersionRequests/VersionController-Get.json");
             var request = JsonConvert.DeserializeObject<APIGatewayProxyRequest>(requestText);
             var context = new TestLambdaContext();
 
