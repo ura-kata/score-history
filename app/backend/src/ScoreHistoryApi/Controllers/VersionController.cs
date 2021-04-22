@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -17,7 +18,9 @@ namespace ScoreHistoryApi.Controllers
             _logger = logger;
             _configuration = configuration;
         }
+
         [HttpGet]
+        [DisableCors]
         public ApiVersion Get()
         {
             return new ApiVersion()
