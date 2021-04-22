@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -38,9 +39,19 @@ namespace ScoreHistoryApi
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseRouting();
+            app.Use(async (context, next) =>
+            {
+                context.User.AddIdentity(new ClaimsIdentity(new[]
+                {
+                    new Claim("sub", "00000000-0000-0000-0000-000000000000"),
+                    new Claim("principalId", "00000000-0000-0000-0000-000000000000"),
+                    new Claim("cognito:username", "test-user"),
+                    new Claim("email", "test-user@example.com"),
+                }));
+                await next.Invoke();
+            });
 
-            app.UseAuthorization();
+            app.UseRouting();
 
             app.UseEndpoints(endpoints =>
             {
