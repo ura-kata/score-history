@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -21,7 +22,15 @@ namespace ScoreHistoryApi.Controllers
         [HttpGet]
         public User Get()
         {
-            throw new NotImplementedException();
+
+            var auth = this.GetAuthorizerData();
+
+            return new User()
+            {
+                Email = auth.Email,
+                Id = auth.Principalid,
+                Username = auth.CognitoUserName
+            };
         }
     }
 }
