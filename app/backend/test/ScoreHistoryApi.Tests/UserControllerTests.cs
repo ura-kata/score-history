@@ -17,12 +17,12 @@ namespace ScoreHistoryApi.Tests
         [Fact]
         public async Task TestSuccessGetUser()
         {
-            var lambdaFunction = new LambdaEntryPoint();
+            using var lambdaFunction = new LambdaEntryPoint();
             var requestText = await File.ReadAllTextAsync("./Requests/UserRequests/UserController-Get.json");
             var request = JsonConvert.DeserializeObject<APIGatewayProxyRequest>(requestText);
             var context = new TestLambdaContext();
-            
-            
+
+
             var response = await lambdaFunction.FunctionHandlerAsync(request, context);
 
             Assert.Equal(200, response.StatusCode);

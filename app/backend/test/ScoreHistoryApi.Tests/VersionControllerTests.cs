@@ -1,8 +1,11 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.TestUtilities;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using ScoreHistoryApi.Models.Versions;
 using Xunit;
@@ -14,11 +17,11 @@ namespace ScoreHistoryApi.Tests
         [Fact]
         public async Task TestSuccessGetVersion()
         {
-            var lambdaFunction = new LambdaEntryPoint();
+
+            using var lambdaFunction = new LambdaEntryPoint();
             var requestText = await File.ReadAllTextAsync("./Requests/VersionRequests/VersionController-Get.json");
             var request = JsonConvert.DeserializeObject<APIGatewayProxyRequest>(requestText);
             var context = new TestLambdaContext();
-
             var version = "dev";
 
             Startup.Configuration[EnvironmentNames.ApiVersion] = version;
