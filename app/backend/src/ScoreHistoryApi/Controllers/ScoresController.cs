@@ -1,4 +1,8 @@
 using System;
+using System.Linq;
+using System.Net;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -24,21 +28,28 @@ namespace ScoreHistoryApi.Controllers
 
         [HttpGet]
         [Route("user")]
-        public Task<ActionResult<Score[]>> GetUserScoresAsync()
+        public async Task<ActionResult<ScoreSummary[]>> GetUserScoresAsync()
         {
+            var ifNoneMatch = this.Request.Headers[HttpHeaderNames.IfNoneMatch];
+
+            // ETag が If-None-Match と一致する場合は NotModified を返す
+            // return this.StatusCode((int) HttpStatusCode.NotModified);
+
+
+            this.Response.Headers[HttpHeaderNames.ETag] = "";
             throw new NotImplementedException();
         }
 
         [HttpPost]
         [Route("user")]
-        public Task<ActionResult<Score>> CreateUserScoreAsync([FromBody] NewScore newScore)
+        public async Task<ActionResult<ScoreDetail>> CreateUserScoreAsync([FromBody] NewScore newScore)
         {
             throw new NotImplementedException();
         }
 
         [HttpGet]
         [Route("user/{id:guid}")]
-        public Task<ActionResult<Score>> GetAUserScoreAsync([FromRoute(Name = "id")] Guid id)
+        public Task<ActionResult<ScoreDetail>> GetAUserScoreAsync([FromRoute(Name = "id")] Guid id)
         {
             throw new NotImplementedException();
         }
@@ -50,20 +61,32 @@ namespace ScoreHistoryApi.Controllers
             throw new NotImplementedException();
         }
 
+        [HttpPatch]
+        [Route("user/{id:guid}")]
+        public Task<IActionResult> PatchAUserScoreAsync([FromRoute(Name = "id")] Guid id)
+        {
+            var ifMatch = this.Request.Headers[HttpHeaderNames.IfMatch];
+
+            // ETag が If-Match と不一致の場合は PreconditionFailed を返す
+            //return this.StatusCode((int)HttpStatusCode.PreconditionFailed);
+
+            throw new NotImplementedException();
+        }
+
         #endregion
 
         #region owner
 
         [HttpGet]
         [Route("{owner:guid}")]
-        public Task<ActionResult<Score[]>> GetOwnerScoresAsync([FromRoute(Name = "owner")] Guid owner)
+        public Task<ActionResult<ScoreSummary[]>> GetOwnerScoresAsync([FromRoute(Name = "owner")] Guid owner)
         {
             throw new NotImplementedException();
         }
 
         [HttpGet]
         [Route("{owner:guid}/{id:guid}")]
-        public Task<ActionResult<Score>> GetAOwnerScoreAsync(
+        public Task<ActionResult<ScoreDetail>> GetAOwnerScoreAsync(
             [FromRoute(Name = "owner")] Guid owner,
             [FromRoute(Name = "id")] Guid id)
         {

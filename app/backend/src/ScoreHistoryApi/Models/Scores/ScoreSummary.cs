@@ -1,6 +1,6 @@
 namespace ScoreHistoryApi.Models.Scores
 {
-    public class Score
+    public class ScoreSummary
     {
     }
 }
