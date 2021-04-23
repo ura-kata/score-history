@@ -20,7 +20,6 @@ namespace ScoreHistoryApi.Controllers
         }
 
         [HttpGet]
-        [DisableCors]
         public ApiVersion Get()
         {
             return new ApiVersion()
