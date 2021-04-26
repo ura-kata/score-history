@@ -36,7 +36,7 @@ namespace ScoreHistoryApi
             {
                 Email = email,
                 CognitoUserName = name,
-                Principalid = Guid.TryParse(id, out var principalid) ? principalid : Guid.Empty,
+                PrincipalId = Guid.TryParse(id, out var principalid) ? principalid : Guid.Empty,
                 Sub = Guid.TryParse(id, out var subId) ? subId : Guid.Empty,
             };
         }
