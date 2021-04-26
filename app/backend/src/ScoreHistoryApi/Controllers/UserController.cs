@@ -28,7 +28,7 @@ namespace ScoreHistoryApi.Controllers
             return new User()
             {
                 Email = auth.Email,
-                Id = auth.Principalid,
+                Id = auth.PrincipalId,
                 Username = auth.CognitoUserName
             };
         }
