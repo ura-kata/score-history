@@ -1,5 +1,28 @@
 # バックエンドについて
 
+## やりたいこと
+
+- 自分がアクセスできる楽譜のサマリーを一覧で取得する
+- 1つの楽譜の詳細情報を取得する
+  - スナップショットを指定してその楽譜の情報を取得する
+- スナップショットを作成、削除する
+- 公開、限定公開を変更する
+- 指定した楽譜の情報を更新する
+  - オブジェクトをアップデート、削除する
+  - 楽譜の情報を更新する
+
+## 楽譜の情報
+
+- 楽譜のタイトル
+- 楽譜の説明
+- 楽譜の画像
+- 楽譜の注釈
+- スナップショット
+
+タイトル、説明についてはサマリーとして一覧で取得できるようにする。
+
+これらの情報は詳細情報を取得するリクエストで一回で取得できるようにしたい。
+
 ## データベースの構造
 
 UUID の Base64 エンコードは 24 byte
@@ -8,10 +31,14 @@ UUID の Base64 エンコードは 24 byte
 
 - パーティションキー
   - owner_id
-    - uuid の base64
+    - owner の uuid を base64 したもの
 - ソートキー
   - score_id
-    - uuid の base64
+    - 楽譜の uuid を base64 したもの
+    - または
+    - 楽譜の uuid と スナップショットの名前の base64 を concat したもの
+
+
 ```json
 [
   {
@@ -21,5 +48,122 @@ UUID の Base64 エンコードは 24 byte
   }
 ]
 
+```
 
+#### スナップショット
+
+スナップショットはその時点でのデータ構造を保存することができる。
+
+スナップショットは UTF-8 の 64 文字以内で自由に付けることができる。
+
+スナップショットの名前は DB に保存する際は base64 エンコードする。
+
+#### 例
+
+- owner
+  - a5a3cceb-de61-43e4-849c-deafbf750bd7
+    - 68yjpWHe5EOEnN6vv3UL1w==
+- score
+  - 9e97ad6b-c5fe-4a6e-8f25-0b265b59017a
+    - a62Xnv7FbkqPJQsmW1kBeg==
+- スナップショット
+  - サンプル1
+    - 44K144Oz44OX44OrMQ==
+  - サンプル2
+    - 44K144Oz44OX44OrMg==
+- アイテム
+  - 8f64ed24-7122-42d6-aeb9-c6eddc93b389
+    - JO1kjyJx1kKuucbt3JOziQ==
+
+
+```json
+[
+  {
+    "owner": "68yjpWHe5EOEnN6vv3UL1w==",
+    "score": "a62Xnv7FbkqPJQsmW1kBeg==",
+    "d_hash": "", // data 部分を JSON にした際のハッシュ値
+    "create_at": "",
+    "update_at": "",
+    "data": {
+      "title": "",
+      "desc": "",
+      "v": "1", // data 構造の version
+      "page": [
+        {
+          "item": "JO1kjyJx1kKuucbt3JOziQ==",
+          "page": "1"
+        },
+        {
+          "item": "JO1kjyJx1kKuucbt3JOziQ==",
+          "page": "2"
+        },
+        {
+          "item": "JO1kjyJx1kKuucbt3JOziQ==",
+          "page": "3"
+        }
+      ],
+      "anno":{
+        "0": "アノテーションの内容",
+        "1": "アノテーションの内容"
+      }
+    }
+  },
+  {
+    "owner_id": "68yjpWHe5EOEnN6vv3UL1w==",
+    "score_id": "a62Xnv7FbkqPJQsmW1kBeg==44K144Oz44OX44OrMQ=="
+  },
+  {
+    "owner_id": "68yjpWHe5EOEnN6vv3UL1w==",
+    "score_id": "a62Xnv7FbkqPJQsmW1kBeg==44K144Oz44OX44OrMg=="
+  }
+]
+```
+
+### アイテム
+
+- パーティションキー
+  - owner_id
+    - uuid の base64
+- ソートキー
+  - item_id
+    - score_id の uuid の base64 と アイテムの uuid の base64 を concat したもの
+
+#### 例
+
+- owner
+  - a5a3cceb-de61-43e4-849c-deafbf750bd7
+    - 68yjpWHe5EOEnN6vv3UL1w==
+- score
+  - 9e97ad6b-c5fe-4a6e-8f25-0b265b59017a
+    - a62Xnv7FbkqPJQsmW1kBeg==
+- アイテム
+  - 8f64ed24-7122-42d6-aeb9-c6eddc93b389
+    - JO1kjyJx1kKuucbt3JOziQ==
+  - 2b81d88e-9004-41cd-9441-fbe25eba46ee
+    - jtiBKwSQzUGUQfviXrpG7g==
+  - c56b0b81-d45a-4974-b4a0-395feed1eeef
+    - gQtrxVrUdEm0oDlf7tHu7w==
+
+```json
+[
+  {
+    "owner_id": "68yjpWHe5EOEnN6vv3UL1w==",
+    "item_id": "summary",
+    "total_size": 123456789 // owner に紐づくアイテムの総量
+  },
+  {
+    "owner_id": "68yjpWHe5EOEnN6vv3UL1w==",
+    "item_id": "a62Xnv7FbkqPJQsmW1kBeg==JO1kjyJx1kKuucbt3JOziQ==",
+    "org_name": "", // オリジナル名
+    "size": 12345, // アイテムのバイトサイズ
+    "obj_name": "", // S3 のオブジェクトの名前
+    "type": "image_png", // アイテムのタイプ
+    "extra": {
+      "thumbnail": {
+        "obj_name": "",
+        "size": 12345
+      }
+    }
+  }
+]
 ```
