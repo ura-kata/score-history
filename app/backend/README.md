@@ -79,8 +79,14 @@ UUID の Base64 エンコードは 24 byte
 ```json
 [
   {
+    "owner_id": "68yjpWHe5EOEnN6vv3UL1w==",
+    "score_id": "summary",
+    "score_count": 1,
+    "socres":["a62Xnv7FbkqPJQsmW1kBeg=="]
+  },
+  {
     "owner": "68yjpWHe5EOEnN6vv3UL1w==",
-    "score": "a62Xnv7FbkqPJQsmW1kBeg==",
+    "score": "main:a62Xnv7FbkqPJQsmW1kBeg==",
     "d_hash": "", // data 部分を JSON にした際のハッシュ値
     "create_at": "",
     "update_at": "",
@@ -88,20 +94,20 @@ UUID の Base64 エンコードは 24 byte
       "title": "",
       "desc": "",
       "v": "1", // data 構造の version
-      "page": [
-        {
+      "page": {
+        "0": {
           "item": "JO1kjyJx1kKuucbt3JOziQ==",
           "page": "1"
         },
-        {
+        "1": {
           "item": "JO1kjyJx1kKuucbt3JOziQ==",
           "page": "2"
         },
-        {
+        "2": {
           "item": "JO1kjyJx1kKuucbt3JOziQ==",
           "page": "3"
         }
-      ],
+      },
       "anno":{
         "0": "アノテーションの内容",
         "1": "アノテーションの内容"
@@ -110,11 +116,11 @@ UUID の Base64 エンコードは 24 byte
   },
   {
     "owner_id": "68yjpWHe5EOEnN6vv3UL1w==",
-    "score_id": "a62Xnv7FbkqPJQsmW1kBeg==44K144Oz44OX44OrMQ=="
+    "score_id": "snap:a62Xnv7FbkqPJQsmW1kBeg==44K144Oz44OX44OrMQ=="
   },
   {
     "owner_id": "68yjpWHe5EOEnN6vv3UL1w==",
-    "score_id": "a62Xnv7FbkqPJQsmW1kBeg==44K144Oz44OX44OrMg=="
+    "score_id": "snap:a62Xnv7FbkqPJQsmW1kBeg==44K144Oz44OX44OrMg=="
   }
 ]
 ```
@@ -149,7 +155,8 @@ UUID の Base64 エンコードは 24 byte
   {
     "owner_id": "68yjpWHe5EOEnN6vv3UL1w==",
     "item_id": "summary",
-    "total_size": 123456789 // owner に紐づくアイテムの総量
+    "total_size": 123456789, // owner に紐づくアイテムの総量
+    "object_size": 123456789 // object の総量
   },
   {
     "owner_id": "68yjpWHe5EOEnN6vv3UL1w==",
@@ -163,7 +170,8 @@ UUID の Base64 エンコードは 24 byte
         "obj_name": "",
         "size": 12345
       }
-    }
+    },
+    "access": "public"
   }
 ]
 ```
