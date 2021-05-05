@@ -4,6 +4,7 @@ using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -88,11 +89,12 @@ namespace ScoreHistoryApi.Controllers
         /// ログインユーザーの指定された楽譜を更新する
         /// </summary>
         /// <param name="id"></param>
+        /// <param name="patch"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
         [HttpPatch]
         [Route("user/{id:guid}")]
-        public Task<IActionResult> PatchAUserScoreAsync([FromRoute(Name = "id")] Guid id)
+        public Task<IActionResult> PatchAUserScoreAsync([FromRoute(Name = "id")] Guid id, JsonPatchDocument<ScorePatch> patch)
         {
             var ifMatch = this.Request.Headers[HttpHeaderNames.IfMatch];
 
