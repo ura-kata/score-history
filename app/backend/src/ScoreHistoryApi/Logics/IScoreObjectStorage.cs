@@ -15,7 +15,7 @@ namespace ScoreHistoryApi.Logics
         /// <param name="scoreId"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        SavedObjectData SaveObject(Guid ownerId, Guid scoreId, byte[] data);
+        SavedItemData SaveObject(Guid ownerId, Guid scoreId, byte[] data);
 
         /// <summary>
         /// 指定した楽譜のオブジェクトデータを削除する
