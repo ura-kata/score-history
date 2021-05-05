@@ -5,11 +5,16 @@ namespace ScoreHistoryApi.Logics
 
     }
 
+    public interface IScoreQuota
+    {
+        public int ScoreCountMax { get; }
+    }
+
     /// <summary>
     ///
     /// </summary>
-    public class ScoreQuota
+    public class ScoreQuota:IScoreQuota
     {
-
+        public int ScoreCountMax { get; } = 10;
     }
 }
