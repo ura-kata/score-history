@@ -433,14 +433,184 @@ namespace ScoreHistoryApi.Logics
             throw new NotImplementedException();
         }
 
-        public Task UpdateTitleAsync(Guid ownerId, Guid scoreId, string title)
+        public async Task UpdateTitleAsync(Guid ownerId, Guid scoreId, string title)
         {
-            throw new NotImplementedException();
+            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
+            var (data, oldHash) = await GetAsync(_dynamoDbClient, TableName, owner, score);
+
+            data.Title = title;
+
+            var newHash = ScoreDatabaseUtils.CalcHash(data);
+
+            var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
+            await UpdateAsync(_dynamoDbClient, TableName, owner, score, title, newHash, oldHash, now);
+
+            static async Task<(DatabaseScoreDataV1 data,string hash)> GetAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score)
+            {
+                var request = new GetItemRequest()
+                {
+                    TableName = tableName,
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                };
+                var response = await client.GetItemAsync(request);
+                var data = response.Item[ScoreDatabasePropertyNames.Data];
+
+                if (data is null)
+                    throw new InvalidOperationException("not found.");
+
+
+                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                return (result,hash);
+            }
+
+            static async Task UpdateAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score,
+                string newTitle,
+                string newHash,
+                string oldHash,
+                DateTimeOffset now
+                )
+            {
+                var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
+
+                var request = new UpdateItemRequest()
+                {
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    {
+                        ["#updateAt"] = ScoreDatabasePropertyNames.UpdateAt,
+                        ["#hash"] = ScoreDatabasePropertyNames.DataHash,
+                        ["#data"] = ScoreDatabasePropertyNames.Data,
+                        ["#title"] = ScoreDatabasePropertyNames.Title,
+                    },
+                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                    {
+                        [":newTitle"] = new AttributeValue(newTitle),
+                        [":newHash"] = new AttributeValue(newHash),
+                        [":oldHash"] = new AttributeValue(oldHash),
+                        [":updateAt"] = new AttributeValue(updateAt),
+                    },
+                    ConditionExpression = "#hash = :oldHash",
+                    UpdateExpression = "SET #updateAt = :updateAt, #hash = :newHash, #data.#title = :newTitle",
+                    TableName = tableName,
+                };
+                try
+                {
+                    await client.UpdateItemAsync(request);
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+            }
         }
 
-        public Task UpdateDescriptionAsync(Guid ownerId, Guid scoreId, string description)
+        public async Task UpdateDescriptionAsync(Guid ownerId, Guid scoreId, string description)
         {
-            throw new NotImplementedException();
+            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
+            var (data, oldHash) = await GetAsync(_dynamoDbClient, TableName, owner, score);
+
+            data.Description = description;
+
+            var newHash = ScoreDatabaseUtils.CalcHash(data);
+
+            var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
+            await UpdateAsync(_dynamoDbClient, TableName, owner, score, description, newHash, oldHash, now);
+
+            static async Task<(DatabaseScoreDataV1 data,string hash)> GetAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score)
+            {
+                var request = new GetItemRequest()
+                {
+                    TableName = tableName,
+                    Key = new Dictionary<string, AttributeValue>()
+        {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                };
+                var response = await client.GetItemAsync(request);
+                var data = response.Item[ScoreDatabasePropertyNames.Data];
+
+                if (data is null)
+                    throw new InvalidOperationException("not found.");
+
+
+                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                return (result,hash);
+        }
+
+            static async Task UpdateAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score,
+                string newDescription,
+                string newHash,
+                string oldHash,
+                DateTimeOffset now
+                )
+            {
+                var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
+
+                var request = new UpdateItemRequest()
+                {
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    {
+                        ["#updateAt"] = ScoreDatabasePropertyNames.UpdateAt,
+                        ["#hash"] = ScoreDatabasePropertyNames.DataHash,
+                        ["#data"] = ScoreDatabasePropertyNames.Data,
+                        ["#desc"] = ScoreDatabasePropertyNames.Description,
+                    },
+                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                    {
+                        [":newDesc"] = new AttributeValue(newDescription),
+                        [":newHash"] = new AttributeValue(newHash),
+                        [":oldHash"] = new AttributeValue(oldHash),
+                        [":updateAt"] = new AttributeValue(updateAt),
+                    },
+                    ConditionExpression = "#hash = :oldHash",
+                    UpdateExpression = "SET #updateAt = :updateAt, #hash = :newHash, #data.#desc = :newDesc",
+                    TableName = tableName,
+                };
+                try
+                {
+                    await client.UpdateItemAsync(request);
+                }
+                catch (Exception ex)
+        {
+                    throw;
+                }
+            }
         }
 
         public Task AddPagesAsync(Guid ownerId, Guid scoreId, List<NewScorePage> pages)
