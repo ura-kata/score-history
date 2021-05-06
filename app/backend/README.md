@@ -94,24 +94,33 @@ UUID の Base64 エンコードは 24 byte
       "title": "",
       "desc": "",
       "v": "1", // data 構造の version
-      "page": {
-        "0": {
-          "item": "JO1kjyJx1kKuucbt3JOziQ==",
-          "page": "1"
+      "page": [
+        {
+          "i": 0,
+          "it": "JO1kjyJx1kKuucbt3JOziQ==",
+          "p": "1"
         },
-        "1": {
-          "item": "JO1kjyJx1kKuucbt3JOziQ==",
-          "page": "2"
+        {
+          "i": 1,
+          "it": "JO1kjyJx1kKuucbt3JOziQ==",
+          "p": "2"
         },
-        "2": {
-          "item": "JO1kjyJx1kKuucbt3JOziQ==",
-          "page": "3"
+        {
+          "i": 2,
+          "it": "JO1kjyJx1kKuucbt3JOziQ==",
+          "p": "3"
         }
-      },
-      "anno":{
-        "0": "アノテーションの内容",
-        "1": "アノテーションの内容"
-      }
+      ],
+      "anno":[
+        {
+          "i": 0,
+          "c": "アノテーションの内容"
+        },
+        {
+          "i": 1,
+          "c": "アノテーションの内容"
+        }
+      ]
     }
   },
   {
