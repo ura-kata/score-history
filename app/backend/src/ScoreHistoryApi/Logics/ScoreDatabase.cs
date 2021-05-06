@@ -26,9 +26,12 @@ namespace ScoreHistoryApi.Logics
         public const string Description = "desc";
         public const string DataVersion = "v";
         public const string Pages = "page";
-        public const string PagesItemId = "item";
-        public const string PagesPage = "page";
+        public const string PagesId = "i";
+        public const string PagesItemId = "it";
+        public const string PagesPage = "p";
         public const string Annotations = "anno";
+        public const string AnnotationsId = "i";
+        public const string AnnotationsContent = "c";
         public const string ScoreCount = "score_count";
         public const string Scores = "scores";
     }
@@ -44,11 +47,21 @@ namespace ScoreHistoryApi.Logics
 
     public class DatabaseScoreDataPageV1
     {
+        [JsonPropertyName(ScoreDatabasePropertyNames.PagesId)]
+        public long Id { get; set; }
         [JsonPropertyName(ScoreDatabasePropertyNames.PagesItemId)]
         public string ItemId { get; set; }
         [JsonPropertyName(ScoreDatabasePropertyNames.PagesPage)]
         public string Page { get; set; }
     }
+    public class DatabaseScoreDataAnnotationV1
+    {
+        [JsonPropertyName(ScoreDatabasePropertyNames.AnnotationsId)]
+        public long Id { get; set; }
+        [JsonPropertyName(ScoreDatabasePropertyNames.AnnotationsContent)]
+        public string Content { get; set; }
+    }
+
     public class DatabaseScoreDataV1
     {
         [JsonPropertyName(ScoreDatabasePropertyNames.Title)]
@@ -57,10 +70,22 @@ namespace ScoreHistoryApi.Logics
         public string Description { get; set; }
         [JsonPropertyName(ScoreDatabasePropertyNames.DataVersion)]
         public string Version { get; set; } = ScoreDatabaseConstant.ScoreDataVersion1;
+
+        private List<DatabaseScoreDataPageV1> _page;
         [JsonPropertyName(ScoreDatabasePropertyNames.Pages)]
-        public Dictionary<string, DatabaseScoreDataPageV1> Page { get; set; }
+        public List<DatabaseScoreDataPageV1> Page
+        {
+            get => _page ??= new List<DatabaseScoreDataPageV1>();
+            set => _page = value;
+        }
+
+        private List<DatabaseScoreDataAnnotationV1> _annotations;
         [JsonPropertyName(ScoreDatabasePropertyNames.Annotations)]
-        public Dictionary<string, string> Annotations { get; set; }
+        public List<DatabaseScoreDataAnnotationV1> Annotations
+        {
+            get => _annotations ??= new List<DatabaseScoreDataAnnotationV1>();
+            set => _annotations = value;
+        }
     }
     public static class ScoreDatabaseUtils
     {
@@ -113,10 +138,10 @@ namespace ScoreHistoryApi.Logics
                     }
                     case ScoreDatabasePropertyNames.Pages:
                     {
-                        if (0 < v.M.Count)
+                        var pages = new List<DatabaseScoreDataPageV1>();
+                        if (0 < v.L.Count)
                         {
-                            var page = new Dictionary<string, DatabaseScoreDataPageV1>();
-                            foreach (var (pageKey, pageValue) in v.M)
+                            foreach (var pageValue in v.L)
                             {
                                 if(pageValue.M.Count == 0)
                                     continue;
@@ -126,6 +151,11 @@ namespace ScoreHistoryApi.Logics
                                 {
                                     switch (pageItemKey)
                                     {
+                                        case ScoreDatabasePropertyNames.PagesId:
+                                        {
+                                            p.Id = long.Parse(pageItemValue.N);
+                                            break;
+                                        }
                                         case ScoreDatabasePropertyNames.PagesItemId:
                                         {
                                             p.ItemId = pageItemValue.S;
@@ -139,19 +169,44 @@ namespace ScoreHistoryApi.Logics
                                     }
                                 }
 
-                                page[pageKey] = p;
+                                pages.Add(p);
                             }
-                            result.Page = page;
                         }
+                        result.Page = pages;
                         break;
                     }
                     case ScoreDatabasePropertyNames.Annotations:
                     {
-                        if (0 < v.M.Count)
+                        var annotations = new List<DatabaseScoreDataAnnotationV1>();
+                        if (0 < v.L.Count)
                         {
-                            var annotations = v.M.ToDictionary(x => x.Key, x => x.Value.S);
-                            result.Annotations = annotations;
+                            foreach (var annotationValue in v.L)
+                            {
+                                if(annotationValue.M.Count == 0)
+                                    continue;
+
+                                var annotation = new DatabaseScoreDataAnnotationV1();
+                                foreach (var (annotationItemKey,annotationItemValue) in annotationValue.M)
+                                {
+                                    switch (annotationItemKey)
+                                    {
+                                        case ScoreDatabasePropertyNames.AnnotationsId:
+                                        {
+                                            annotation.Id = long.Parse(annotationItemValue.N);
+                                            break;
+                                        }
+                                        case ScoreDatabasePropertyNames.AnnotationsContent:
+                                        {
+                                            annotation.Content = annotationItemValue.S;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                annotations.Add(annotation);
+                            }
                         }
+                            result.Annotations = annotations;
                         break;
                     }
                 }
@@ -175,13 +230,16 @@ namespace ScoreHistoryApi.Logics
             {
                 databaseData[ScoreDatabasePropertyNames.DataVersion] = new AttributeValue(data.Version);
             }
+
+            var pages = new List<AttributeValue>();
             if (0 < data.Page?.Count)
             {
-                var pages = new Dictionary<string, AttributeValue>();
-
-                foreach (var (key,value) in data.Page)
+                foreach (var value in data.Page)
                 {
-                    var page = new Dictionary<string, AttributeValue>();
+                    var page = new Dictionary<string, AttributeValue>
+                    {
+                        [ScoreDatabasePropertyNames.PagesId] = new AttributeValue() {N = value.Id.ToString()}
+                    };
 
                     if (value.Page != null)
                     {
@@ -194,29 +252,35 @@ namespace ScoreHistoryApi.Logics
 
                     if(page.Count == 0)
                         continue;
-                    pages[key] = new AttributeValue() {M = page};
-                }
-
-                if (0 < pages.Count)
-                {
-                    databaseData[ScoreDatabasePropertyNames.Pages] = new AttributeValue() {M = pages};
+                    pages.Add(new AttributeValue() {M = page});
                 }
             }
 
+            databaseData[ScoreDatabasePropertyNames.Pages] = new AttributeValue() {L = pages, IsLSet = true};
+
+            var annotations = new List<AttributeValue>();
             if (0 < data.Annotations?.Count)
             {
-                var annotations = new Dictionary<string, AttributeValue>();
-
-                foreach (var (key,value) in data.Annotations)
+                foreach (var value in data.Annotations)
                 {
-                    if(value == null)
-                        continue;
+                    var annotation = new Dictionary<string, AttributeValue>
+                    {
+                        [ScoreDatabasePropertyNames.AnnotationsId] = new AttributeValue() {N = value.Id.ToString()}
+                    };
 
-                    annotations[key] = new AttributeValue(value);
+                    if (value.Content != null)
+                {
+                        annotation[ScoreDatabasePropertyNames.AnnotationsContent] = new AttributeValue(value.Content);
+                    }
+
+                    if(annotation.Count == 0)
+                        continue;
+                    annotations.Add(new AttributeValue() {M = annotation});
+                }
                 }
 
-                databaseData[ScoreDatabasePropertyNames.Annotations] = new AttributeValue() {M = annotations};
-            }
+            databaseData[ScoreDatabasePropertyNames.Annotations] =
+                new AttributeValue() {L = annotations, IsLSet = true};
 
             return new AttributeValue() {M = databaseData};
         }
@@ -613,9 +677,145 @@ namespace ScoreHistoryApi.Logics
             }
         }
 
-        public Task AddPagesAsync(Guid ownerId, Guid scoreId, List<NewScorePage> pages)
+        public async Task AddPagesAsync(Guid ownerId, Guid scoreId, List<NewScorePage> pages)
         {
-            throw new NotImplementedException();
+            if (pages.Count == 0)
+                throw new ArgumentException(nameof(pages));
+
+            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
+            var (data, oldHash) = await GetAsync(_dynamoDbClient, TableName, owner, score);
+
+            data.Page ??= new List<DatabaseScoreDataPageV1>();
+
+            var newPages = new List<DatabaseScoreDataPageV1>();
+
+            var pageId = data.Page.Count == 0 ? 0 : data.Page.Select(x => x.Id).Max() + 1;
+            foreach (var page in pages)
+            {
+                var p = new DatabaseScoreDataPageV1()
+                {
+                    Id = pageId++,
+                    ItemId = ScoreDatabaseUtils.ConvertToBase64(page.ItemId),
+                    Page = page.Page,
+                };
+                newPages.Add(p);
+                data.Page.Add(p);
+            }
+
+            var newHash = ScoreDatabaseUtils.CalcHash(data);
+
+            var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
+
+            await UpdateAsync(_dynamoDbClient, TableName, owner, score, newPages, newHash, oldHash, now);
+
+            static async Task<(DatabaseScoreDataV1 data,string hash)> GetAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score)
+            {
+                var request = new GetItemRequest()
+                {
+                    TableName = tableName,
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                };
+                var response = await client.GetItemAsync(request);
+                var data = response.Item[ScoreDatabasePropertyNames.Data];
+
+                if (data is null)
+                    throw new InvalidOperationException("not found.");
+
+
+                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                return (result,hash);
+            }
+
+            static AttributeValue ConvertFromPages(List<DatabaseScoreDataPageV1> pages)
+            {
+                var result = new AttributeValue()
+                {
+                    L = new List<AttributeValue>()
+                };
+
+                foreach (var page in pages)
+                {
+                    var p = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.PagesId] = new AttributeValue()
+                        {
+                            N = page.Id.ToString(),
+                        }
+                    };
+                    if (page.Page != null)
+                    {
+                        p[ScoreDatabasePropertyNames.PagesPage] = new AttributeValue(page.Page);
+                    }
+                    if (page.ItemId != null)
+                    {
+                        p[ScoreDatabasePropertyNames.PagesItemId] = new AttributeValue(page.ItemId);
+                    }
+                    if(p.Count == 0)
+                        continue;
+
+                    result.L.Add(new AttributeValue() {M = p});
+                }
+
+                return result;
+            }
+            static async Task UpdateAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score,
+                List<DatabaseScoreDataPageV1> newPages,
+                string newHash,
+                string oldHash,
+                DateTimeOffset now
+                )
+            {
+                var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
+
+                var request = new UpdateItemRequest()
+                {
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    {
+                        ["#updateAt"] = ScoreDatabasePropertyNames.UpdateAt,
+                        ["#hash"] = ScoreDatabasePropertyNames.DataHash,
+                        ["#data"] = ScoreDatabasePropertyNames.Data,
+                        ["#pages"] = ScoreDatabasePropertyNames.Pages,
+                    },
+                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                    {
+                        [":newPages"] = ConvertFromPages(newPages),
+                        [":newHash"] = new AttributeValue(newHash),
+                        [":oldHash"] = new AttributeValue(oldHash),
+                        [":updateAt"] = new AttributeValue(updateAt),
+                    },
+                    ConditionExpression = "#hash = :oldHash",
+                    UpdateExpression = "SET #updateAt = :updateAt, #hash = :newHash, #data.#pages = list_append(#data.#pages, :newPages)",
+                    TableName = tableName,
+                };
+                try
+                {
+                    await client.UpdateItemAsync(request);
+                }
+                catch (Exception ex)
+        {
+                    throw;
+                }
+            }
         }
 
         public Task RemovePagesAsync(Guid ownerId, Guid scoreId, List<int> pageIds)
