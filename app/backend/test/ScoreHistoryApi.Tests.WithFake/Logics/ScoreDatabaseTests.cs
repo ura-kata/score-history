@@ -16,6 +16,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var scoreId = Guid.Parse("0d9fb491-43ae-44a1-9056-55bb25b21187");
             try
             {
                 await target.InitializeAsync(ownerId);
@@ -28,8 +29,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var title = "test score";
             var description = "楽譜の説明";
 
-            await target.CreateAsync(ownerId, title, description);
-
+            await target.CreateAsync(ownerId, scoreId, title, description);
         }
     }
 }

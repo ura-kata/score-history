@@ -229,8 +229,15 @@ namespace ScoreHistoryApi.Logics
 
         public async Task CreateAsync(Guid ownerId, string title, string description)
         {
+            var newScoreId = Guid.NewGuid();
+            await CreateAsync(ownerId, newScoreId, title, description);
+        }
+        public async Task CreateAsync(Guid ownerId, Guid newScoreId, string title, string description)
+        {
             if (ownerId == Guid.Empty)
                 throw new ArgumentException(nameof(ownerId));
+            if (newScoreId == Guid.Empty)
+                throw new ArgumentException(nameof(newScoreId));
             if (title == null)
                 throw new ArgumentNullException(nameof(title));
 
@@ -239,8 +246,6 @@ namespace ScoreHistoryApi.Logics
                 throw new ArgumentException(nameof(title));
 
             var scoreCountMax = _quota.ScoreCountMax;
-
-            var newScoreId = Guid.NewGuid();
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
