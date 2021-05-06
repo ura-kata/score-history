@@ -88,6 +88,77 @@ namespace ScoreHistoryApi.Logics
             return Convert.ToBase64String(MD5.Create().ComputeHash(json));
         }
 
+        public static DatabaseScoreDataV1 ConvertToDatabaseScoreDataV1(AttributeValue value)
+        {
+            var result = new DatabaseScoreDataV1();
+
+            foreach (var (key, v) in value.M)
+            {
+                switch (key)
+                {
+                    case ScoreDatabasePropertyNames.Title:
+                    {
+                        result.Title = v.S;
+                        break;
+                    }
+                    case ScoreDatabasePropertyNames.Description:
+                    {
+                        result.Description = v.S;
+                        break;
+                    }
+                    case ScoreDatabasePropertyNames.DataVersion:
+                    {
+                        result.Version = v.S;
+                        break;
+                    }
+                    case ScoreDatabasePropertyNames.Pages:
+                    {
+                        if (0 < v.M.Count)
+                        {
+                            var page = new Dictionary<string, DatabaseScoreDataPageV1>();
+                            foreach (var (pageKey, pageValue) in v.M)
+                            {
+                                if(pageValue.M.Count == 0)
+                                    continue;
+
+                                var p = new DatabaseScoreDataPageV1();
+                                foreach (var (pageItemKey,pageItemValue) in pageValue.M)
+                                {
+                                    switch (pageItemKey)
+                                    {
+                                        case ScoreDatabasePropertyNames.PagesItemId:
+                                        {
+                                            p.ItemId = pageItemValue.S;
+                                            break;
+                                        }
+                                        case ScoreDatabasePropertyNames.PagesPage:
+                                        {
+                                            p.Page = pageItemValue.S;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                page[pageKey] = p;
+                            }
+                            result.Page = page;
+                        }
+                        break;
+                    }
+                    case ScoreDatabasePropertyNames.Annotations:
+                    {
+                        if (0 < v.M.Count)
+                        {
+                            var annotations = v.M.ToDictionary(x => x.Key, x => x.Value.S);
+                            result.Annotations = annotations;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            return result;
+        }
         public static AttributeValue ConvertToDatabaseDataV1(DatabaseScoreDataV1 data)
         {
             var databaseData = new Dictionary<string, AttributeValue>();
