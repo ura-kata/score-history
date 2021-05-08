@@ -147,5 +147,83 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             };
             await target.AddPagesAsync(ownerId, scoreId, newPages);
         }
+
+
+
+        [Fact]
+        public async Task RemovePagesAsyncTest()
+        {
+            var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
+            var tableName = "ura-kata-score-history";
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+
+            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var scoreId = Guid.Parse("727679a2-c1eb-4089-9817-9a9bfb7a23b1");
+
+            var title = "test score";
+            var description = "楽譜の説明";
+
+            try
+            {
+                await target.InitializeAsync(ownerId);
+            }
+            catch
+            {
+                // 初期化のエラーは握りつぶす
+            }
+            try
+            {
+                await target.CreateAsync(ownerId, scoreId, title, description);
+            }
+            catch
+            {
+                // 初期化のエラーは握りつぶす
+            }
+
+            var newPages = new List<NewScorePage>()
+            {
+                new NewScorePage()
+                {
+                    Page = "1",
+                    ItemId = Guid.NewGuid(),
+                },
+                new NewScorePage()
+                {
+                    Page = "2",
+                    ItemId = Guid.NewGuid(),
+                },
+                new NewScorePage()
+                {
+                    Page = "3",
+                    ItemId = Guid.NewGuid(),
+                },
+                new NewScorePage()
+                {
+                    Page = "4",
+                    ItemId = Guid.NewGuid(),
+                },
+                new NewScorePage()
+                {
+                    Page = "5",
+                    ItemId = Guid.NewGuid(),
+                }
+            };
+
+            try
+            {
+                await target.AddPagesAsync(ownerId, scoreId, newPages);
+            }
+            catch (Exception)
+            {
+                // 握りつぶす
+            }
+
+            var pageIds = new List<long>()
+            {
+                1,3
+            };
+            await target.RemovePagesAsync(ownerId, scoreId, pageIds);
+
+        }
     }
 }

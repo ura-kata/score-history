@@ -64,7 +64,7 @@ namespace ScoreHistoryApi.Logics
         /// <param name="ownerId"></param>
         /// <param name="scoreId"></param>
         /// <param name="pageIds"></param>
-        Task RemovePagesAsync(Guid ownerId, Guid scoreId, List<int> pageIds);
+        Task RemovePagesAsync(Guid ownerId, Guid scoreId, List<long> pageIds);
 
         /// <summary>
         /// ページの置き換え

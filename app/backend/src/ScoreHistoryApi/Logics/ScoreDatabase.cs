@@ -818,9 +818,116 @@ namespace ScoreHistoryApi.Logics
             }
         }
 
-        public Task RemovePagesAsync(Guid ownerId, Guid scoreId, List<int> pageIds)
+        public async Task RemovePagesAsync(Guid ownerId, Guid scoreId, List<long> pageIds)
         {
-            throw new NotImplementedException();
+
+            if (pageIds.Count == 0)
+                throw new ArgumentException(nameof(pageIds));
+
+            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
+            var (data, oldHash) = await GetAsync(_dynamoDbClient, TableName, owner, score);
+
+            data.Page ??= new List<DatabaseScoreDataPageV1>();
+
+            var newPages = new List<DatabaseScoreDataPageV1>();
+
+            var existedIdSet = new HashSet<long>();
+            pageIds.ForEach(id => existedIdSet.Add(id));
+
+            var removeIndices = data.Page.Select((x, index) => (x, index))
+                .Where(x => x.x != null && existedIdSet.Contains(x.x.Id))
+                .Select(x => x.index)
+                .ToArray();
+
+            foreach (var index in removeIndices.Reverse())
+            {
+                data.Page.RemoveAt(index);
+            }
+
+            var newHash = ScoreDatabaseUtils.CalcHash(data);
+
+            var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
+
+            await UpdateAsync(_dynamoDbClient, TableName, owner, score, removeIndices, newHash, oldHash, now);
+
+            static async Task<(DatabaseScoreDataV1 data, string hash)> GetAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score)
+            {
+                var request = new GetItemRequest()
+                {
+                    TableName = tableName,
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] =
+                            new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                };
+                var response = await client.GetItemAsync(request);
+                var data = response.Item[ScoreDatabasePropertyNames.Data];
+
+                if (data is null)
+                    throw new InvalidOperationException("not found.");
+
+
+                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                return (result, hash);
+            }
+
+            static async Task UpdateAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score,
+                int[] removeIndices,
+                string newHash,
+                string oldHash,
+                DateTimeOffset now
+            )
+            {
+                var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
+
+                var request = new UpdateItemRequest()
+                {
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] =
+                            new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    {
+                        ["#updateAt"] = ScoreDatabasePropertyNames.UpdateAt,
+                        ["#hash"] = ScoreDatabasePropertyNames.DataHash,
+                        ["#data"] = ScoreDatabasePropertyNames.Data,
+                        ["#pages"] = ScoreDatabasePropertyNames.Pages,
+                    },
+                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                    {
+                        [":newHash"] = new AttributeValue(newHash),
+                        [":oldHash"] = new AttributeValue(oldHash),
+                        [":updateAt"] = new AttributeValue(updateAt),
+                    },
+                    ConditionExpression = "#hash = :oldHash",
+                    UpdateExpression =
+                        $"SET #updateAt = :updateAt, #hash = :newHash REMOVE {string.Join(", ", removeIndices.Select(i=>$"#data.#pages[{i}]"))}",
+                    TableName = tableName,
+                };
+                try
+                {
+                    await client.UpdateItemAsync(request);
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+            }
         }
 
         public Task ReplacePagesAsync(Guid ownerId, Guid scoreId, List<PatchScorePage> pages)
