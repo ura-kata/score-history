@@ -9,7 +9,7 @@ namespace ScoreHistoryApi.Models.Scores
     public class PatchScorePage
     {
         [JsonPropertyName("targetPageId")]
-        public int TargetPageId { get; set; }
+        public long TargetPageId { get; set; }
         [JsonPropertyName("itemId")]
         public Guid ItemId { get; set; }
         [JsonPropertyName("page")]

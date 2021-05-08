@@ -930,9 +930,157 @@ namespace ScoreHistoryApi.Logics
             }
         }
 
-        public Task ReplacePagesAsync(Guid ownerId, Guid scoreId, List<PatchScorePage> pages)
+        public async Task ReplacePagesAsync(Guid ownerId, Guid scoreId, List<PatchScorePage> pages)
         {
-            throw new NotImplementedException();
+
+            if (pages.Count == 0)
+                throw new ArgumentException(nameof(pages));
+
+            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
+            var (data, oldHash) = await GetAsync(_dynamoDbClient, TableName, owner, score);
+
+            data.Page ??= new List<DatabaseScoreDataPageV1>();
+
+            // 重複する TargetPageId があればここで例外が発生する
+            var pageDic = pages.ToDictionary(x => x.TargetPageId, x => x);
+
+            // Key id, Value index
+            var pageIndices = new Dictionary<long,int>();
+            foreach (var (databaseScoreDataPageV1,index) in data.Page.Select((x,index)=>(x,index)))
+            {
+                pageIndices[databaseScoreDataPageV1.Id] = index;
+            }
+
+            var replacingPages = new List<(DatabaseScoreDataPageV1 data, int targetIndex)>();
+
+            foreach (var page in pages)
+            {
+                var id = page.TargetPageId;
+                if(!pageIndices.TryGetValue(id, out var index))
+                    throw new InvalidOperationException();
+
+                var p = new DatabaseScoreDataPageV1()
+                {
+                    Id = id,
+                    ItemId = ScoreDatabaseUtils.ConvertToBase64(page.ItemId),
+                    Page = page.Page,
+                };
+                replacingPages.Add((p, index));
+                data.Page[index] = p;
+            }
+
+            var newHash = ScoreDatabaseUtils.CalcHash(data);
+
+            var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
+
+            await UpdateAsync(_dynamoDbClient, TableName, owner, score, replacingPages, newHash, oldHash, now);
+
+            static async Task<(DatabaseScoreDataV1 data, string hash)> GetAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score)
+            {
+                var request = new GetItemRequest()
+                {
+                    TableName = tableName,
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] =
+                            new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                };
+                var response = await client.GetItemAsync(request);
+                var data = response.Item[ScoreDatabasePropertyNames.Data];
+
+                if (data is null)
+                    throw new InvalidOperationException("not found.");
+
+
+                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                return (result, hash);
+            }
+
+
+            static AttributeValue ConvertFromPage(DatabaseScoreDataPageV1 page)
+            {
+                var p = new Dictionary<string, AttributeValue>()
+                {
+                    [ScoreDatabasePropertyNames.PagesId] = new AttributeValue()
+                    {
+                        N = page.Id.ToString(),
+                    }
+                };
+                if (page.Page != null)
+                {
+                    p[ScoreDatabasePropertyNames.PagesPage] = new AttributeValue(page.Page);
+                }
+                if (page.ItemId != null)
+                {
+                    p[ScoreDatabasePropertyNames.PagesItemId] = new AttributeValue(page.ItemId);
+                }
+                if(p.Count == 0)
+                    return null;
+
+                return new AttributeValue() {M = p};
+            }
+
+            static async Task UpdateAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score,
+                List<(DatabaseScoreDataPageV1 data, int targetIndex)> replacingPages,
+                string newHash,
+                string oldHash,
+                DateTimeOffset now
+            )
+            {
+                var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
+
+                var replacingValues = replacingPages
+                    .Select(x => (key: ":newPage" + x.targetIndex, value: ConvertFromPage(x.data), x.targetIndex))
+                    .ToArray();
+                var request = new UpdateItemRequest()
+                {
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] =
+                            new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    {
+                        ["#updateAt"] = ScoreDatabasePropertyNames.UpdateAt,
+                        ["#hash"] = ScoreDatabasePropertyNames.DataHash,
+                        ["#data"] = ScoreDatabasePropertyNames.Data,
+                        ["#pages"] = ScoreDatabasePropertyNames.Pages,
+                    },
+                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>(replacingValues.ToDictionary(x=>x.key, x=>x.value))
+                    {
+                        [":newHash"] = new AttributeValue(newHash),
+                        [":oldHash"] = new AttributeValue(oldHash),
+                        [":updateAt"] = new AttributeValue(updateAt),
+                    },
+                    ConditionExpression = "#hash = :oldHash",
+                    UpdateExpression =
+                        $"SET #updateAt = :updateAt, #hash = :newHash, {string.Join(", ", replacingValues.Select((x)=>$"#data.#pages[{x.targetIndex}] = {x.key}"))}",
+                    TableName = tableName,
+                };
+                try
+                {
+                    await client.UpdateItemAsync(request);
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+
+            }
         }
 
         public Task AddAnnotationsAsync(Guid ownerId, Guid scoreId, List<NewScoreAnnotation> annotations)
