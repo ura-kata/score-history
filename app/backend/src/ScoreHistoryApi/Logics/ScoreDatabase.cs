@@ -611,6 +611,7 @@ namespace ScoreHistoryApi.Logics
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
+            // TODO ページの追加上限値判定を追加
             await UpdateAsync(_dynamoDbClient, TableName, owner, score, newPages, newHash, oldHash, now);
 
             static async Task<(DatabaseScoreDataV1 data,string hash)> GetAsync(
@@ -1014,6 +1015,7 @@ namespace ScoreHistoryApi.Logics
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
+            // TODO アノテーションの追加上限値判定を追加
             await UpdateAsync(_dynamoDbClient, TableName, owner, score, newAnnotations, newHash, oldHash, now);
 
             static async Task<(DatabaseScoreDataV1 data,string hash)> GetAsync(
@@ -1567,6 +1569,7 @@ namespace ScoreHistoryApi.Logics
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
+            // TODO スナップショットの作成数上限値判定を追加
             await UpdateAsync(_dynamoDbClient, TableName, owner, score, snapshotName, value, now);
 
             static async Task<(AttributeValue data,string hash)> GetAsync(
