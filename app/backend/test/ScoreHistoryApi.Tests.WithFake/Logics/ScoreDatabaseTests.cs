@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using ScoreHistoryApi.Factories;
 using ScoreHistoryApi.Logics;
@@ -751,6 +752,120 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             }
 
             await target.DeleteSnapshotAsync(ownerId, scoreId, snapshotName);
+
+        }
+
+
+        [Fact]
+        public async Task GetSnapshotNamesAsyncTest()
+        {
+            var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
+            var tableName = "ura-kata-score-history";
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+
+            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var scoreId = Guid.Parse("89405e01-67f1-42e6-8673-e932a4b20d26");
+
+            var title = "test score";
+            var description = "楽譜の説明(スナップショット削除)";
+
+            try
+            {
+                await target.InitializeAsync(ownerId);
+            }
+            catch
+            {
+                // 初期化のエラーは握りつぶす
+            }
+            try
+            {
+                await target.CreateAsync(ownerId, scoreId, title, description);
+            }
+            catch
+            {
+                // 初期化のエラーは握りつぶす
+            }
+
+            var newAnnotations = new List<NewScoreAnnotation>()
+            {
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+            };
+
+            try
+            {
+                await target.AddAnnotationsAsync(ownerId, scoreId, newAnnotations);
+            }
+            catch (Exception)
+            {
+                // 握りつぶす
+            }
+
+
+            var newPages = new List<NewScorePage>()
+            {
+                new NewScorePage()
+                {
+                    Page = "1",
+                    ItemId = Guid.NewGuid(),
+                },
+                new NewScorePage()
+                {
+                    Page = "2",
+                    ItemId = Guid.NewGuid(),
+                },
+                new NewScorePage()
+                {
+                    Page = "3",
+                    ItemId = Guid.NewGuid(),
+                },
+                new NewScorePage()
+                {
+                    Page = "4",
+                    ItemId = Guid.NewGuid(),
+                },
+                new NewScorePage()
+                {
+                    Page = "5",
+                    ItemId = Guid.NewGuid(),
+                }
+            };
+
+            try
+            {
+                await target.AddPagesAsync(ownerId, scoreId, newPages);
+            }
+            catch (Exception)
+            {
+                // 握りつぶす
+            }
+
+            var snapshotNames = new string[]
+            {
+                "スナップショット名1",
+                "スナップショット名2",
+                "スナップショット名3",
+                "スナップショット名4",
+            }.OrderBy(x => x).ToArray();
+
+            try
+            {
+                foreach (var snapshotName in snapshotNames)
+                {
+                    await target.CreateSnapshotAsync(ownerId, scoreId, snapshotName);
+                }
+            }
+            catch (Exception)
+            {
+                // 握りつぶす
+            }
+
+            var actual = await target.GetSnapshotNamesAsync(ownerId, scoreId);
+
+            Assert.Equal(snapshotNames, actual.OrderBy(x => x).ToArray());
 
         }
     }
