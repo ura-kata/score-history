@@ -87,6 +87,16 @@ namespace ScoreHistoryApi.Logics
             set => _annotations = value;
         }
     }
+
+    public class DatabaseScoreRecord
+    {
+        public DateTimeOffset CreateAt { get; set; }
+        public DateTimeOffset UpdateAt { get; set; }
+        public string DataHash { get; set; }
+        public DatabaseScoreDataV1 Data { get; set; }
+    }
+
+
     public static class ScoreDatabaseUtils
     {
         public static string ConvertToBase64(Guid id) =>
@@ -1555,9 +1565,52 @@ namespace ScoreHistoryApi.Logics
             }
         }
 
-        public Task<ScoreDetail> GetScoreDetailAsync(Guid ownerId, Guid scoreId)
+        public async Task<DatabaseScoreRecord> GetDatabaseScoreRecordAsync(Guid ownerId, Guid scoreId)
         {
-            throw new NotImplementedException();
+
+            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
+            var record = await GetAsync(_dynamoDbClient, TableName, owner, score);
+
+            return record;
+
+            static async Task<DatabaseScoreRecord> GetAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score)
+            {
+                var request = new GetItemRequest()
+                {
+                    TableName = tableName,
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] =
+                            new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                };
+                var response = await client.GetItemAsync(request);
+                var data = response.Item[ScoreDatabasePropertyNames.Data];
+
+                if (data is null)
+                    throw new InvalidOperationException("not found.");
+
+
+                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+
+                var createAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[ScoreDatabasePropertyNames.CreateAt].S);
+                var updateAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[ScoreDatabasePropertyNames.UpdateAt].S);
+                return new DatabaseScoreRecord()
+                {
+                    CreateAt = createAt,
+                    UpdateAt = updateAt,
+                    DataHash = hash,
+                    Data = result,
+                };
+            }
         }
 
         public Task<ScoreDetail> GetScoreDetailAsync(Guid ownerId, Guid scoreId, string snapshotName)

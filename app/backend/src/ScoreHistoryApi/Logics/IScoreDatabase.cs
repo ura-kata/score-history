@@ -111,7 +111,7 @@ namespace ScoreHistoryApi.Logics
         /// <param name="ownerId"></param>
         /// <param name="scoreId"></param>
         /// <returns></returns>
-        Task<ScoreDetail> GetScoreDetailAsync(Guid ownerId, Guid scoreId);
+        Task<DatabaseScoreRecord> GetDatabaseScoreRecordAsync(Guid ownerId, Guid scoreId);
 
         /// <summary>
         /// 楽譜の詳細データを取得する
