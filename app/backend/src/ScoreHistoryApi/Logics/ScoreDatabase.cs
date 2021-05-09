@@ -1697,9 +1697,46 @@ namespace ScoreHistoryApi.Logics
             }
         }
 
-        public Task DeleteSnapshotAsync(Guid ownerId, Guid scoreId, string snapshotName)
+        public async Task DeleteSnapshotAsync(Guid ownerId, Guid scoreId, string snapshotName)
         {
-            throw new NotImplementedException();
+            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
+            await DeleteItemAsync(_dynamoDbClient, TableName, owner, score, snapshotName);
+
+            static async Task DeleteItemAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score,
+                string snapshotName
+                )
+            {
+                var snapshotNameBase64 = ScoreDatabaseUtils.ConvertToBase64FromSnapshotName(snapshotName);
+
+                var request = new DeleteItemRequest()
+                {
+                    TableName = tableName,
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + snapshotNameBase64),
+                    },
+                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    {
+                        ["#score"] = ScoreDatabasePropertyNames.ScoreId,
+                    },
+                    ConditionExpression = "attribute_exists(#score)",
+                };
+                try
+                {
+                    await client.DeleteItemAsync(request);
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+            }
         }
 
         public async Task<IReadOnlyList<string>> GetSnapshotNamesAsync(Guid ownerId, Guid scoreId)

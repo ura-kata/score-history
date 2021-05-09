@@ -651,6 +651,108 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             await target.CreateSnapshotAsync(ownerId, scoreId, snapshotName);
 
         }
+
+        [Fact]
+        public async Task DeleteSnapshotAsyncTest()
+        {
+            var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
+            var tableName = "ura-kata-score-history";
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+
+            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var scoreId = Guid.Parse("aa917a9b-453e-4bc2-8381-b61404725d6a");
+
+            var title = "test score";
+            var description = "楽譜の説明(スナップショット削除)";
+
+            try
+            {
+                await target.InitializeAsync(ownerId);
+            }
+            catch
+            {
+                // 初期化のエラーは握りつぶす
+            }
+            try
+            {
+                await target.CreateAsync(ownerId, scoreId, title, description);
+            }
+            catch
+            {
+                // 初期化のエラーは握りつぶす
+            }
+
+            var newAnnotations = new List<NewScoreAnnotation>()
+            {
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+            };
+
+            try
+            {
+                await target.AddAnnotationsAsync(ownerId, scoreId, newAnnotations);
+            }
+            catch (Exception)
+            {
+                // 握りつぶす
+            }
+
+
+            var newPages = new List<NewScorePage>()
+            {
+                new NewScorePage()
+                {
+                    Page = "1",
+                    ItemId = Guid.NewGuid(),
+                },
+                new NewScorePage()
+                {
+                    Page = "2",
+                    ItemId = Guid.NewGuid(),
+                },
+                new NewScorePage()
+                {
+                    Page = "3",
+                    ItemId = Guid.NewGuid(),
+                },
+                new NewScorePage()
+                {
+                    Page = "4",
+                    ItemId = Guid.NewGuid(),
+                },
+                new NewScorePage()
+                {
+                    Page = "5",
+                    ItemId = Guid.NewGuid(),
+                }
+            };
+
+            try
+            {
+                await target.AddPagesAsync(ownerId, scoreId, newPages);
+            }
+            catch (Exception)
+            {
+                // 握りつぶす
+            }
+
+            string snapshotName = "snapshot name";
+
+            try
+            {
+                await target.CreateSnapshotAsync(ownerId, scoreId, snapshotName);
+            }
+            catch (Exception)
+            {
+                // 握りつぶす
+            }
+
+            await target.DeleteSnapshotAsync(ownerId, scoreId, snapshotName);
+
+        }
     }
 
 
