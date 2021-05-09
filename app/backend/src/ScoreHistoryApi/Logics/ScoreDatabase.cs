@@ -1618,9 +1618,83 @@ namespace ScoreHistoryApi.Logics
             throw new NotImplementedException();
         }
 
-        public Task CreateSnapshotAsync(Guid ownerId, Guid scoreId, string snapshotName)
+        public async Task CreateSnapshotAsync(Guid ownerId, Guid scoreId, string snapshotName)
         {
-            throw new NotImplementedException();
+
+            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
+            var value = await GetAsync(_dynamoDbClient, TableName, owner, score);
+
+            var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
+
+            await UpdateAsync(_dynamoDbClient, TableName, owner, score, snapshotName, value, now);
+
+            static async Task<(AttributeValue data,string hash)> GetAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score)
+            {
+                var request = new GetItemRequest()
+                {
+                    TableName = tableName,
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                };
+                var response = await client.GetItemAsync(request);
+                var data = response.Item[ScoreDatabasePropertyNames.Data];
+
+                if (data is null)
+                    throw new InvalidOperationException("not found.");
+
+                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                return (data,hash);
+            }
+
+            static async Task UpdateAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score,
+                string snapshotName,
+                (AttributeValue data, string hash) value,
+                DateTimeOffset now
+                )
+            {
+                var at = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
+                var snapshotNameBase64 = ScoreDatabaseUtils.ConvertToBase64FromSnapshotName(snapshotName);
+
+                var request = new PutItemRequest()
+                {
+                    TableName = tableName,
+                    Item = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + snapshotNameBase64),
+                        [ScoreDatabasePropertyNames.CreateAt] = new AttributeValue(at),
+                        [ScoreDatabasePropertyNames.UpdateAt] = new AttributeValue(at),
+                        [ScoreDatabasePropertyNames.DataHash] = new AttributeValue(value.hash),
+                        [ScoreDatabasePropertyNames.Data] = value.data,
+                    },
+                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    {
+                        ["#score"] = ScoreDatabasePropertyNames.ScoreId,
+                    },
+                    ConditionExpression = "attribute_not_exists(#score)",
+                };
+                try
+                {
+                    await client.PutItemAsync(request);
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+            }
         }
 
         public Task DeleteSnapshotAsync(Guid ownerId, Guid scoreId, string snapshotName)
