@@ -102,12 +102,27 @@ namespace ScoreHistoryApi.Logics
 
     public static class ScoreDatabaseUtils
     {
+        /// <summary>
+        /// UUID を Base64 エンコードで変換する
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public static string ConvertToBase64(Guid id) =>
             Convert.ToBase64String(id.ToByteArray());
 
+        /// <summary>
+        /// Base64 エンコードされた id を UUID に変換する
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public static Guid ConvertToGuid(string id) =>
             new Guid(Convert.FromBase64String(id));
 
+        /// <summary>
+        /// データベースのデータからハッシュ値を計算する
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public static string CalcHash(DatabaseScoreDataV1 data)
         {
             var option = new JsonSerializerOptions()
@@ -126,6 +141,11 @@ namespace ScoreHistoryApi.Logics
             return Convert.ToBase64String(MD5.Create().ComputeHash(json));
         }
 
+        /// <summary>
+        /// DynamoDB のデータベースのデータからデータベースデータのクラスにマッピングする
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public static DatabaseScoreDataV1 ConvertToDatabaseScoreDataV1(AttributeValue value)
         {
             var result = new DatabaseScoreDataV1();
@@ -219,7 +239,7 @@ namespace ScoreHistoryApi.Logics
                                 annotations.Add(annotation);
                             }
                         }
-                            result.Annotations = annotations;
+                        result.Annotations = annotations;
                         break;
                     }
                 }
@@ -227,6 +247,12 @@ namespace ScoreHistoryApi.Logics
 
             return result;
         }
+
+        /// <summary>
+        /// データベースデータのクラスから DynamoDB のデータベースのデータに変換する
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public static AttributeValue ConvertToDatabaseDataV1(DatabaseScoreDataV1 data)
         {
             var databaseData = new Dictionary<string, AttributeValue>();
@@ -282,15 +308,15 @@ namespace ScoreHistoryApi.Logics
                     };
 
                     if (value.Content != null)
-                {
-                        annotation[ScoreDatabasePropertyNames.AnnotationsContent] = new AttributeValue(value.Content);
+                    {
+                            annotation[ScoreDatabasePropertyNames.AnnotationsContent] = new AttributeValue(value.Content);
                     }
 
                     if(annotation.Count == 0)
                         continue;
                     annotations.Add(new AttributeValue() {M = annotation});
                 }
-                }
+            }
 
             databaseData[ScoreDatabasePropertyNames.Annotations] =
                 new AttributeValue() {L = annotations, IsLSet = true};
@@ -298,19 +324,43 @@ namespace ScoreHistoryApi.Logics
             return new AttributeValue() {M = databaseData};
         }
 
+        /// <summary>
+        /// <see cref="DateTimeOffset"/> から Unix millisecond の16進数表記に変換する
+        /// </summary>
+        /// <param name="datetime"></param>
+        /// <returns></returns>
         public static string ConvertToUnixTimeMilli(DateTimeOffset datetime) =>
             datetime.ToUnixTimeMilliseconds().ToString("X");
 
+        /// <summary>
+        /// Unix millisecond の16進数表記から <see cref="DateTimeOffset"/> に変換する
+        /// </summary>
+        /// <param name="datetime"></param>
+        /// <returns></returns>
         public static DateTimeOffset ConvertFromUnixTimeMilli(string datetime) =>
             DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(datetime, NumberStyles.HexNumber));
 
+        /// <summary>
+        /// 最小単位が Unix millisecond の現時間を取得する
+        /// </summary>
+        /// <returns></returns>
         public static DateTimeOffset UnixTimeMillisecondsNow() =>
             DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.Now.ToUnixTimeMilliseconds());
 
-        public static string ConvertToBase64FromSnapshotName(string snapshotName) =>
+        /// <summary>
+        /// スナップショット名を base64 エンコードで変換する
+        /// </summary>
+        /// <param name="snapshotName"></param>
+        /// <returns></returns>
+        public static string EncodeToBase64FromSnapshotName(string snapshotName) =>
             Convert.ToBase64String(Encoding.UTF8.GetBytes(snapshotName));
 
-        public static string ConvertToSnapshotNameFromBase64(string snapshotNameBase64) =>
+        /// <summary>
+        /// base64 でエンコードされたスナップショット名をデコードする
+        /// </summary>
+        /// <param name="snapshotNameBase64"></param>
+        /// <returns></returns>
+        public static string DecodeToSnapshotNameFromBase64(string snapshotNameBase64) =>
             Encoding.UTF8.GetString(Convert.FromBase64String(snapshotNameBase64));
     }
 
@@ -370,6 +420,7 @@ namespace ScoreHistoryApi.Logics
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
             }
@@ -481,7 +532,7 @@ namespace ScoreHistoryApi.Logics
                 };
                 try
                 {
-                    var response = await client.TransactWriteItemsAsync(new TransactWriteItemsRequest()
+                    await client.TransactWriteItemsAsync(new TransactWriteItemsRequest()
                     {
                         TransactItems = actions,
                         ReturnConsumedCapacity = ReturnConsumedCapacity.TOTAL
@@ -572,7 +623,7 @@ namespace ScoreHistoryApi.Logics
                 };
                 try
                 {
-                    var response = await client.TransactWriteItemsAsync(new TransactWriteItemsRequest()
+                    await client.TransactWriteItemsAsync(new TransactWriteItemsRequest()
                     {
                         TransactItems = actions,
                         ReturnConsumedCapacity = ReturnConsumedCapacity.TOTAL
@@ -628,22 +679,27 @@ namespace ScoreHistoryApi.Logics
                 }
                 catch (InternalServerErrorException ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
                 catch (ProvisionedThroughputExceededException ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
                 catch (RequestLimitExceededException ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
                 catch (ResourceNotFoundException ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
             }
@@ -779,6 +835,7 @@ namespace ScoreHistoryApi.Logics
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
             }
@@ -868,7 +925,8 @@ namespace ScoreHistoryApi.Logics
                     await client.UpdateItemAsync(request);
                 }
                 catch (Exception ex)
-        {
+                {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
             }
@@ -1009,7 +1067,8 @@ namespace ScoreHistoryApi.Logics
                     await client.UpdateItemAsync(request);
                 }
                 catch (Exception ex)
-        {
+                {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
             }
@@ -1027,8 +1086,6 @@ namespace ScoreHistoryApi.Logics
             var (data, oldHash) = await GetAsync(_dynamoDbClient, TableName, owner, score);
 
             data.Page ??= new List<DatabaseScoreDataPageV1>();
-
-            var newPages = new List<DatabaseScoreDataPageV1>();
 
             var existedIdSet = new HashSet<long>();
             pageIds.ForEach(id => existedIdSet.Add(id));
@@ -1122,6 +1179,7 @@ namespace ScoreHistoryApi.Logics
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
             }
@@ -1139,9 +1197,6 @@ namespace ScoreHistoryApi.Logics
             var (data, oldHash) = await GetAsync(_dynamoDbClient, TableName, owner, score);
 
             data.Page ??= new List<DatabaseScoreDataPageV1>();
-
-            // 重複する TargetPageId があればここで例外が発生する
-            var pageDic = pages.ToDictionary(x => x.TargetPageId, x => x);
 
             // Key id, Value index
             var pageIndices = new Dictionary<long,int>();
@@ -1274,6 +1329,7 @@ namespace ScoreHistoryApi.Logics
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
 
@@ -1411,6 +1467,7 @@ namespace ScoreHistoryApi.Logics
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
             }
@@ -1521,6 +1578,7 @@ namespace ScoreHistoryApi.Logics
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
             }
@@ -1537,9 +1595,6 @@ namespace ScoreHistoryApi.Logics
             var (data, oldHash) = await GetAsync(_dynamoDbClient, TableName, owner, score);
 
             data.Annotations ??= new List<DatabaseScoreDataAnnotationV1>();
-
-            // 重複する TargetPageId があればここで例外が発生する
-            var annotationDic = annotations.ToDictionary(x => x.TargetAnnotationId, x => x);
 
             // Key id, Value index
             var annotationIndices = new Dictionary<long,int>();
@@ -1667,6 +1722,7 @@ namespace ScoreHistoryApi.Logics
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
 
@@ -1731,22 +1787,27 @@ namespace ScoreHistoryApi.Logics
                 }
                 catch (InternalServerErrorException ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
                 catch (ProvisionedThroughputExceededException ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
                 catch (RequestLimitExceededException ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
                 catch (ResourceNotFoundException ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
             }
@@ -1853,7 +1914,7 @@ namespace ScoreHistoryApi.Logics
                 )
             {
                 var at = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
-                var snapshotNameBase64 = ScoreDatabaseUtils.ConvertToBase64FromSnapshotName(snapshotName);
+                var snapshotNameBase64 = ScoreDatabaseUtils.EncodeToBase64FromSnapshotName(snapshotName);
 
                 var request = new PutItemRequest()
                 {
@@ -1879,6 +1940,7 @@ namespace ScoreHistoryApi.Logics
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
             }
@@ -1899,7 +1961,7 @@ namespace ScoreHistoryApi.Logics
                 string snapshotName
                 )
             {
-                var snapshotNameBase64 = ScoreDatabaseUtils.ConvertToBase64FromSnapshotName(snapshotName);
+                var snapshotNameBase64 = ScoreDatabaseUtils.EncodeToBase64FromSnapshotName(snapshotName);
 
                 var request = new DeleteItemRequest()
                 {
@@ -1921,6 +1983,7 @@ namespace ScoreHistoryApi.Logics
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
             }
@@ -1961,27 +2024,32 @@ namespace ScoreHistoryApi.Logics
                     return response.Items.Select(x => x[ScoreDatabasePropertyNames.ScoreId]?.S)
                         .Where(x => !(x is null))
                         .Select(x => x.Substring(subStartIndex))
-                        .Select(ScoreDatabaseUtils.ConvertToSnapshotNameFromBase64)
+                        .Select(ScoreDatabaseUtils.DecodeToSnapshotNameFromBase64)
                         .ToArray();
                 }
                 catch (InternalServerErrorException ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
                 catch (ProvisionedThroughputExceededException ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
                 catch (RequestLimitExceededException ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
                 catch (ResourceNotFoundException ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine(ex.Message);
                     throw;
                 }
             }
