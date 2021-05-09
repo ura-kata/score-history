@@ -7,6 +7,7 @@ using ScoreHistoryApi.Logics;
 using ScoreHistoryApi.Models.Scores;
 using Xunit;
 
+// TODO 冪等性が担保されるようにテストを修正する
 namespace ScoreHistoryApi.Tests.WithFake.Logics
 {
     public class ScoreDatabaseTests
