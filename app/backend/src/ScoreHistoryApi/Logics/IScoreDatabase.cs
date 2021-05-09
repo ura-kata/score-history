@@ -88,7 +88,7 @@ namespace ScoreHistoryApi.Logics
         /// <param name="ownerId"></param>
         /// <param name="scoreId"></param>
         /// <param name="annotationIds"></param>
-        Task RemoveAnnotationsAsync(Guid ownerId, Guid scoreId, List<int> annotationIds);
+        Task RemoveAnnotationsAsync(Guid ownerId, Guid scoreId, List<long> annotationIds);
 
         /// <summary>
         /// アノテーションの置き換え

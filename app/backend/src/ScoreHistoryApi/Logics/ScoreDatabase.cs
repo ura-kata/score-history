@@ -1219,14 +1219,261 @@ namespace ScoreHistoryApi.Logics
             }
         }
 
-        public Task RemoveAnnotationsAsync(Guid ownerId, Guid scoreId, List<int> annotationIds)
+        public async Task RemoveAnnotationsAsync(Guid ownerId, Guid scoreId, List<long> annotationIds)
         {
-            throw new NotImplementedException();
+
+            if (annotationIds.Count == 0)
+                throw new ArgumentException(nameof(annotationIds));
+
+            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
+            var (data, oldHash) = await GetAsync(_dynamoDbClient, TableName, owner, score);
+
+            data.Annotations ??= new List<DatabaseScoreDataAnnotationV1>();
+
+            var existedIdSet = new HashSet<long>();
+            annotationIds.ForEach(id => existedIdSet.Add(id));
+
+            var removeIndices = data.Annotations.Select((x, index) => (x, index))
+                .Where(x => x.x != null && existedIdSet.Contains(x.x.Id))
+                .Select(x => x.index)
+                .ToArray();
+
+            foreach (var index in removeIndices.Reverse())
+            {
+                data.Annotations.RemoveAt(index);
+            }
+
+            var newHash = ScoreDatabaseUtils.CalcHash(data);
+
+            var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
+
+            await UpdateAsync(_dynamoDbClient, TableName, owner, score, removeIndices, newHash, oldHash, now);
+
+            static async Task<(DatabaseScoreDataV1 data, string hash)> GetAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score)
+            {
+                var request = new GetItemRequest()
+                {
+                    TableName = tableName,
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] =
+                            new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                };
+                var response = await client.GetItemAsync(request);
+                var data = response.Item[ScoreDatabasePropertyNames.Data];
+
+                if (data is null)
+                    throw new InvalidOperationException("not found.");
+
+
+                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                return (result, hash);
+            }
+
+            static async Task UpdateAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score,
+                int[] removeIndices,
+                string newHash,
+                string oldHash,
+                DateTimeOffset now
+            )
+            {
+                var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
+
+                var request = new UpdateItemRequest()
+                {
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] =
+                            new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    {
+                        ["#updateAt"] = ScoreDatabasePropertyNames.UpdateAt,
+                        ["#hash"] = ScoreDatabasePropertyNames.DataHash,
+                        ["#data"] = ScoreDatabasePropertyNames.Data,
+                        ["#ann"] = ScoreDatabasePropertyNames.Annotations,
+                    },
+                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                    {
+                        [":newHash"] = new AttributeValue(newHash),
+                        [":oldHash"] = new AttributeValue(oldHash),
+                        [":updateAt"] = new AttributeValue(updateAt),
+                    },
+                    ConditionExpression = "#hash = :oldHash",
+                    UpdateExpression =
+                        $"SET #updateAt = :updateAt, #hash = :newHash REMOVE {string.Join(", ", removeIndices.Select(i=>$"#data.#ann[{i}]"))}",
+                    TableName = tableName,
+                };
+                try
+                {
+                    await client.UpdateItemAsync(request);
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+            }
         }
 
-        public Task ReplaceAnnotationsAsync(Guid ownerId, Guid scoreId, List<PatchScoreAnnotation> annotations)
+        public async Task ReplaceAnnotationsAsync(Guid ownerId, Guid scoreId, List<PatchScoreAnnotation> annotations)
         {
-            throw new NotImplementedException();
+            if (annotations.Count == 0)
+                throw new ArgumentException(nameof(annotations));
+
+            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
+            var (data, oldHash) = await GetAsync(_dynamoDbClient, TableName, owner, score);
+
+            data.Annotations ??= new List<DatabaseScoreDataAnnotationV1>();
+
+            // 重複する TargetPageId があればここで例外が発生する
+            var annotationDic = annotations.ToDictionary(x => x.TargetAnnotationId, x => x);
+
+            // Key id, Value index
+            var annotationIndices = new Dictionary<long,int>();
+            foreach (var (ann,index) in data.Annotations.Select((x,index)=>(x,index)))
+            {
+                annotationIndices[ann.Id] = index;
+            }
+
+            var replacingAnnotations = new List<(DatabaseScoreDataAnnotationV1 data, int targetIndex)>();
+
+            foreach (var ann in annotations)
+            {
+                var id = ann.TargetAnnotationId;
+                if(!annotationIndices.TryGetValue(id, out var index))
+                    throw new InvalidOperationException();
+
+                var a = new DatabaseScoreDataAnnotationV1()
+                {
+                    Id = id,
+                    Content = ann.Content,
+                };
+                replacingAnnotations.Add((a, index));
+                data.Annotations[index] = a;
+            }
+
+            var newHash = ScoreDatabaseUtils.CalcHash(data);
+
+            var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
+
+            await UpdateAsync(_dynamoDbClient, TableName, owner, score, replacingAnnotations, newHash, oldHash, now);
+
+            static async Task<(DatabaseScoreDataV1 data, string hash)> GetAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score)
+            {
+                var request = new GetItemRequest()
+                {
+                    TableName = tableName,
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] =
+                            new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                };
+                var response = await client.GetItemAsync(request);
+                var data = response.Item[ScoreDatabasePropertyNames.Data];
+
+                if (data is null)
+                    throw new InvalidOperationException("not found.");
+
+
+                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                return (result, hash);
+            }
+
+
+            static AttributeValue ConvertFromAnnotation(DatabaseScoreDataAnnotationV1 annotation)
+            {
+                var a = new Dictionary<string, AttributeValue>()
+                {
+                    [ScoreDatabasePropertyNames.AnnotationsId] = new AttributeValue()
+                    {
+                        N = annotation.Id.ToString(),
+                    }
+                };
+                if (annotation.Content != null)
+                {
+                    a[ScoreDatabasePropertyNames.AnnotationsContent] = new AttributeValue(annotation.Content);
+                }
+                if(a.Count == 0)
+                    return null;
+
+                return new AttributeValue() {M = a};
+            }
+
+            static async Task UpdateAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score,
+                List<(DatabaseScoreDataAnnotationV1 data, int targetIndex)> replacingAnnotations,
+                string newHash,
+                string oldHash,
+                DateTimeOffset now
+            )
+            {
+                var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
+
+                var replacingValues = replacingAnnotations
+                    .Select(x => (key: ":newAnn" + x.targetIndex, value: ConvertFromAnnotation(x.data), x.targetIndex))
+                    .ToArray();
+                var request = new UpdateItemRequest()
+                {
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] =
+                            new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    {
+                        ["#updateAt"] = ScoreDatabasePropertyNames.UpdateAt,
+                        ["#hash"] = ScoreDatabasePropertyNames.DataHash,
+                        ["#data"] = ScoreDatabasePropertyNames.Data,
+                        ["#ann"] = ScoreDatabasePropertyNames.Annotations,
+                    },
+                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>(replacingValues.ToDictionary(x=>x.key, x=>x.value))
+                    {
+                        [":newHash"] = new AttributeValue(newHash),
+                        [":oldHash"] = new AttributeValue(oldHash),
+                        [":updateAt"] = new AttributeValue(updateAt),
+                    },
+                    ConditionExpression = "#hash = :oldHash",
+                    UpdateExpression =
+                        $"SET #updateAt = :updateAt, #hash = :newHash, {string.Join(", ", replacingValues.Select((x)=>$"#data.#ann[{x.targetIndex}] = {x.key}"))}",
+                    TableName = tableName,
+                };
+                try
+                {
+                    await client.UpdateItemAsync(request);
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+
+            }
         }
 
         public async Task<IReadOnlyList<ScoreSummary>> GetScoreSummariesAsync(Guid ownerId)

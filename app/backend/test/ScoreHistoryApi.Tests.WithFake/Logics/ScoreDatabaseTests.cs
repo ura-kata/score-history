@@ -352,5 +352,123 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             };
             await target.AddAnnotationsAsync(ownerId, scoreId, newAnnotations);
         }
+
+
+        [Fact]
+        public async Task RemoveAnnotationsAsyncTest()
+        {
+            var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
+            var tableName = "ura-kata-score-history";
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+
+            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var scoreId = Guid.Parse("27badfc9-372f-4423-aa41-cfa397c9b01d");
+
+            var title = "test score";
+            var description = "楽譜の説明";
+
+            try
+            {
+                await target.InitializeAsync(ownerId);
+            }
+            catch
+            {
+                // 初期化のエラーは握りつぶす
+            }
+            try
+            {
+                await target.CreateAsync(ownerId, scoreId, title, description);
+            }
+            catch
+            {
+                // 初期化のエラーは握りつぶす
+            }
+
+            var newAnnotations = new List<NewScoreAnnotation>()
+            {
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+            };
+
+            try
+            {
+                await target.AddAnnotationsAsync(ownerId, scoreId, newAnnotations);
+            }
+            catch (Exception)
+            {
+                // 握りつぶす
+            }
+
+            var annotationIds = new List<long>()
+            {
+                1,3
+            };
+            await target.RemoveAnnotationsAsync(ownerId, scoreId, annotationIds);
+
+        }
+
+
+        [Fact]
+        public async Task ReplaceAnnotationsAsyncTest()
+        {
+            var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
+            var tableName = "ura-kata-score-history";
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+
+            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var scoreId = Guid.Parse("9fc3f5e5-66b6-4443-be68-1cc96155550f");
+
+            var title = "test score";
+            var description = "楽譜の説明";
+
+            try
+            {
+                await target.InitializeAsync(ownerId);
+            }
+            catch
+            {
+                // 初期化のエラーは握りつぶす
+            }
+            try
+            {
+                await target.CreateAsync(ownerId, scoreId, title, description);
+            }
+            catch
+            {
+                // 初期化のエラーは握りつぶす
+            }
+
+            var newAnnotations = new List<NewScoreAnnotation>()
+            {
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+                new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
+            };
+
+            try
+            {
+                await target.AddAnnotationsAsync(ownerId, scoreId, newAnnotations);
+            }
+            catch (Exception)
+            {
+                // 握りつぶす
+            }
+
+            var anns = new List<PatchScoreAnnotation>()
+            {
+                new PatchScoreAnnotation(){TargetAnnotationId = 1, Content = "replaced " + Guid.NewGuid()},
+                new PatchScoreAnnotation(){TargetAnnotationId = 3, Content = "replaced " + Guid.NewGuid()},
+            };
+            await target.ReplaceAnnotationsAsync(ownerId, scoreId, anns);
+
+        }
+
     }
+
+
 }
