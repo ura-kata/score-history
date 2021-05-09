@@ -1083,9 +1083,140 @@ namespace ScoreHistoryApi.Logics
             }
         }
 
-        public Task AddAnnotationsAsync(Guid ownerId, Guid scoreId, List<NewScoreAnnotation> annotations)
+        public async Task AddAnnotationsAsync(Guid ownerId, Guid scoreId, List<NewScoreAnnotation> annotations)
         {
-            throw new NotImplementedException();
+            if (annotations.Count == 0)
+                throw new ArgumentException(nameof(annotations));
+
+            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
+            var (data, oldHash) = await GetAsync(_dynamoDbClient, TableName, owner, score);
+
+            data.Annotations ??= new List<DatabaseScoreDataAnnotationV1>();
+
+            var newAnnotations = new List<DatabaseScoreDataAnnotationV1>();
+
+            var annotationId = data.Annotations.Count == 0 ? 0 : data.Annotations.Select(x => x.Id).Max() + 1;
+            foreach (var annotation in annotations)
+            {
+                var a = new DatabaseScoreDataAnnotationV1()
+                {
+                    Id = annotationId++,
+                    Content = annotation.Content,
+                };
+                newAnnotations.Add(a);
+                data.Annotations.Add(a);
+            }
+
+            var newHash = ScoreDatabaseUtils.CalcHash(data);
+
+            var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
+
+            await UpdateAsync(_dynamoDbClient, TableName, owner, score, newAnnotations, newHash, oldHash, now);
+
+            static async Task<(DatabaseScoreDataV1 data,string hash)> GetAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score)
+            {
+                var request = new GetItemRequest()
+                {
+                    TableName = tableName,
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                };
+                var response = await client.GetItemAsync(request);
+                var data = response.Item[ScoreDatabasePropertyNames.Data];
+
+                if (data is null)
+                    throw new InvalidOperationException("not found.");
+
+
+                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                return (result,hash);
+            }
+
+            static AttributeValue ConvertFromAnnotations(List<DatabaseScoreDataAnnotationV1> annotations)
+            {
+                var result = new AttributeValue()
+                {
+                    L = new List<AttributeValue>()
+                };
+
+                foreach (var annotation in annotations)
+                {
+                    var a = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.AnnotationsId] = new AttributeValue()
+                        {
+                            N = annotation.Id.ToString(),
+                        }
+                    };
+                    if (annotation.Content != null)
+                    {
+                        a[ScoreDatabasePropertyNames.AnnotationsContent] = new AttributeValue(annotation.Content);
+                    }
+                    if(a.Count == 0)
+                        continue;
+
+                    result.L.Add(new AttributeValue() {M = a});
+                }
+
+                return result;
+            }
+            static async Task UpdateAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score,
+                List<DatabaseScoreDataAnnotationV1> newAnnotations,
+                string newHash,
+                string oldHash,
+                DateTimeOffset now
+                )
+            {
+                var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
+
+                var request = new UpdateItemRequest()
+                {
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    {
+                        ["#updateAt"] = ScoreDatabasePropertyNames.UpdateAt,
+                        ["#hash"] = ScoreDatabasePropertyNames.DataHash,
+                        ["#data"] = ScoreDatabasePropertyNames.Data,
+                        ["#annotations"] = ScoreDatabasePropertyNames.Annotations,
+                    },
+                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                    {
+                        [":newAnnotations"] = ConvertFromAnnotations(newAnnotations),
+                        [":newHash"] = new AttributeValue(newHash),
+                        [":oldHash"] = new AttributeValue(oldHash),
+                        [":updateAt"] = new AttributeValue(updateAt),
+                    },
+                    ConditionExpression = "#hash = :oldHash",
+                    UpdateExpression = "SET #updateAt = :updateAt, #hash = :newHash, #data.#annotations = list_append(#data.#annotations, :newAnnotations)",
+                    TableName = tableName,
+                };
+                try
+                {
+                    await client.UpdateItemAsync(request);
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+            }
         }
 
         public Task RemoveAnnotationsAsync(Guid ownerId, Guid scoreId, List<int> annotationIds)

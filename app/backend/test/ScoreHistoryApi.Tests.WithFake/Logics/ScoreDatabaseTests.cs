@@ -313,5 +313,44 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             await target.ReplacePagesAsync(ownerId, scoreId, pages);
 
         }
+
+        [Fact]
+        public async Task AddAnnotationsAsyncTest()
+        {
+            var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
+            var tableName = "ura-kata-score-history";
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+
+            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var scoreId = Guid.Parse("90fcc364-2a67-42b8-8b93-15a84370b1e4");
+
+            var title = "test score";
+            var description = "楽譜の説明";
+
+            try
+            {
+                await target.InitializeAsync(ownerId);
+            }
+            catch
+            {
+                // 初期化のエラーは握りつぶす
+            }
+            try
+            {
+                await target.CreateAsync(ownerId, scoreId, title, description);
+            }
+            catch
+            {
+                // 初期化のエラーは握りつぶす
+            }
+
+            var newAnnotations = new List<NewScoreAnnotation>()
+            {
+                new NewScoreAnnotation(){Content = "アノテーション1"},
+                new NewScoreAnnotation(){Content = "アノテーション2"},
+                new NewScoreAnnotation(){Content = "アノテーション3"},
+            };
+            await target.AddAnnotationsAsync(ownerId, scoreId, newAnnotations);
+        }
     }
 }
