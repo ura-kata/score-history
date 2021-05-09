@@ -467,7 +467,12 @@ namespace ScoreHistoryApi.Logics
                                 [ScoreDatabasePropertyNames.UpdateAt] = new AttributeValue(updateAt),
                                 [ScoreDatabasePropertyNames.Data] = dataAttributeValue,
                             },
-                            TableName = tableName
+                            TableName = tableName,
+                            ExpressionAttributeNames = new Dictionary<string, string>()
+                            {
+                                ["#score"] = ScoreDatabasePropertyNames.ScoreId,
+                            },
+                            ConditionExpression = "attribute_not_exists(#score)",
                         }
                     },
                 };
@@ -502,9 +507,188 @@ namespace ScoreHistoryApi.Logics
             }
         }
 
-        public Task DeleteAsync(Guid ownerId, Guid scoreId)
+        public async Task DeleteAsync(Guid ownerId, Guid scoreId)
         {
-            throw new NotImplementedException();
+            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
+            await DeleteMainAsync(_dynamoDbClient, TableName, owner, score);
+
+            // スナップショットの削除は SQS を使ったほうがいいかも
+            var snapshotScoreIds = await GetSnapshotScoreIdsAsync(_dynamoDbClient, TableName, owner, score);
+
+            await DeleteSnapshotsAsync(_dynamoDbClient, TableName, owner, snapshotScoreIds);
+
+            static async Task DeleteMainAsync(IAmazonDynamoDB client, string tableName, string owner, string score)
+            {
+                var actions = new List<TransactWriteItem>()
+                {
+                    new TransactWriteItem()
+                    {
+                        Delete = new Delete()
+                        {
+                            Key = new Dictionary<string, AttributeValue>()
+                            {
+                                [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                            },
+                            ExpressionAttributeNames = new Dictionary<string, string>()
+                            {
+                                ["#score"] = ScoreDatabasePropertyNames.ScoreId,
+                            },
+                            ConditionExpression = "attribute_exists(#score)",
+                            TableName = tableName,
+                        }
+                    },
+                    new TransactWriteItem()
+                    {
+                        Update = new Update()
+                        {
+                            Key = new Dictionary<string, AttributeValue>()
+                            {
+                                [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
+                            },
+                            ExpressionAttributeNames = new Dictionary<string, string>()
+                            {
+                                ["#count"] = ScoreDatabasePropertyNames.ScoreCount,
+                                ["#scores"] = ScoreDatabasePropertyNames.Scores,
+                            },
+                            ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                            {
+                                [":increment"] = new AttributeValue(){N = "-1"},
+                                [":score"] = new AttributeValue()
+                                {
+                                    SS = new List<string>(){score}
+                                }
+                            },
+                            UpdateExpression = "ADD #count :increment DELETE #scores :score",
+                            TableName = tableName,
+                        },
+                    },
+                };
+                try
+                {
+                    var response = await client.TransactWriteItemsAsync(new TransactWriteItemsRequest()
+                    {
+                        TransactItems = actions,
+                        ReturnConsumedCapacity = ReturnConsumedCapacity.TOTAL
+                    });
+                }
+                catch (ResourceNotFoundException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    throw;
+                }
+                catch (InternalServerErrorException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    throw;
+                }
+                catch (TransactionCanceledException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    throw;
+                }
+            }
+
+            static async Task<string[]> GetSnapshotScoreIdsAsync(IAmazonDynamoDB client, string tableName, string owner, string score)
+            {
+                var request = new QueryRequest()
+                {
+                    TableName = tableName,
+                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    {
+                        ["#owner"] = ScoreDatabasePropertyNames.OwnerId,
+                        ["#score"] = ScoreDatabasePropertyNames.ScoreId,
+                    },
+                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                    {
+                        [":owner"] = new AttributeValue(owner),
+                        [":snapPrefix"] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score),
+                    },
+                    KeyConditionExpression = "#owner = :owner and begins_with(#score, :snapPrefix)",
+                    ProjectionExpression = "#score",
+                };
+                try
+                {
+                    var response = await client.QueryAsync(request);
+
+                    return response.Items.Select(x => x[ScoreDatabasePropertyNames.ScoreId]?.S)
+                        .Where(x => !(x is null))
+                        .ToArray();
+                }
+                catch (InternalServerErrorException ex)
+                {
+                    throw;
+                }
+                catch (ProvisionedThroughputExceededException ex)
+                {
+                    throw;
+                }
+                catch (RequestLimitExceededException ex)
+                {
+                    throw;
+                }
+                catch (ResourceNotFoundException ex)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+            }
+
+
+            static async Task DeleteSnapshotsAsync(IAmazonDynamoDB client, string tableName, string owner, string[] scoreIds)
+            {
+                const int chunkSize = 25;
+
+                var chunkList = scoreIds.Select((x, index) => (x, index))
+                    .GroupBy(x => x.index / chunkSize)
+                    .Select(x=>x.Select(y=>y.x).ToArray())
+                    .ToArray();
+
+                foreach (var ids in chunkList)
+                {
+                    await DeleteSnapshot25Async(client, tableName, owner, ids);
+                }
+
+                static async Task DeleteSnapshot25Async(IAmazonDynamoDB client, string tableName, string owner, string[] scoreIds)
+                {
+                    var request = new Dictionary<string, List<WriteRequest>>()
+                    {
+                        [tableName] = scoreIds.Select(scoreId=>new WriteRequest()
+                        {
+                            DeleteRequest = new DeleteRequest()
+                            {
+                                Key = new Dictionary<string, AttributeValue>()
+                                {
+                                    [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                                    [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(scoreId),
+                                }
+                            }
+                        }).ToList(),
+                    };
+
+                    try
+                    {
+                        await client.BatchWriteItemAsync(request);
+                    }
+                    catch (Exception ex)
+        {
+                        // TODO 削除時に失敗したデータを取得しリトライ処理を入れる
+                        Console.WriteLine(ex.Message);
+                        throw;
+                    }
+                }
+            }
         }
 
         public async Task UpdateTitleAsync(Guid ownerId, Guid scoreId, string title)
