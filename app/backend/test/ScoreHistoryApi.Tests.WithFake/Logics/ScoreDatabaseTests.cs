@@ -979,6 +979,101 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
 
             await target.DeleteAsync(ownerId, scoreId);
         }
+
+
+        [Fact]
+        public async Task GetSnapshotScoreDetailAsyncTest()
+        {
+            var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
+            var tableName = "ura-kata-score-history";
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+
+            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var scoreId = Guid.Parse("29c64902-faa6-40bc-8d45-bcc90fe97818");
+
+            var title = "test score";
+            var description = "楽譜の説明(Get Snapshot)";
+
+            const int snapshotCount = 5;
+
+            try
+            {
+                await target.InitializeAsync(ownerId);
+            }
+            catch
+            {
+                // 初期化のエラーは握りつぶす
+            }
+            try
+            {
+                await target.CreateAsync(ownerId, scoreId, title, description);
+            }
+            catch
+            {
+                // 初期化のエラーは握りつぶす
+            }
+
+            var newAnnotations = Enumerable.Range(0, snapshotCount).Select(x => new NewScoreAnnotation()
+            {
+                Content = "annotation " + x,
+            }).ToList();
+
+            var newPages = Enumerable.Range(0, snapshotCount).Select(x => new NewScorePage()
+            {
+                Page = "page " + x,
+                ItemId = new Guid(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (byte) x)
+            }).ToList();
+
+            var snapshotNames = Enumerable.Range(0, snapshotCount).Select(x => "スナップショット名" + x).ToArray();
+
+            try
+            {
+
+            }
+            catch (Exception)
+            {
+                // 握りつぶす
+            }
+
+
+
+
+            try
+            {
+
+            }
+            catch (Exception)
+            {
+                // 握りつぶす
+            }
+
+
+
+            try
+            {
+                for (int i = 0; i < snapshotCount; ++i)
+                {
+                    var newPage = newPages[i];
+                    var newAnnotation = newAnnotations[i];
+                    var snapshotName = snapshotNames[i];
+
+                    await target.AddPagesAsync(ownerId, scoreId, new List<NewScorePage>() {newPage});
+                    await target.AddAnnotationsAsync(ownerId, scoreId, new List<NewScoreAnnotation>() {newAnnotation});
+
+                    await target.CreateSnapshotAsync(ownerId, scoreId, snapshotName);
+                }
+            }
+            catch (Exception)
+            {
+                // 握りつぶす
+            }
+
+            foreach (var snapshotName in snapshotNames)
+            {
+                var actual = await target.GetSnapshotScoreDetailAsync(ownerId, scoreId, snapshotName);
+                break;
+            }
+        }
     }
 
 

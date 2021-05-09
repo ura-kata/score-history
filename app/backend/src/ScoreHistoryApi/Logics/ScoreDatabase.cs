@@ -1861,9 +1861,52 @@ namespace ScoreHistoryApi.Logics
             }
         }
 
-        public Task<ScoreDetail> GetScoreDetailAsync(Guid ownerId, Guid scoreId, string snapshotName)
+        public async Task<DatabaseScoreRecord> GetSnapshotScoreDetailAsync(Guid ownerId, Guid scoreId, string snapshotName)
         {
-            throw new NotImplementedException();
+
+            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
+            var record = await GetAsync(_dynamoDbClient, TableName, owner, score, snapshotName);
+
+            return record;
+
+            static async Task<DatabaseScoreRecord> GetAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score,
+                string snapshotName)
+            {
+                var base64SnapshotName = ScoreDatabaseUtils.EncodeToBase64FromSnapshotName(snapshotName);
+                var request = new GetItemRequest()
+                {
+                    TableName = tableName,
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] =
+                            new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + base64SnapshotName),
+                    },
+                };
+                var response = await client.GetItemAsync(request);
+
+                if(!response.Item.TryGetValue(ScoreDatabasePropertyNames.Data, out var data))
+                    throw new InvalidOperationException("not found.");
+
+                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+
+                var createAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[ScoreDatabasePropertyNames.CreateAt].S);
+                var updateAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[ScoreDatabasePropertyNames.UpdateAt].S);
+                return new DatabaseScoreRecord()
+                {
+                    CreateAt = createAt,
+                    UpdateAt = updateAt,
+                    DataHash = hash,
+                    Data = result,
+                };
+            }
         }
 
         public async Task CreateSnapshotAsync(Guid ownerId, Guid scoreId, string snapshotName)

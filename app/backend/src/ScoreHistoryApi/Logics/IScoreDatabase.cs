@@ -120,7 +120,7 @@ namespace ScoreHistoryApi.Logics
         /// <param name="scoreId"></param>
         /// <param name="snapshotName"></param>
         /// <returns></returns>
-        Task<ScoreDetail> GetScoreDetailAsync(Guid ownerId, Guid scoreId, string snapshotName);
+        Task<DatabaseScoreRecord> GetSnapshotScoreDetailAsync(Guid ownerId, Guid scoreId, string snapshotName);
 
         /// <summary>
         /// スナップショットを作成する
