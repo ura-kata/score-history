@@ -1550,10 +1550,9 @@ namespace ScoreHistoryApi.Logics
                 }
                 catch (Exception ex)
                 {
-                    throw ex;
+                    throw;
                 }
             }
-            throw new NotImplementedException();
         }
 
         public Task<ScoreDetail> GetScoreDetailAsync(Guid ownerId, Guid scoreId)
