@@ -12,6 +12,9 @@ using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
 using ScoreHistoryApi.Models.Scores;
 
+
+// TODO 変更時にハッシュを確認してから更新するようにする処理を追加する
+
 namespace ScoreHistoryApi.Logics
 {
     public static class ScoreDatabasePropertyNames
@@ -682,7 +685,7 @@ namespace ScoreHistoryApi.Logics
                         await client.BatchWriteItemAsync(request);
                     }
                     catch (Exception ex)
-        {
+                    {
                         // TODO 削除時に失敗したデータを取得しリトライ処理を入れる
                         Console.WriteLine(ex.Message);
                         throw;
