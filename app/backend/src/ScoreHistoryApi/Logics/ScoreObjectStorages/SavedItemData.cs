@@ -17,9 +17,6 @@ namespace ScoreHistoryApi.Logics.ScoreObjectStorages
         /// <summary> Item id </summary>
         public Guid ItemId { get; set; }
 
-        /// <summary> オリジナルのファイル名 </summary>
-        public string OriginName { get; set; }
-
         /// <summary> S3 のオブジェクト名 </summary>
         public string ObjectName { get; set; }
 
@@ -34,5 +31,8 @@ namespace ScoreHistoryApi.Logics.ScoreObjectStorages
 
         /// <summary> アクセスコントロール </summary>
         public ScoreObjectAccessControls AccessControl { get; set; }
+
+        /// <summary> <see cref="Data"/> のバイトサイズ </summary>
+        public long Size { get; set; }
     }
 }

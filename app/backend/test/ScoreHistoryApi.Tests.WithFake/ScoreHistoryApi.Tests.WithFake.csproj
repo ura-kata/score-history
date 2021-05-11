@@ -17,4 +17,9 @@
     <ProjectReference Include="..\..\src\ScoreHistoryApi\ScoreHistoryApi.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="Resources\pexels-cottonbro-4709821.jpg" />
+    <EmbeddedResource Include="Resources\pexels-cottonbro-4709821.jpg" />
+  </ItemGroup>
+
 </Project>
