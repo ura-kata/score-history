@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.DataCollection;
 using ScoreHistoryApi.Factories;
 using ScoreHistoryApi.Logics;
+using ScoreHistoryApi.Logics.ScoreItemDatabases;
 using Xunit;
 
 // TODO 冪等性が担保されるようにテストを修正する
