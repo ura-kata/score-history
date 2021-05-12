@@ -184,10 +184,24 @@ namespace ScoreHistoryApi.Logics
 
         public async Task DeleteObjectAsync(Guid ownerId, Guid scoreId, Guid itemId)
         {
-            var key = $"{ownerId:D}/{scoreId:D}/{itemId:D}/";
-
             var prefix = $"{ownerId:D}/{scoreId:D}/{itemId:D}";
+            await DeleteObjectsAsync(prefix);
+        }
 
+        public async Task DeleteAllScoreObjectAsync(Guid ownerId, Guid scoreId)
+        {
+            var prefix = $"{ownerId:D}/{scoreId:D}";
+            await DeleteObjectsAsync(prefix);
+        }
+
+        public async Task DeleteAllOwnerObjectAsync(Guid ownerId)
+        {
+            var prefix = $"{ownerId:D}";
+            await DeleteObjectsAsync(prefix);
+        }
+
+        public async Task DeleteObjectsAsync(string prefix)
+        {
             var objectKeyList = new List<string>();
             string continuationToken = default;
 
@@ -216,16 +230,6 @@ namespace ScoreHistoryApi.Logics
                 }).ToList(),
             };
             await _s3Client.DeleteObjectsAsync(request);
-        }
-
-        public Task DeleteAllScoreObjectAsync(Guid ownerId, Guid scoreId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task DeleteAllOwnerObjectAsync(Guid ownerId)
-        {
-            throw new NotImplementedException();
         }
 
         public Task SetAccessControlPolicyAsync(Guid ownerId, Guid scoreId, ScoreObjectAccessControls accessControls)
