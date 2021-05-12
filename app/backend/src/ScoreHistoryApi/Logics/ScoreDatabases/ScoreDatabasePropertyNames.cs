@@ -20,5 +20,6 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
         public const string AnnotationsContent = "c";
         public const string ScoreCount = "score_count";
         public const string Scores = "scores";
+        public const string Access = "access";
     }
 }

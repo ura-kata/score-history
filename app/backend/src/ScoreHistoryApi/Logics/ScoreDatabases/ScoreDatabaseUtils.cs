@@ -271,5 +271,18 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
         /// <returns></returns>
         public static string DecodeToSnapshotNameFromBase64(string snapshotNameBase64) =>
             Encoding.UTF8.GetString(Convert.FromBase64String(snapshotNameBase64));
+
+        /// <summary>
+        /// アクセスを文字に変換する
+        /// </summary>
+        /// <param name="access"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public static string ConvertFromScoreAccess(ScoreAccesses access) => access switch
+        {
+            ScoreAccesses.Private => ScoreDatabaseConstant.ScoreAccessPrivate,
+            ScoreAccesses.Public => ScoreDatabaseConstant.ScoreAccessPublic,
+            _ => throw new InvalidOperationException()
+        };
     }
 }

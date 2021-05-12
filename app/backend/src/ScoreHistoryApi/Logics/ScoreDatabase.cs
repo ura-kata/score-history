@@ -167,6 +167,7 @@ namespace ScoreHistoryApi.Logics
                                 [ScoreDatabasePropertyNames.DataHash] = new AttributeValue(dataHash),
                                 [ScoreDatabasePropertyNames.CreateAt] = new AttributeValue(createAt),
                                 [ScoreDatabasePropertyNames.UpdateAt] = new AttributeValue(updateAt),
+                                [ScoreDatabasePropertyNames.Access] = new AttributeValue(ScoreDatabaseConstant.ScoreAccessPrivate),
                                 [ScoreDatabasePropertyNames.Data] = dataAttributeValue,
                             },
                             TableName = tableName,
@@ -1740,6 +1741,88 @@ namespace ScoreHistoryApi.Logics
                 {
                     Console.WriteLine(ex.Message);
                     throw;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    throw;
+                }
+            }
+        }
+
+        public async Task SetAccessAsync(Guid ownerId, Guid scoreId, ScoreAccesses access)
+        {
+            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
+            var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
+
+            await UpdateAsync(_dynamoDbClient, TableName, owner, score, access, now);
+
+            static async Task<(DatabaseScoreDataV1 data,string hash)> GetAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score)
+            {
+                var request = new GetItemRequest()
+                {
+                    TableName = tableName,
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                };
+                var response = await client.GetItemAsync(request);
+                var data = response.Item[ScoreDatabasePropertyNames.Data];
+
+                if (data is null)
+                    throw new InvalidOperationException("not found.");
+
+
+                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                return (result,hash);
+            }
+
+            static async Task UpdateAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score,
+                ScoreAccesses access,
+                DateTimeOffset now
+                )
+            {
+                var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
+                var accessText = ScoreDatabaseUtils.ConvertFromScoreAccess(access);
+
+                var request = new UpdateItemRequest()
+                {
+                    Key = new Dictionary<string, AttributeValue>()
+                    {
+                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                    },
+                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    {
+                        ["#score"] = ScoreDatabasePropertyNames.ScoreId,
+                        ["#updateAt"] = ScoreDatabasePropertyNames.UpdateAt,
+                        ["#access"] = ScoreDatabasePropertyNames.Access,
+                    },
+                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                    {
+                        [":access"] = new AttributeValue(accessText),
+                        [":updateAt"] = new AttributeValue(updateAt),
+                    },
+                    ConditionExpression = "attribute_exists(#score)",
+                    UpdateExpression = "SET #updateAt = :updateAt, #access = :access",
+                    TableName = tableName,
+                };
+                try
+                {
+                    await client.UpdateItemAsync(request);
                 }
                 catch (Exception ex)
                 {

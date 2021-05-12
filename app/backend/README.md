@@ -90,6 +90,7 @@ UUID の Base64 エンコードは 24 byte
     "d_hash": "", // data 部分を JSON にした際のハッシュ値
     "create_at": "",
     "update_at": "",
+    "access": "private",
     "data": {
       "title": "",
       "desc": "",
