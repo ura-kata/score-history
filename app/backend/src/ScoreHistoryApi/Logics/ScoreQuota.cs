@@ -8,6 +8,7 @@ namespace ScoreHistoryApi.Logics
     public interface IScoreQuota
     {
         public int ScoreCountMax { get; }
+        public long OwnerItemMaxSize { get; }
     }
 
     /// <summary>
@@ -16,5 +17,6 @@ namespace ScoreHistoryApi.Logics
     public class ScoreQuota:IScoreQuota
     {
         public int ScoreCountMax { get; } = 10;
+        public long OwnerItemMaxSize { get; } = 1024 * 1024 * 500;
     }
 }

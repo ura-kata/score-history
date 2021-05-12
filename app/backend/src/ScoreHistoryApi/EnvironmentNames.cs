@@ -2,10 +2,12 @@ namespace ScoreHistoryApi
 {
     public static class EnvironmentNames
     {
-        public static string CorsOrigins = "CorsOrigins";
-        public static string CorsHeaders = "CorsHeaders";
-        public static string CorsMethods = "CorsMethods";
-        public static string CorsCredentials = "CorsCredentials";
-        public static string ApiVersion = "ApiVersion";
+        public const string CorsOrigins = "CorsOrigins";
+        public const string CorsHeaders = "CorsHeaders";
+        public const string CorsMethods = "CorsMethods";
+        public const string CorsCredentials = "CorsCredentials";
+        public const string ApiVersion = "ApiVersion";
+
+        public const string ScoreItemDynamoDbTableName = "ScoreItemDynamoDbTableName";
     }
 }

@@ -162,25 +162,22 @@ UUID の Base64 エンコードは 24 byte
 ```json
 [
   {
-    "owner_id": "68yjpWHe5EOEnN6vv3UL1w==",
-    "item_id": "summary",
-    "total_size": 123456789, // owner に紐づくアイテムの総量
-    "object_size": 123456789 // object の総量
+    "owner": "68yjpWHe5EOEnN6vv3UL1w==",
+    "item": "summary",
+    "size": 123456789, // owner に紐づくアイテムの総量
   },
   {
-    "owner_id": "68yjpWHe5EOEnN6vv3UL1w==",
-    "item_id": "a62Xnv7FbkqPJQsmW1kBeg==JO1kjyJx1kKuucbt3JOziQ==",
-    "org_name": "", // オリジナル名
-    "size": 12345, // アイテムのバイトサイズ
+    "owner": "68yjpWHe5EOEnN6vv3UL1w==",
+    "item": "a62Xnv7FbkqPJQsmW1kBeg==JO1kjyJx1kKuucbt3JOziQ==",
     "obj_name": "", // S3 のオブジェクトの名前
-    "type": "image_png", // アイテムのタイプ
-    "extra": {
-      "thumbnail": {
-        "obj_name": "",
-        "size": 12345
-      }
-    },
-    "access": "public"
+    "size": 12345, // アイテムのバイトサイズ
+    "at": "",
+    "type": "image", // アイテムのタイプ
+    "org_name": "", // オリジナル名
+    "thumbnail": {
+      "obj_name": "",
+      "size": 12345
+    }
   }
 ]
 ```
