@@ -46,7 +46,7 @@ namespace ScoreHistoryApi.Logics
         /// </summary>
         /// <param name="ownerId"></param>
         /// <param name="scoreId"></param>
-        /// <param name="accessControls"></param>
-        Task SetAccessControlPolicyAsync(Guid ownerId, Guid scoreId, ScoreObjectAccessControls accessControls);
+        /// <param name="accessControl"></param>
+        Task SetAccessControlPolicyAsync(Guid ownerId, Guid scoreId, ScoreObjectAccessControls accessControl);
     }
 }

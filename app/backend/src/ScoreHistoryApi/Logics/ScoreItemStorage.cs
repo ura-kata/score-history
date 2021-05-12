@@ -232,9 +232,49 @@ namespace ScoreHistoryApi.Logics
             await _s3Client.DeleteObjectsAsync(request);
         }
 
-        public Task SetAccessControlPolicyAsync(Guid ownerId, Guid scoreId, ScoreObjectAccessControls accessControls)
+        public async Task SetAccessControlPolicyAsync(Guid ownerId, Guid scoreId,
+            ScoreObjectAccessControls accessControl)
         {
-            throw new NotImplementedException();
+            var prefix = $"{ownerId:D}/{scoreId:D}";
+
+            var objectKeyList = new List<string>();
+            string continuationToken = default;
+
+            do
+            {
+                var listRequest = new ListObjectsV2Request()
+                {
+                    BucketName = BucketName,
+                    Prefix = prefix,
+                    ContinuationToken = string.IsNullOrWhiteSpace(continuationToken) ? null : continuationToken,
+                };
+                var listResponse = await _s3Client.ListObjectsV2Async(listRequest);
+
+                objectKeyList.AddRange(listResponse.S3Objects.Select(x => x.Key));
+
+                continuationToken = listResponse.NextContinuationToken;
+
+            } while (!string.IsNullOrEmpty(continuationToken));
+
+
+            var acl = accessControl switch
+            {
+                ScoreObjectAccessControls.Private => S3CannedACL.Private,
+                ScoreObjectAccessControls.Public => S3CannedACL.PublicRead,
+                _ => throw new NotSupportedException(),
+            };
+
+            foreach (var key in objectKeyList)
+            {
+                var request = new PutACLRequest()
+                {
+                    BucketName = BucketName,
+                    CannedACL = acl,
+                    Key = key,
+                };
+                await _s3Client.PutACLAsync(request);
+            }
+
         }
     }
 }
