@@ -18,8 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Resources\pexels-cottonbro-4709821.jpg" />
-    <EmbeddedResource Include="Resources\pexels-cottonbro-4709821.jpg" />
+    <EmbeddedResource Include="..\Resources\*.jpg" Link="Resources\%(RecursiveDir)%(FileName)%(Extension)"/>
   </ItemGroup>
 
 </Project>
