@@ -25,8 +25,8 @@ namespace ScoreHistoryApi.Logics
         /// </summary>
         /// <param name="ownerId"></param>
         /// <param name="scoreId"></param>
-        /// <param name="dataId"></param>
-        Task DeleteObjectAsync(Guid ownerId, Guid scoreId, Guid dataId);
+        /// <param name="itemId"></param>
+        Task DeleteObjectAsync(Guid ownerId, Guid scoreId, Guid itemId);
 
         /// <summary>
         /// 指定した楽譜のオブジェクトデータを全て削除する

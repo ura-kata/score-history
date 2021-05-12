@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -130,6 +132,8 @@ namespace ScoreHistoryApi.Logics
             await thumbnailImage.SaveAsJpegAsync(thumbnailStream);
             thumbnailStream.Seek(0, SeekOrigin.Begin);
 
+            var thumbnailSize = thumbnailStream.Length;
+
             var objectFileName = ScoreItemStorageUtils.GetFileName(itemType);
             var thumbnailFileName = ScoreItemStorageConstant.ThumbnailFileName;
 
@@ -171,16 +175,47 @@ namespace ScoreHistoryApi.Logics
                 Extra = new Thumbnail()
                 {
                     ObjectName = thumbnailFileName,
-                    Size = thumbnailStream.Length,
+                    Size = thumbnailSize,
                 },
                 AccessControl = ScoreObjectAccessControls.Private
             };
         }
 
 
-        public Task DeleteObjectAsync(Guid ownerId, Guid scoreId, Guid dataId)
+        public async Task DeleteObjectAsync(Guid ownerId, Guid scoreId, Guid itemId)
         {
-            throw new NotImplementedException();
+            var key = $"{ownerId:D}/{scoreId:D}/{itemId:D}/";
+
+            var prefix = $"{ownerId:D}/{scoreId:D}/{itemId:D}";
+
+            var objectKeyList = new List<string>();
+            string continuationToken = default;
+
+            do
+            {
+                var listRequest = new ListObjectsV2Request()
+                {
+                    BucketName = BucketName,
+                    Prefix = prefix,
+                    ContinuationToken = string.IsNullOrWhiteSpace(continuationToken) ? null : continuationToken,
+                };
+                var listResponse = await _s3Client.ListObjectsV2Async(listRequest);
+
+                objectKeyList.AddRange(listResponse.S3Objects.Select(x => x.Key));
+
+                continuationToken = listResponse.NextContinuationToken;
+
+            } while (!string.IsNullOrEmpty(continuationToken));
+
+            var request = new DeleteObjectsRequest()
+            {
+                BucketName = BucketName,
+                Objects = objectKeyList.Select(x=>new KeyVersion()
+                {
+                    Key = x
+                }).ToList(),
+            };
+            await _s3Client.DeleteObjectsAsync(request);
         }
 
         public Task DeleteAllScoreObjectAsync(Guid ownerId, Guid scoreId)
