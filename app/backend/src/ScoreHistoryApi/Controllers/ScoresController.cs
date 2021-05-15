@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using ScoreHistoryApi.Factories;
+using ScoreHistoryApi.Logics;
 using ScoreHistoryApi.Models.Scores;
 
 namespace ScoreHistoryApi.Controllers
@@ -18,11 +20,24 @@ namespace ScoreHistoryApi.Controllers
     {
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
+        private readonly ScoreLogicFactory _scoreLogicFactory;
 
-        public ScoresController(ILogger<ScoresController> logger, IConfiguration configuration)
+        public ScoresController(ILogger<ScoresController> logger, IConfiguration configuration, ScoreLogicFactory scoreLogicFactory)
         {
             _logger = logger;
             _configuration = configuration;
+            _scoreLogicFactory = scoreLogicFactory;
+        }
+
+        public async Task ScoreInitializeAsync()
+        {
+            var authorizerData = this.GetAuthorizerData();
+
+            var initialise = _scoreLogicFactory.Initializer;
+
+            var ownerId = authorizerData.Sub;
+
+            await initialise.Initialize(ownerId);
         }
 
         #region user
