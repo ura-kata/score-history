@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
+using Microsoft.Extensions.Configuration;
 using ScoreHistoryApi.Logics.ScoreDatabases;
 using ScoreHistoryApi.Models.Scores;
 
@@ -21,8 +22,13 @@ namespace ScoreHistoryApi.Logics
         private readonly IAmazonDynamoDB _dynamoDbClient;
         public string TableName { get; } = "ura-kata-score-history";
 
-        public ScoreDatabase(IScoreQuota quota, IAmazonDynamoDB dynamoDbClient)
+        public ScoreDatabase(IScoreQuota quota, IAmazonDynamoDB dynamoDbClient, IConfiguration configuration)
         {
+            var tableName = configuration[EnvironmentNames.ScoreDynamoDbTableName];
+            if (string.IsNullOrWhiteSpace(tableName))
+                throw new InvalidOperationException($"'{EnvironmentNames.ScoreDynamoDbTableName}' is not found.");
+            TableName = tableName;
+
             _quota = quota;
             _dynamoDbClient = dynamoDbClient;
         }

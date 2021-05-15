@@ -1,10 +1,14 @@
+using System;
 using System.Security.Claims;
+using Amazon.Runtime;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using ScoreHistoryApi.Factories;
+using ScoreHistoryApi.Logics;
 
 namespace ScoreHistoryApi
 {
@@ -20,6 +24,18 @@ namespace ScoreHistoryApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<IScoreQuota>(x => new ScoreQuota());
+            services.AddSingleton(x =>
+                new DynamoDbClientFactory()
+                    .SetEndpointUrl(new Uri(Configuration[EnvironmentNames.ScoreDynamoDbEndpointUrl]))
+                    .Create());
+            services.AddSingleton(x =>
+                new S3ClientFactory()
+                    .SetEndpointUrl(new Uri(Configuration[EnvironmentNames.ScoreS3EndpointUrl]))
+                    .SetCredentials(new BasicAWSCredentials(Configuration[EnvironmentNames.ScoreS3AccessKey],Configuration[EnvironmentNames.ScoreS3SecretKey]))
+                    .Create());
+            services.AddScoped<ScoreLogicFactory>();
+
             services.AddControllers();
 
             services.AddSwaggerGen(option =>

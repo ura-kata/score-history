@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Amazon.DynamoDBv2;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -13,6 +14,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using ScoreHistoryApi.Factories;
+using ScoreHistoryApi.Logics;
 
 namespace ScoreHistoryApi
 {
@@ -30,6 +33,15 @@ namespace ScoreHistoryApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<IScoreQuota>(x => new ScoreQuota());
+            services.AddSingleton(x =>
+                new DynamoDbClientFactory()
+                    .SetRegionSystemName(Configuration[EnvironmentNames.ScoreDynamoDbRegionSystemName]).Create());
+            services.AddSingleton(x =>
+                new S3ClientFactory().SetRegionSystemName(Configuration[EnvironmentNames.ScoreS3RegionSystemName])
+                    .Create());
+            services.AddScoped<ScoreLogicFactory>();
+
             services.AddCors(options =>
             {
                 options.AddPolicy(CorsPolicyName, builder =>

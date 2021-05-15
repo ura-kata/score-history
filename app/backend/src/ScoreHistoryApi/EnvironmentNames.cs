@@ -9,5 +9,14 @@ namespace ScoreHistoryApi
         public const string ApiVersion = "ApiVersion";
 
         public const string ScoreItemDynamoDbTableName = "ScoreItemDynamoDbTableName";
+        public const string ScoreDynamoDbTableName  = "ScoreDynamoDbTableName";
+
+        public const string ScoreDynamoDbRegionSystemName = "ScoreDynamoDbRegionSystemName";
+        public const string ScoreS3RegionSystemName = "ScoreS3RegionSystemName";
+
+        public const string ScoreDynamoDbEndpointUrl = "ScoreDynamoDbEndpointUrl";
+        public const string ScoreS3EndpointUrl = "ScoreS3EndpointUrl";
+        public const string ScoreS3AccessKey = "SocreS3AccessKey";
+        public const string ScoreS3SecretKey = "ScoreS3SecretKey";
     }
 }
