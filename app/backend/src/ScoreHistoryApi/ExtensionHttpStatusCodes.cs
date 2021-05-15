@@ -4,5 +4,8 @@ namespace ScoreHistoryApi
     {
         /// <summary> 初期化がされていない </summary>
         public const int NotInitializedScore = 520;
+
+        /// <summary> 楽譜が存在しない </summary>
+        public const int NotFoundScore = 521;
     }
 }

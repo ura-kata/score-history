@@ -116,9 +116,22 @@ namespace ScoreHistoryApi.Controllers
         /// <exception cref="NotImplementedException"></exception>
         [HttpDelete]
         [Route("user/{id:guid}")]
-        public Task<IActionResult> DeleteAUserScoreAsync([FromRoute(Name = "id")] Guid id)
+        public async Task<IActionResult> DeleteAUserScoreAsync([FromRoute(Name = "id")] Guid id)
         {
-            throw new NotImplementedException();
+            var authorizerData = this.GetAuthorizerData();
+            var ownerId = authorizerData.Sub;
+            var deleter = _scoreLogicFactory.Deleter;
+
+            try
+            {
+                await deleter.DeleteAsync(ownerId, id);
+            }
+            catch (NotFoundScoreException)
+            {
+                return StatusCode(ExtensionHttpStatusCodes.NotFoundScore, new {message = "楽譜が存在しません"});
+            }
+
+            return Ok();
         }
 
         /// <summary>

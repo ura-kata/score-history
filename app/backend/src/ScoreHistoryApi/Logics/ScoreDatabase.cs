@@ -328,6 +328,14 @@ namespace ScoreHistoryApi.Logics
                 }
                 catch (TransactionCanceledException ex)
                 {
+                    var deleteReason = ex.CancellationReasons[0];
+
+                    if (deleteReason.Code == "ConditionalCheckFailed")
+                    {
+                        throw new NotFoundScoreException(ex);
+                    }
+                    var updateReason = ex.CancellationReasons[1];
+
                     Console.WriteLine(ex.Message);
                     throw;
                 }
