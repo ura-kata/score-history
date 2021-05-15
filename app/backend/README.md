@@ -166,10 +166,12 @@ UUID の Base64 エンコードは 24 byte
     "owner": "68yjpWHe5EOEnN6vv3UL1w==",
     "item": "summary",
     "size": 123456789, // owner に紐づくアイテムの総量
+    "items" : ["JO1kjyJx1kKuucbt3JOziQ=="]
   },
   {
     "owner": "68yjpWHe5EOEnN6vv3UL1w==",
-    "item": "a62Xnv7FbkqPJQsmW1kBeg==JO1kjyJx1kKuucbt3JOziQ==",
+    "item": "JO1kjyJx1kKuucbt3JOziQ==",
+    "score": "a62Xnv7FbkqPJQsmW1kBeg==",
     "obj_name": "", // S3 のオブジェクトの名前
     "size": 12345, // アイテムのバイトサイズ
     "at": "",
@@ -182,3 +184,20 @@ UUID の Base64 エンコードは 24 byte
   }
 ]
 ```
+
+
+`"items": []` に保存できる項目の大体の数は以下で計算できる
+
+(400 * 1024 - 5 - 3) / 24 ≒ 17066
+
+DynamoDB の1つの Item の最大サイズは 400KB
+
+このため 10000 Item は余裕で保存できる。
+
+1つの楽譜のページが 50 ページで全てのページが異なるスナップショットが 10 できるとして
+
+10000 / (50 * 10) = 20 楽譜は保存することができるので十分と考える。
+
+もし 17000 Item を超えるような保存をしたくなった場合は `"item": "summaryXXXXX"` のように summary を拡張する。
+
+- [DynamoDB Item Sizes and Formats - Amazon DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/CapacityUnitCalculations.html)

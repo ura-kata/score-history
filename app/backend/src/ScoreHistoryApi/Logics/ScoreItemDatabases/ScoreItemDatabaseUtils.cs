@@ -7,7 +7,7 @@ namespace ScoreHistoryApi.Logics.ScoreItemDatabases
 {
     public static class ScoreItemDatabaseUtils
     {
-        public static (Dictionary<string, AttributeValue> items, string owner) CreateDynamoDbValue(ScoreItemDatabaseItemDataBase itemData, DateTimeOffset now)
+        public static (Dictionary<string, AttributeValue> items, string owner, string score, string item) CreateDynamoDbValue(ScoreItemDatabaseItemDataBase itemData, DateTimeOffset now)
         {
             var items = new Dictionary<string, AttributeValue>();
 
@@ -17,7 +17,8 @@ namespace ScoreHistoryApi.Logics.ScoreItemDatabases
             var at = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
 
             items[ScoreItemDatabasePropertyNames.OwnerId] = new AttributeValue(owner);
-            items[ScoreItemDatabasePropertyNames.ItemId] = new AttributeValue(score + item);
+            items[ScoreItemDatabasePropertyNames.ItemId] = new AttributeValue(item);
+            items[ScoreItemDatabasePropertyNames.ScoreId] = new AttributeValue(score);
             items[ScoreItemDatabasePropertyNames.ObjName] = new AttributeValue(itemData.ObjName);
             items[ScoreItemDatabasePropertyNames.Size] = new AttributeValue() {N = itemData.Size.ToString()};
             items[ScoreItemDatabasePropertyNames.At] = new AttributeValue(at);
@@ -40,7 +41,7 @@ namespace ScoreHistoryApi.Logics.ScoreItemDatabases
                 };
             }
 
-            return (items, owner);
+            return (items, owner, score, item);
         }
 
         public static long GetSize(ScoreItemDatabaseItemDataBase itemData)
