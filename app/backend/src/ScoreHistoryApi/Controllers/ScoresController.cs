@@ -29,6 +29,8 @@ namespace ScoreHistoryApi.Controllers
             _scoreLogicFactory = scoreLogicFactory;
         }
 
+        [HttpPost]
+        [Route("new")]
         public async Task ScoreInitializeAsync()
         {
             var authorizerData = this.GetAuthorizerData();
