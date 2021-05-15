@@ -26,5 +26,7 @@ namespace ScoreHistoryApi.Factories
 
         public ScoreCreator Creator =>
             new ScoreCreator(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+
+        public ScoreGetter Getter => new ScoreGetter(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
     }
 }

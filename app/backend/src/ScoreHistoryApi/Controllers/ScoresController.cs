@@ -57,14 +57,14 @@ namespace ScoreHistoryApi.Controllers
         [Route("user")]
         public async Task<ActionResult<ScoreSummary[]>> GetUserScoresAsync()
         {
-            var ifNoneMatch = this.Request.Headers[HttpHeaderNames.IfNoneMatch];
+            var authorizerData = this.GetAuthorizerData();
+            var ownerId = authorizerData.Sub;
 
-            // ETag が If-None-Match と一致する場合は NotModified を返す
-            // return this.StatusCode((int) HttpStatusCode.NotModified);
+            var getter = _scoreLogicFactory.Getter;
 
+            var summaries = await getter.GetScoreSummaries(ownerId);
 
-            this.Response.Headers[HttpHeaderNames.ETag] = "";
-            throw new NotImplementedException();
+            return summaries;
         }
 
         /// <summary>
