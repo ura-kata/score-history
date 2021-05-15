@@ -59,10 +59,10 @@ namespace ScoreHistoryApi
             {
                 context.User.AddIdentity(new ClaimsIdentity(new[]
                 {
-                    new Claim("sub", "00000000-0000-0000-0000-000000000000"),
-                    new Claim("principalId", "00000000-0000-0000-0000-000000000000"),
-                    new Claim("cognito:username", "test-user"),
-                    new Claim("email", "test-user@example.com"),
+                    new Claim("sub", Configuration[EnvironmentNames.DevelopmentSub]),
+                    new Claim("principalId", Configuration[EnvironmentNames.DevelopmentPrincipalId]),
+                    new Claim("cognito:username", Configuration[EnvironmentNames.DevelopmentCognitoUsername]),
+                    new Claim("email", Configuration[EnvironmentNames.DevelopmentEmail]),
                 }));
                 await next.Invoke();
             });
