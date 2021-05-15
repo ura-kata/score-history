@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
 using Microsoft.Extensions.Configuration;
+using ScoreHistoryApi.Logics.Exceptions;
 using ScoreHistoryApi.Logics.ScoreDatabases;
 using ScoreHistoryApi.Logics.ScoreItemDatabases;
 
@@ -62,6 +63,14 @@ namespace ScoreHistoryApi.Logics
                 try
                 {
                     await client.PutItemAsync(request);
+                }
+                catch (ConditionalCheckFailedException ex)
+                {
+                    if (ex.ErrorCode == "ConditionalCheckFailedException")
+                    {
+                        throw new AlreadyInitializedException(ex);
+                    }
+                    throw;
                 }
                 catch (Exception ex)
                 {

@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using ScoreHistoryApi.Logics.Exceptions;
 
 namespace ScoreHistoryApi.Logics.Scores
 {
@@ -16,8 +17,25 @@ namespace ScoreHistoryApi.Logics.Scores
 
         public async Task Initialize(Guid ownerId)
         {
-            await _scoreDatabase.InitializeAsync(ownerId);
-            await _scoreItemDatabase.InitializeAsync(ownerId);
+            try
+            {
+                await _scoreDatabase.InitializeAsync(ownerId);
+            }
+            catch (AlreadyInitializedException ex)
+            {
+
+                // 初期化済み
+            }
+
+            try
+            {
+                await _scoreItemDatabase.InitializeAsync(ownerId);
+            }
+            catch (AlreadyInitializedException ex)
+            {
+
+                // 初期化済み
+            }
         }
     }
 }
