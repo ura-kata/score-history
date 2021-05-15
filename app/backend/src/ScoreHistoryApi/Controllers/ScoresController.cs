@@ -1,15 +1,19 @@
+#nullable enable
+
 using System;
 using System.Linq;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ScoreHistoryApi.Factories;
 using ScoreHistoryApi.Logics;
+using ScoreHistoryApi.Logics.Exceptions;
 using ScoreHistoryApi.Models.Scores;
 
 namespace ScoreHistoryApi.Controllers
@@ -71,9 +75,24 @@ namespace ScoreHistoryApi.Controllers
         /// <exception cref="NotImplementedException"></exception>
         [HttpPost]
         [Route("user")]
-        public async Task<ActionResult<ScoreDetail>> CreateUserScoreAsync([FromBody] NewScore newScore)
+        public async Task<IActionResult> CreateUserScoreAsync([FromBody] NewScore newScore)
         {
-            throw new NotImplementedException();
+            var authorizerData = this.GetAuthorizerData();
+            var ownerId = authorizerData.Sub;
+
+            var creator = _scoreLogicFactory.Creator;
+
+            try
+            {
+                await creator.CreateAsync(ownerId, newScore);
+            }
+            catch (UninitializedScoreException)
+            {
+                return StatusCode(ExtensionHttpStatusCodes.NotInitializedScore,
+                    new {message = "楽譜を作成するための初期化処理がされていない"});
+            }
+
+            return Ok();
         }
 
         /// <summary>

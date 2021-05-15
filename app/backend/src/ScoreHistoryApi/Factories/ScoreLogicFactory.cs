@@ -23,5 +23,8 @@ namespace ScoreHistoryApi.Factories
 
         public Initializer Initializer => new Initializer(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration),
             new ScoreItemDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+
+        public ScoreCreator Creator =>
+            new ScoreCreator(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
     }
 }

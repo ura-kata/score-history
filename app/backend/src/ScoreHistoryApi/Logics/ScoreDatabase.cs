@@ -207,7 +207,37 @@ namespace ScoreHistoryApi.Logics
                 }
                 catch (TransactionCanceledException ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    var updateReason = ex.CancellationReasons[0];
+
+                    if (updateReason.Code == "ConditionalCheckFailed")
+                    {
+                        var request = new GetItemRequest()
+                        {
+                            TableName = tableName,
+                            Key = new Dictionary<string, AttributeValue>()
+                            {
+                                [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
+                            },
+                        };
+                        var checkResponse = await client.GetItemAsync(request);
+
+                        if (checkResponse.Item.TryGetValue(ScoreDatabasePropertyNames.ScoreCount, out _))
+                        {
+                            throw new CreatedScoreException(CreatedScoreExceptionCodes.ExceededUpperLimit, ex);
+                        }
+                        else
+                        {
+                            throw new UninitializedScoreException(ex);
+                        };
+                    }
+
+                    var putReason = ex.CancellationReasons[1];
+
+                    if (putReason.Code == "ConditionalCheckFailed")
+                    {
+                        throw new ExistedScoreException(ex);
+                    }
                     throw;
                 }
                 catch (Exception ex)
