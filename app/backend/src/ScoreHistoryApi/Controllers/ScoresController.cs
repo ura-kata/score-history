@@ -153,6 +153,32 @@ namespace ScoreHistoryApi.Controllers
             throw new NotImplementedException();
         }
 
+        [HttpPatch]
+        [Route("user/{id:guid}/title")]
+        public async Task<IActionResult> SetTitleAsync([FromRoute(Name = "id")] Guid id, NewScoreTitle title)
+        {
+            var authorizerData = this.GetAuthorizerData();
+            var ownerId = authorizerData.Sub;
+
+            var titleSetter = _scoreLogicFactory.TitleSetter;
+
+            try
+            {
+                await titleSetter.SetTitleAsync(ownerId, id, title.Title);
+            }
+            catch (ArgumentNullException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+            catch (ArgumentException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+
+            return Ok();
+
+        }
+
         #endregion
 
         #region owner

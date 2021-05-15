@@ -31,5 +31,8 @@ namespace ScoreHistoryApi.Factories
 
         public ScoreDeleter Deleter =>
             new ScoreDeleter(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+
+        public ScoreTitleSetter TitleSetter =>
+            new ScoreTitleSetter(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration), _scoreQuota);
     }
 }
