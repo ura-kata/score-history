@@ -44,9 +44,6 @@ namespace ScoreHistoryApi.Logics
 
         public async Task InitializeAsync(Guid ownerId)
         {
-            if (ownerId == Guid.Empty)
-                throw new ArgumentException(nameof(ownerId));
-
             var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
 
             await PutAsync(_dynamoDbClient, TableName, owner);
@@ -87,10 +84,6 @@ namespace ScoreHistoryApi.Logics
         }
         public async Task CreateAsync(Guid ownerId, Guid newScoreId, string title, string description)
         {
-            if (ownerId == Guid.Empty)
-                throw new ArgumentException(nameof(ownerId));
-            if (newScoreId == Guid.Empty)
-                throw new ArgumentException(nameof(newScoreId));
             if (title == null)
                 throw new ArgumentNullException(nameof(title));
 
