@@ -91,6 +91,7 @@ UUID の Base64 エンコードは 24 byte
     "create_at": "",
     "update_at": "",
     "access": "private",
+    "s_count": 0, // snapshot count
     "data": {
       "title": "",
       "desc": "",
@@ -125,12 +126,14 @@ UUID の Base64 エンコードは 24 byte
     }
   },
   {
-    "owner_id": "68yjpWHe5EOEnN6vv3UL1w==",
-    "score_id": "snap:a62Xnv7FbkqPJQsmW1kBeg==44K144Oz44OX44OrMQ=="
+    "owner": "68yjpWHe5EOEnN6vv3UL1w==",
+    "score": "snap:a62Xnv7FbkqPJQsmW1kBeg==G83UGGM9UUS4Ky8gsKmxRg==",
+    "snapname": "スナップショット1"
   },
   {
-    "owner_id": "68yjpWHe5EOEnN6vv3UL1w==",
-    "score_id": "snap:a62Xnv7FbkqPJQsmW1kBeg==44K144Oz44OX44OrMg=="
+    "owner": "68yjpWHe5EOEnN6vv3UL1w==",
+    "score": "snap:a62Xnv7FbkqPJQsmW1kBeg==HdVwA45SOUacxgvNTADESA==",
+    "snapname": "スナップショット2"
   }
 ]
 ```

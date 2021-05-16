@@ -10,6 +10,7 @@ namespace ScoreHistoryApi.Logics
         public int ScoreCountMax { get; }
         public long OwnerItemMaxSize { get; }
         public long TitleMaxLength { get; }
+        public int SnapshotCountMax { get; }
     }
 
     /// <summary>
@@ -27,5 +28,7 @@ namespace ScoreHistoryApi.Logics
         /// 最大のサイズは 6 * 64 = 384 byte
         /// </remarks>
         public long TitleMaxLength { get; } = 64;
+
+        public int SnapshotCountMax { get; } = 100;
     }
 }

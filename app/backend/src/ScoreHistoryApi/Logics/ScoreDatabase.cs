@@ -176,6 +176,7 @@ namespace ScoreHistoryApi.Logics
                                 [ScoreDatabasePropertyNames.CreateAt] = new AttributeValue(createAt),
                                 [ScoreDatabasePropertyNames.UpdateAt] = new AttributeValue(updateAt),
                                 [ScoreDatabasePropertyNames.Access] = new AttributeValue(ScoreDatabaseConstant.ScoreAccessPrivate),
+                                [ScoreDatabasePropertyNames.SnapshotCount] = new AttributeValue(){N = "0"},
                                 [ScoreDatabasePropertyNames.Data] = dataAttributeValue,
                             },
                             TableName = tableName,
@@ -1558,13 +1559,14 @@ namespace ScoreHistoryApi.Logics
             }
         }
 
-        public async Task<DatabaseScoreRecord> GetSnapshotScoreDetailAsync(Guid ownerId, Guid scoreId, string snapshotName)
+        public async Task<DatabaseScoreRecord> GetSnapshotScoreDetailAsync(Guid ownerId, Guid scoreId, Guid snapshotId)
         {
 
             var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
             var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+            var snapshot = ScoreDatabaseUtils.ConvertToBase64(snapshotId);
 
-            var record = await GetAsync(_dynamoDbClient, TableName, owner, score, snapshotName);
+            var record = await GetAsync(_dynamoDbClient, TableName, owner, score, snapshot);
 
             return record;
 
@@ -1573,9 +1575,8 @@ namespace ScoreHistoryApi.Logics
                 string tableName,
                 string owner,
                 string score,
-                string snapshotName)
+                string snapshot)
             {
-                var base64SnapshotName = ScoreDatabaseUtils.EncodeToBase64FromSnapshotName(snapshotName);
                 var request = new GetItemRequest()
                 {
                     TableName = tableName,
@@ -1583,41 +1584,52 @@ namespace ScoreHistoryApi.Logics
                     {
                         [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
                         [ScoreDatabasePropertyNames.ScoreId] =
-                            new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + base64SnapshotName),
+                            new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + snapshot),
                     },
                 };
                 var response = await client.GetItemAsync(request);
 
                 if(!response.Item.TryGetValue(ScoreDatabasePropertyNames.Data, out var data))
-                    throw new InvalidOperationException("not found.");
+                    throw new NotFoundSnapshotException("Not found snapshot.");
 
                 var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
                 var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
 
                 var createAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[ScoreDatabasePropertyNames.CreateAt].S);
                 var updateAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[ScoreDatabasePropertyNames.UpdateAt].S);
-                return new DatabaseScoreRecord()
+
+                var snapshotName = response.Item[ScoreDatabasePropertyNames.SnapshotName].S;
+                return new DatabaseScoreSnapshotRecord()
                 {
                     CreateAt = createAt,
                     UpdateAt = updateAt,
                     DataHash = hash,
                     Data = result,
+                    SnapshotName = snapshotName,
                 };
             }
         }
 
         public async Task CreateSnapshotAsync(Guid ownerId, Guid scoreId, string snapshotName)
         {
+            await CreateSnapshotAsync(ownerId, scoreId, Guid.NewGuid(), snapshotName);
+        }
+
+        public async Task CreateSnapshotAsync(Guid ownerId, Guid scoreId, Guid snapshotId, string snapshotName)
+        {
 
             var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
             var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+            var snapshot = ScoreDatabaseUtils.ConvertToBase64(snapshotId);
 
             var value = await GetAsync(_dynamoDbClient, TableName, owner, score);
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
-            // TODO スナップショットの作成数上限値判定を追加
-            await UpdateAsync(_dynamoDbClient, TableName, owner, score, snapshotName, value, now);
+            var maxSnapshotCount = _quota.SnapshotCountMax;
+            await UpdateAsync(
+                _dynamoDbClient, TableName, owner, score, snapshot
+                , snapshotName, value, now, maxSnapshotCount);
 
             static async Task<(AttributeValue data,string hash)> GetAsync(
                 IAmazonDynamoDB client,
@@ -1638,7 +1650,7 @@ namespace ScoreHistoryApi.Logics
                 var data = response.Item[ScoreDatabasePropertyNames.Data];
 
                 if (data is null)
-                    throw new InvalidOperationException("not found.");
+                    throw new NotFoundScoreException("Not found score.");
 
                 var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
                 return (data,hash);
@@ -1649,35 +1661,85 @@ namespace ScoreHistoryApi.Logics
                 string tableName,
                 string owner,
                 string score,
+                string snapshot,
                 string snapshotName,
                 (AttributeValue data, string hash) value,
-                DateTimeOffset now
+                DateTimeOffset now,
+                int maxSnapshotCount
                 )
             {
                 var at = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
-                var snapshotNameBase64 = ScoreDatabaseUtils.EncodeToBase64FromSnapshotName(snapshotName);
 
-                var request = new PutItemRequest()
+                var actions = new List<TransactWriteItem>()
                 {
-                    TableName = tableName,
-                    Item = new Dictionary<string, AttributeValue>()
+                    new TransactWriteItem()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + snapshotNameBase64),
-                        [ScoreDatabasePropertyNames.CreateAt] = new AttributeValue(at),
-                        [ScoreDatabasePropertyNames.UpdateAt] = new AttributeValue(at),
-                        [ScoreDatabasePropertyNames.DataHash] = new AttributeValue(value.hash),
-                        [ScoreDatabasePropertyNames.Data] = value.data,
+                        Update = new Update()
+                        {
+                            TableName = tableName,
+                            Key = new Dictionary<string, AttributeValue>()
+                            {
+                                [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                            },
+                            ExpressionAttributeNames = new Dictionary<string, string>()
+                            {
+                                ["#snapshotCount"] = ScoreDatabasePropertyNames.SnapshotCount,
+                            },
+                            ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                            {
+                                [":increment"] = new AttributeValue(){N = "1"},
+                                [":countMax"] = new AttributeValue()
+                                {
+                                    N = maxSnapshotCount.ToString(),
+                                },
+                            },
+                            ConditionExpression = "#snapshotCount < :countMax",
+                            UpdateExpression = "ADD #snapshotCount :increment"
+                        }
                     },
-                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    new TransactWriteItem()
                     {
-                        ["#score"] = ScoreDatabasePropertyNames.ScoreId,
-                    },
-                    ConditionExpression = "attribute_not_exists(#score)",
+                        Put = new Put()
+                        {
+                            TableName = tableName,
+                            Item = new Dictionary<string, AttributeValue>()
+                            {
+                                [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + snapshot),
+                                [ScoreDatabasePropertyNames.CreateAt] = new AttributeValue(at),
+                                [ScoreDatabasePropertyNames.UpdateAt] = new AttributeValue(at),
+                                [ScoreDatabasePropertyNames.DataHash] = new AttributeValue(value.hash),
+                                [ScoreDatabasePropertyNames.Data] = value.data,
+                                [ScoreDatabasePropertyNames.SnapshotName] = new AttributeValue(snapshotName),
+                            },
+                            ExpressionAttributeNames = new Dictionary<string, string>()
+                            {
+                                ["#score"] = ScoreDatabasePropertyNames.ScoreId,
+                            },
+                            ConditionExpression = "attribute_not_exists(#score)",
+                        }
+                    }
                 };
+
                 try
                 {
-                    await client.PutItemAsync(request);
+                    await client.TransactWriteItemsAsync(new TransactWriteItemsRequest()
+                    {
+                        TransactItems = actions,
+                        ReturnConsumedCapacity = ReturnConsumedCapacity.TOTAL
+                    });
+                }
+                catch (TransactionCanceledException ex)
+                {
+                    var updateReason = ex.CancellationReasons[0];
+
+                    if (updateReason.Code == "ConditionalCheckFailed")
+                    {
+                        throw new CreatedSnapshotException(CreatedSnapshotExceptionCodes.ExceededUpperLimit, ex);
+                    }
+
+                    throw;
                 }
                 catch (Exception ex)
                 {
@@ -1687,40 +1749,82 @@ namespace ScoreHistoryApi.Logics
             }
         }
 
-        public async Task DeleteSnapshotAsync(Guid ownerId, Guid scoreId, string snapshotName)
+        public async Task DeleteSnapshotAsync(Guid ownerId, Guid scoreId, Guid snapshotId)
         {
             var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
             var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+            var snapshot = ScoreDatabaseUtils.ConvertToBase64(snapshotId);
 
-            await DeleteItemAsync(_dynamoDbClient, TableName, owner, score, snapshotName);
+            await DeleteItemAsync(_dynamoDbClient, TableName, owner, score, snapshot);
 
             static async Task DeleteItemAsync(
                 IAmazonDynamoDB client,
                 string tableName,
                 string owner,
                 string score,
-                string snapshotName
+                string snapshot
                 )
             {
-                var snapshotNameBase64 = ScoreDatabaseUtils.EncodeToBase64FromSnapshotName(snapshotName);
-
-                var request = new DeleteItemRequest()
+                var actions = new List<TransactWriteItem>()
                 {
-                    TableName = tableName,
-                    Key = new Dictionary<string, AttributeValue>()
+                    new TransactWriteItem()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + snapshotNameBase64),
+                        Delete = new Delete()
+                        {
+                            TableName = tableName,
+                            Key = new Dictionary<string, AttributeValue>()
+                            {
+                                [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + snapshot),
+                            },
+                            ExpressionAttributeNames = new Dictionary<string, string>()
+                            {
+                                ["#score"] = ScoreDatabasePropertyNames.ScoreId,
+                            },
+                            ConditionExpression = "attribute_exists(#score)",
+                        },
                     },
-                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    new TransactWriteItem()
                     {
-                        ["#score"] = ScoreDatabasePropertyNames.ScoreId,
+                        Update = new Update()
+                        {
+                            TableName = tableName,
+                            Key = new Dictionary<string, AttributeValue>()
+                            {
+                                [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                            },
+                            ExpressionAttributeNames = new Dictionary<string, string>()
+                            {
+                                ["#snapshotCount"] = ScoreDatabasePropertyNames.SnapshotCount,
+                            },
+                            ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                            {
+                                [":increment"] = new AttributeValue(){N = "-1"},
+                            },
+                            UpdateExpression = "ADD #snapshotCount :increment",
+                        }
                     },
-                    ConditionExpression = "attribute_exists(#score)",
                 };
+
                 try
                 {
-                    await client.DeleteItemAsync(request);
+                    await client.TransactWriteItemsAsync(new TransactWriteItemsRequest()
+                    {
+                        TransactItems = actions,
+                        ReturnConsumedCapacity = ReturnConsumedCapacity.TOTAL,
+                    });
+                }
+                catch (TransactionCanceledException ex)
+                {
+                    var deleteReason = ex.CancellationReasons[0];
+
+                    if (deleteReason.Code == "ConditionalCheckFailed")
+                    {
+                        throw new NotFoundSnapshotException(ex);
+                    }
+
+                    throw;
                 }
                 catch (Exception ex)
                 {
@@ -1730,12 +1834,13 @@ namespace ScoreHistoryApi.Logics
             }
         }
 
-        public async Task<IReadOnlyList<string>> GetSnapshotNamesAsync(Guid ownerId, Guid scoreId)
+        public async Task<IReadOnlyList<(Guid snapshotId, string snapshotName)>> GetSnapshotNamesAsync(Guid ownerId,
+            Guid scoreId)
         {
 
             return await GetAsync(_dynamoDbClient, TableName, ownerId, scoreId);
 
-            static async Task<string[]> GetAsync(IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId)
+            static async Task<(Guid snapshotId, string snapshotName)[]> GetAsync(IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId)
             {
                 var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
                 var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
@@ -1747,6 +1852,7 @@ namespace ScoreHistoryApi.Logics
                     {
                         ["#owner"] = ScoreDatabasePropertyNames.OwnerId,
                         ["#score"] = ScoreDatabasePropertyNames.ScoreId,
+                        ["#snapshotName"] = ScoreDatabasePropertyNames.SnapshotName,
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
@@ -1754,7 +1860,7 @@ namespace ScoreHistoryApi.Logics
                         [":snapPrefix"] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score),
                     },
                     KeyConditionExpression = "#owner = :owner and begins_with(#score, :snapPrefix)",
-                    ProjectionExpression = "#score",
+                    ProjectionExpression = "#score, #snapshotName",
                 };
                 try
                 {
@@ -1762,10 +1868,15 @@ namespace ScoreHistoryApi.Logics
 
                     var subStartIndex = (ScoreDatabaseConstant.ScoreIdSnapPrefix + score).Length;
 
-                    return response.Items.Select(x => x[ScoreDatabasePropertyNames.ScoreId]?.S)
-                        .Where(x => !(x is null))
-                        .Select(x => x.Substring(subStartIndex))
-                        .Select(ScoreDatabaseUtils.DecodeToSnapshotNameFromBase64)
+                    return response.Items
+                        .Select(x =>(
+                                score: x[ScoreDatabasePropertyNames.ScoreId].S,
+                                name: x[ScoreDatabasePropertyNames.SnapshotName].S)
+                        )
+                        .Select(x => (
+                            ScoreDatabaseUtils.ConvertToGuid(x.score.Substring(subStartIndex)),
+                            x.name)
+                        )
                         .ToArray();
                 }
                 catch (InternalServerErrorException ex)

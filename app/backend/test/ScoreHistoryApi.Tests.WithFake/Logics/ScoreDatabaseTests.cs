@@ -571,6 +571,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
             var scoreId = Guid.Parse("fd32d482-477d-4cb4-ab78-88e86a073a31");
+            var snapshotId = Guid.Parse("6d1d0a52-8371-4f78-b61b-785522d2577d");
 
             var title = "test score";
             var description = "楽譜の説明";
@@ -651,7 +652,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
 
             string snapshotName = "snapshot name";
 
-            await target.CreateSnapshotAsync(ownerId, scoreId, snapshotName);
+            await target.CreateSnapshotAsync(ownerId, scoreId, snapshotId, snapshotName);
 
         }
 
@@ -664,6 +665,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
             var scoreId = Guid.Parse("aa917a9b-453e-4bc2-8381-b61404725d6a");
+            var snapshotId = Guid.Parse("7a82b4e0-02aa-4b5e-b323-7f13f61302c7");
 
             var title = "test score";
             var description = "楽譜の説明(スナップショット削除)";
@@ -742,18 +744,18 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
                 // 握りつぶす
             }
 
-            string snapshotName = "snapshot name";
+            string snapshotName = "snapshot name(delete)";
 
             try
             {
-                await target.CreateSnapshotAsync(ownerId, scoreId, snapshotName);
+                await target.CreateSnapshotAsync(ownerId, scoreId, snapshotId, snapshotName);
             }
             catch (Exception)
             {
                 // 握りつぶす
             }
 
-            await target.DeleteSnapshotAsync(ownerId, scoreId, snapshotName);
+            await target.DeleteSnapshotAsync(ownerId, scoreId, snapshotId);
 
         }
 
@@ -845,19 +847,19 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
                 // 握りつぶす
             }
 
-            var snapshotNames = new string[]
+            var snapshotNames = new[]
             {
-                "スナップショット名1",
-                "スナップショット名2",
-                "スナップショット名3",
-                "スナップショット名4",
+                (id: new Guid("5542709f-2810-40c1-a3c4-fbcd2217fb65"), name: "スナップショット名1(Get)"),
+                (id: new Guid("a2821d08-3e25-405f-8b7e-1b6543b86e02"), name: "スナップショット名2(Get)"),
+                (id: new Guid("d191a5bc-ffca-4ab7-978e-4bf8236b4bdc"), name: "スナップショット名3(Get)"),
+                (id: new Guid("e5a56aff-1449-48e0-acd1-89e8506bbb6b"), name: "スナップショット名4(Get)"),
             }.OrderBy(x => x).ToArray();
 
             try
             {
                 foreach (var snapshotName in snapshotNames)
                 {
-                    await target.CreateSnapshotAsync(ownerId, scoreId, snapshotName);
+                    await target.CreateSnapshotAsync(ownerId, scoreId, snapshotName.id, snapshotName.name);
                 }
             }
             catch (Exception)
@@ -867,8 +869,10 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
 
             var actual = await target.GetSnapshotNamesAsync(ownerId, scoreId);
 
-            Assert.Equal(snapshotNames, actual.OrderBy(x => x).ToArray());
-
+            Assert.Equal(
+                snapshotNames.OrderBy(x => x.id).ToArray(),
+                actual.OrderBy(x => x.snapshotId).ToArray()
+                );
         }
 
 
@@ -1026,7 +1030,10 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
                 ItemId = new Guid(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (byte) x)
             }).ToList();
 
-            var snapshotNames = Enumerable.Range(0, snapshotCount).Select(x => "スナップショット名" + x).ToArray();
+            var snapshotNames = Enumerable
+                .Range(0, snapshotCount)
+                .Select(x => (id: new Guid(0,0,0,0,0,0,0,0,0,0,(byte)x), name:"スナップショット名" + x))
+                .ToArray();
 
             try
             {
@@ -1062,7 +1069,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
                     await target.AddPagesAsync(ownerId, scoreId, new List<NewScorePage>() {newPage});
                     await target.AddAnnotationsAsync(ownerId, scoreId, new List<NewScoreAnnotation>() {newAnnotation});
 
-                    await target.CreateSnapshotAsync(ownerId, scoreId, snapshotName);
+                    await target.CreateSnapshotAsync(ownerId, scoreId, snapshotName.id, snapshotName.name);
                 }
             }
             catch (Exception)
@@ -1072,7 +1079,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
 
             foreach (var snapshotName in snapshotNames)
             {
-                var actual = await target.GetSnapshotScoreDetailAsync(ownerId, scoreId, snapshotName);
+                var actual = await target.GetSnapshotScoreDetailAsync(ownerId, scoreId, snapshotName.id);
                 break;
             }
         }

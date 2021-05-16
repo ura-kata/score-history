@@ -257,22 +257,6 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
             DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.Now.ToUnixTimeMilliseconds());
 
         /// <summary>
-        /// スナップショット名を base64 エンコードで変換する
-        /// </summary>
-        /// <param name="snapshotName"></param>
-        /// <returns></returns>
-        public static string EncodeToBase64FromSnapshotName(string snapshotName) =>
-            Convert.ToBase64String(Encoding.UTF8.GetBytes(snapshotName));
-
-        /// <summary>
-        /// base64 でエンコードされたスナップショット名をデコードする
-        /// </summary>
-        /// <param name="snapshotNameBase64"></param>
-        /// <returns></returns>
-        public static string DecodeToSnapshotNameFromBase64(string snapshotNameBase64) =>
-            Encoding.UTF8.GetString(Convert.FromBase64String(snapshotNameBase64));
-
-        /// <summary>
         /// アクセスを文字に変換する
         /// </summary>
         /// <param name="access"></param>

@@ -119,9 +119,9 @@ namespace ScoreHistoryApi.Logics
         /// </summary>
         /// <param name="ownerId"></param>
         /// <param name="scoreId"></param>
-        /// <param name="snapshotName"></param>
+        /// <param name="snapshotId"></param>
         /// <returns></returns>
-        Task<DatabaseScoreRecord> GetSnapshotScoreDetailAsync(Guid ownerId, Guid scoreId, string snapshotName);
+        Task<DatabaseScoreRecord> GetSnapshotScoreDetailAsync(Guid ownerId, Guid scoreId, Guid snapshotId);
 
         /// <summary>
         /// スナップショットを作成する
@@ -136,8 +136,8 @@ namespace ScoreHistoryApi.Logics
         /// </summary>
         /// <param name="ownerId"></param>
         /// <param name="scoreId"></param>
-        /// <param name="snapshotName"></param>
-        Task DeleteSnapshotAsync(Guid ownerId, Guid scoreId, string snapshotName);
+        /// <param name="snapshotId"></param>
+        Task DeleteSnapshotAsync(Guid ownerId, Guid scoreId, Guid snapshotId);
 
         /// <summary>
         /// スナップショットの名前一覧を取得する
@@ -145,7 +145,7 @@ namespace ScoreHistoryApi.Logics
         /// <param name="ownerId"></param>
         /// <param name="scoreId"></param>
         /// <returns></returns>
-        Task<IReadOnlyList<string>> GetSnapshotNamesAsync(Guid ownerId, Guid scoreId);
+        Task<IReadOnlyList<(Guid snapshotId, string snapshotName)>> GetSnapshotNamesAsync(Guid ownerId, Guid scoreId);
 
         /// <summary>
         /// アクセスを設定する
