@@ -96,6 +96,7 @@ UUID の Base64 エンコードは 24 byte
       "title": "",
       "desc": "",
       "v": "1", // data 構造の version
+      "p_count": 3, // page count
       "page": [
         {
           "i": 0,
@@ -113,14 +114,15 @@ UUID の Base64 エンコードは 24 byte
           "p": "3"
         }
       ],
+      "a_count": 2, // annotation count
       "anno":[
         {
           "i": 0,
-          "c": "アノテーションの内容"
+          "h": "ouWfeVUe4keu21CyOIZ0jg==" // Content のハッシュ値
         },
         {
           "i": 1,
-          "c": "アノテーションの内容"
+          "h": "ouWfeVUe4keu21CyOIZ0jg=="
         }
       ]
     }
@@ -128,15 +130,33 @@ UUID の Base64 エンコードは 24 byte
   {
     "owner": "68yjpWHe5EOEnN6vv3UL1w==",
     "score": "snap:a62Xnv7FbkqPJQsmW1kBeg==G83UGGM9UUS4Ky8gsKmxRg==",
+    "create_at": "",
+    "update_at": "",
     "snapname": "スナップショット1"
   },
   {
     "owner": "68yjpWHe5EOEnN6vv3UL1w==",
     "score": "snap:a62Xnv7FbkqPJQsmW1kBeg==HdVwA45SOUacxgvNTADESA==",
+    "create_at": "",
+    "update_at": "",
     "snapname": "スナップショット2"
   }
 ]
 ```
+
+```json
+{
+  "o": "68yjpWHe5EOEnN6vv3UL1w==a62Xnv7FbkqPJQsmW1kBeg==", // owner id & score id
+  "d": "ouWfeVUe4keu21CyOIZ0jg==", // data id アノテーションの内容のハッシュ値を計算し base64 にしたもの
+  "t": "a", // type annotation
+  "c": "アノテーションの内容", // content
+}
+```
+
+- `"t": "a"`
+  - annotation
+
+スナップショットは JSON に変換して S3 に保存する
 
 ### アイテム
 

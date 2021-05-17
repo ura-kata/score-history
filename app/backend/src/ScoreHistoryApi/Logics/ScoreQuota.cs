@@ -11,6 +11,8 @@ namespace ScoreHistoryApi.Logics
         public long OwnerItemMaxSize { get; }
         public long TitleMaxLength { get; }
         public int SnapshotCountMax { get; }
+        public int AnnotationCountMax { get; }
+        public int PageCountMax { get; }
     }
 
     /// <summary>
@@ -30,5 +32,8 @@ namespace ScoreHistoryApi.Logics
         public long TitleMaxLength { get; } = 64;
 
         public int SnapshotCountMax { get; } = 100;
+        public int AnnotationCountMax { get; } = 1000;
+
+        public int PageCountMax { get; } = 100;
     }
 }

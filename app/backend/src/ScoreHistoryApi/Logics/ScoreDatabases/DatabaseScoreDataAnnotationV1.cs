@@ -6,7 +6,8 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
     {
         [JsonPropertyName(ScoreDatabasePropertyNames.AnnotationsId)]
         public long Id { get; set; }
-        [JsonPropertyName(ScoreDatabasePropertyNames.AnnotationsContent)]
-        public string Content { get; set; }
+
+        [JsonPropertyName(ScoreDatabasePropertyNames.AnnotationsContentHash)]
+        public string ContentHash { get; set; }
     }
 }

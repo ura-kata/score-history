@@ -13,12 +13,14 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
 {
     public class ScoreDatabaseTests
     {
+        public const string ScoreTableName = "ura-kata-score-history";
+        public const string ScoreDataTableName = "ura-kata-score-history-data";
+
         [Fact]
         public async Task CreateAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history";
-            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName);
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
             var scoreId = Guid.Parse("0d9fb491-43ae-44a1-9056-55bb25b21187");
@@ -41,8 +43,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         public async Task UpdateTitleAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history";
-            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName);
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
             var scoreId = Guid.Parse("0d9fb491-43ae-44a1-9056-55bb25b21187");
@@ -75,8 +76,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         public async Task UpdateDescriptionAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history";
-            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName);
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
             var scoreId = Guid.Parse("0d9fb491-43ae-44a1-9056-55bb25b21187");
@@ -109,8 +109,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         public async Task AddPagesAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history";
-            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName);
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
             var scoreId = Guid.Parse("0d9fb491-43ae-44a1-9056-55bb25b21187");
@@ -157,8 +156,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         public async Task RemovePagesAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history";
-            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName);
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
             var scoreId = Guid.Parse("727679a2-c1eb-4089-9817-9a9bfb7a23b1");
@@ -234,8 +232,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         public async Task ReplacePagesAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history";
-            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName);
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
             var scoreId = Guid.Parse("9db807b1-42fe-4e1a-b85c-61905b176616");
@@ -321,8 +318,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         public async Task AddAnnotationsAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history";
-            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName);
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
             var scoreId = Guid.Parse("90fcc364-2a67-42b8-8b93-15a84370b1e4");
@@ -361,8 +357,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         public async Task RemoveAnnotationsAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history";
-            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName);
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
             var scoreId = Guid.Parse("27badfc9-372f-4423-aa41-cfa397c9b01d");
@@ -418,8 +413,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         public async Task ReplaceAnnotationsAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history";
-            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName);
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
             var scoreId = Guid.Parse("9fc3f5e5-66b6-4443-be68-1cc96155550f");
@@ -475,8 +469,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         public async Task GetScoreDetailAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history";
-            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName);
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
             var scoreId = Guid.Parse("8127bf3d-0d80-4635-bdb7-9c544ccea46f");
@@ -566,8 +559,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         public async Task CreateSnapshotAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history";
-            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName);
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
             var scoreId = Guid.Parse("fd32d482-477d-4cb4-ab78-88e86a073a31");
@@ -660,8 +652,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         public async Task DeleteSnapshotAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history";
-            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName);
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
             var scoreId = Guid.Parse("aa917a9b-453e-4bc2-8381-b61404725d6a");
@@ -764,8 +755,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         public async Task GetSnapshotNamesAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history";
-            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName);
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
             var scoreId = Guid.Parse("89405e01-67f1-42e6-8673-e932a4b20d26");
@@ -880,8 +870,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         public async Task DeleteAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history";
-            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName);
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
             var scoreId = Guid.Parse("ce815421-4538-4b2e-bcb5-4a43f8c01320");
@@ -991,8 +980,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         public async Task GetSnapshotScoreDetailAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history";
-            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName);
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
             var scoreId = Guid.Parse("29c64902-faa6-40bc-8d45-bcc90fe97818");
@@ -1088,8 +1076,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         public async Task SetAccessAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history";
-            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName);
 
             var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
             var scoreId = Guid.Parse("6884c1c3-55ab-4c62-b515-a039d18b14e9");

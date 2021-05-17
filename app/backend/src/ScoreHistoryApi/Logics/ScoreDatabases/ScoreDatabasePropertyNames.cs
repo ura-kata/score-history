@@ -17,11 +17,17 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
         public const string PagesPage = "p";
         public const string Annotations = "anno";
         public const string AnnotationsId = "i";
-        public const string AnnotationsContent = "c";
+        public const string AnnotationsContentHash = "h";
         public const string ScoreCount = "score_count";
         public const string Scores = "scores";
         public const string Access = "access";
         public const string SnapshotName = "snapname";
         public const string SnapshotCount = "s_count";
+
+        public static class DataPropertyNames
+        {
+            public const string PageCount = "p_count";
+            public const string AnnotationCount = "a_count";
+        }
     }
 }

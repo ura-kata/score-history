@@ -51,6 +51,15 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
         }
 
         /// <summary>
+        /// コンテンツのハッシュ値を計算する
+        /// </summary>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        public static string CalcContentHash(string content) =>
+            Convert.ToBase64String(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(content)));
+
+
+        /// <summary>
         /// DynamoDB のデータベースのデータからデータベースデータのクラスにマッピングする
         /// </summary>
         /// <param name="value"></param>
@@ -137,9 +146,9 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                                             annotation.Id = long.Parse(annotationItemValue.N);
                                             break;
                                         }
-                                        case ScoreDatabasePropertyNames.AnnotationsContent:
+                                        case ScoreDatabasePropertyNames.AnnotationsContentHash:
                                         {
-                                            annotation.Content = annotationItemValue.S;
+                                            annotation.ContentHash = annotationItemValue.S;
                                             break;
                                         }
                                     }
@@ -204,6 +213,8 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                 }
             }
 
+            databaseData[ScoreDatabasePropertyNames.DataPropertyNames.PageCount] =
+                new AttributeValue() {N = pages.Count.ToString()};
             databaseData[ScoreDatabasePropertyNames.Pages] = new AttributeValue() {L = pages, IsLSet = true};
 
             var annotations = new List<AttributeValue>();
@@ -216,9 +227,9 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                         [ScoreDatabasePropertyNames.AnnotationsId] = new AttributeValue() {N = value.Id.ToString()}
                     };
 
-                    if (value.Content != null)
+                    if (value.ContentHash != null)
                     {
-                        annotation[ScoreDatabasePropertyNames.AnnotationsContent] = new AttributeValue(value.Content);
+                        annotation[ScoreDatabasePropertyNames.AnnotationsContentHash] = new AttributeValue(value.ContentHash);
                     }
 
                     if(annotation.Count == 0)
@@ -227,6 +238,8 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                 }
             }
 
+            databaseData[ScoreDatabasePropertyNames.DataPropertyNames.AnnotationCount] =
+                new AttributeValue() {N = annotations.Count.ToString()};
             databaseData[ScoreDatabasePropertyNames.Annotations] =
                 new AttributeValue() {L = annotations, IsLSet = true};
 
