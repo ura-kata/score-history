@@ -179,6 +179,31 @@ namespace ScoreHistoryApi.Controllers
 
         }
 
+        [HttpPost]
+        [Route("user/{id:guid}/snapshots")]
+        public async Task<IActionResult> CreateSnapshotAsync([FromRoute(Name = "id")] Guid id, [FromBody] NewScoreSnapshot snapshot)
+        {
+            var authorizerData = this.GetAuthorizerData();
+            var ownerId = authorizerData.Sub;
+
+            var snapshotCreator = _scoreLogicFactory.SnapshotCreator;
+
+            try
+            {
+                await snapshotCreator.CreateAsync(ownerId, id, snapshot.Name);
+            }
+            catch (ArgumentNullException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+            catch (ArgumentException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+
+            return Ok();
+        }
+
         #endregion
 
         #region owner

@@ -34,5 +34,9 @@ namespace ScoreHistoryApi.Factories
 
         public ScoreTitleSetter TitleSetter =>
             new ScoreTitleSetter(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration), _scoreQuota);
+
+        public ScoreSnapshotCreator SnapshotCreator => new ScoreSnapshotCreator(
+            new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration),
+            new ScoreSnapshotStorage(_s3Client, _configuration));
     }
 }

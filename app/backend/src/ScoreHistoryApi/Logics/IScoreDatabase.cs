@@ -129,8 +129,8 @@ namespace ScoreHistoryApi.Logics
         /// <param name="ownerId"></param>
         /// <param name="scoreId"></param>
         /// <param name="snapshotName"></param>
-        Task<(Guid snapshotId, DatabaseScoreDataV1 data, Dictionary<string, string> annotations)> CreateSnapshotAsync(
-            Guid ownerId, Guid scoreId, string snapshotName);
+        Task<(ScoreSnapshot snapshot, ScoreAccesses access)> CreateSnapshotAsync(Guid ownerId, Guid scoreId,
+            string snapshotName);
 
         /// <summary>
         /// スナップショットを削除する
