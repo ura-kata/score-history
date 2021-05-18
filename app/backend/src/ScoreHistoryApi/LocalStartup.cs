@@ -32,7 +32,7 @@ namespace ScoreHistoryApi
             services.AddSingleton(x =>
                 new S3ClientFactory()
                     .SetEndpointUrl(new Uri(Configuration[EnvironmentNames.ScoreS3EndpointUrl]))
-                    .SetCredentials(new BasicAWSCredentials(Configuration[EnvironmentNames.ScoreS3AccessKey],Configuration[EnvironmentNames.ScoreS3SecretKey]))
+                    .SetCredentials(Configuration[EnvironmentNames.ScoreS3AccessKey],Configuration[EnvironmentNames.ScoreS3SecretKey])
                     .Create());
             services.AddScoped<ScoreLogicFactory>();
 

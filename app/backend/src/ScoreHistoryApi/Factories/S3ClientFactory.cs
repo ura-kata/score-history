@@ -57,6 +57,17 @@ namespace ScoreHistoryApi.Factories
             return this;
         }
 
+        public S3ClientFactory SetCredentials(string accessKey, string secretKey)
+        {
+            if (accessKey is null)
+                throw new ArgumentNullException(nameof(accessKey));
+            if (secretKey is null)
+                throw new ArgumentNullException(nameof(secretKey));
+
+            Credentials = new BasicAWSCredentials(accessKey, secretKey);
+            return this;
+        }
+
         public IAmazonS3 Create()
         {
             if (!(RegionSystemName is default(string)))

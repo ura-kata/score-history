@@ -20,7 +20,7 @@ namespace ScoreHistoryApi
 
         public const string ScoreDynamoDbEndpointUrl = "ScoreDynamoDbEndpointUrl";
         public const string ScoreS3EndpointUrl = "ScoreS3EndpointUrl";
-        public const string ScoreS3AccessKey = "SocreS3AccessKey";
+        public const string ScoreS3AccessKey = "ScoreS3AccessKey";
         public const string ScoreS3SecretKey = "ScoreS3SecretKey";
 
         public const string DevelopmentSub = "DevelopmentSub";
