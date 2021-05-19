@@ -141,8 +141,9 @@ namespace ScoreHistoryApi.Controllers
         /// <param name="patch"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        [HttpPatch]
-        [Route("user/{id:guid}")]
+        // [HttpPatch]
+        // [Route("user/{id:guid}")]
+        [NonAction]
         public Task<IActionResult> PatchAUserScoreAsync([FromRoute(Name = "id")] Guid id, JsonPatchDocument<ScorePatch> patch)
         {
             var ifMatch = this.Request.Headers[HttpHeaderNames.IfMatch];
