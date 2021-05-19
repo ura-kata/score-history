@@ -136,7 +136,7 @@ namespace ScoreHistoryApi.Logics
                     Title = title,
                     DescriptionHash = description,
                 };
-                var dataAttributeValue = ScoreDatabaseUtils.ConvertToDatabaseDataV1(data);
+                var dataAttributeValue = data.ConvertToAttributeValue();
                 var dataHash = ScoreDatabaseUtils.CalcHash(data);
                 var createAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
                 var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
@@ -572,7 +572,7 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result,hash);
             }
@@ -663,7 +663,7 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result,hash);
         }
@@ -774,7 +774,7 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result,hash);
             }
@@ -916,7 +916,7 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result, hash);
             }
@@ -1039,7 +1039,7 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result, hash);
             }
@@ -1240,7 +1240,7 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result,hash);
             }
@@ -1386,7 +1386,7 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result, hash);
             }
@@ -1577,7 +1577,7 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result, hash);
             }
@@ -1876,7 +1876,7 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
 
                 var createAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[DynamoDbScorePropertyNames.CreateAt].S);
@@ -1974,7 +1974,7 @@ namespace ScoreHistoryApi.Logics
                 if(!response.Item.TryGetValue(DynamoDbScorePropertyNames.Data, out var data))
                     throw new NotFoundSnapshotException("Not found snapshot.");
 
-                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
 
                 var createAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[DynamoDbScorePropertyNames.CreateAt].S);
@@ -2018,7 +2018,7 @@ namespace ScoreHistoryApi.Logics
             var snapshot = ScoreDatabaseUtils.ConvertToBase64(snapshotId);
 
             var (dataValue,hash,access) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
-            var scoreData = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(dataValue);
+            var scoreData = DynamoDbScoreDataV1.MapFromAttributeValue(dataValue);
             var annotations = await GetAnnotationsAsync(_dynamoDbClient, ScoreDataTableName, owner, score, snapshot);
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
@@ -2389,7 +2389,7 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
+                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result,hash);
             }
