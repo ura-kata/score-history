@@ -146,7 +146,7 @@ namespace ScoreHistoryApi.Logics
         /// <param name="ownerId"></param>
         /// <param name="scoreId"></param>
         /// <returns></returns>
-        Task<IReadOnlyList<(Guid snapshotId, string snapshotName)>> GetSnapshotNamesAsync(Guid ownerId, Guid scoreId);
+        Task<ScoreSnapshotSummary[]> GetSnapshotSummariesAsync(Guid ownerId, Guid scoreId);
 
         /// <summary>
         /// アクセスを設定する

@@ -38,5 +38,8 @@ namespace ScoreHistoryApi.Factories
         public ScoreSnapshotCreator SnapshotCreator => new ScoreSnapshotCreator(
             new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration),
             new ScoreSnapshotStorage(_s3Client, _configuration));
+
+        public ScoreSnapshotSummaryGetter SnapshotSummaryGetter => new ScoreSnapshotSummaryGetter(
+            new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
     }
 }

@@ -2226,13 +2226,13 @@ namespace ScoreHistoryApi.Logics
             }
         }
 
-        public async Task<IReadOnlyList<(Guid snapshotId, string snapshotName)>> GetSnapshotNamesAsync(Guid ownerId,
+        public async Task<ScoreSnapshotSummary[]> GetSnapshotSummariesAsync(Guid ownerId,
             Guid scoreId)
         {
 
             return await GetAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId);
 
-            static async Task<(Guid snapshotId, string snapshotName)[]> GetAsync(IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId)
+            static async Task<ScoreSnapshotSummary[]> GetAsync(IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId)
             {
                 var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
                 var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
@@ -2245,6 +2245,7 @@ namespace ScoreHistoryApi.Logics
                         ["#owner"] = ScoreDatabasePropertyNames.OwnerId,
                         ["#score"] = ScoreDatabasePropertyNames.ScoreId,
                         ["#snapshotName"] = ScoreDatabasePropertyNames.SnapshotName,
+                        ["#createAt"] = ScoreDatabasePropertyNames.CreateAt,
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
@@ -2252,7 +2253,7 @@ namespace ScoreHistoryApi.Logics
                         [":snapPrefix"] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score),
                     },
                     KeyConditionExpression = "#owner = :owner and begins_with(#score, :snapPrefix)",
-                    ProjectionExpression = "#score, #snapshotName",
+                    ProjectionExpression = "#score, #snapshotName, #createAt",
                 };
                 try
                 {
@@ -2263,11 +2264,16 @@ namespace ScoreHistoryApi.Logics
                     return response.Items
                         .Select(x =>(
                                 score: x[ScoreDatabasePropertyNames.ScoreId].S,
-                                name: x[ScoreDatabasePropertyNames.SnapshotName].S)
+                                name: x[ScoreDatabasePropertyNames.SnapshotName].S,
+                                createAt: x[ScoreDatabasePropertyNames.CreateAt].S)
                         )
-                        .Select(x => (
-                            ScoreDatabaseUtils.ConvertToGuid(x.score.Substring(subStartIndex)),
-                            x.name)
+                        .Select(x =>
+                            new ScoreSnapshotSummary()
+                            {
+                                Id = ScoreDatabaseUtils.ConvertToGuid(x.score.Substring(subStartIndex)),
+                                Name =x.name,
+                                CreateAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(x.createAt),
+                            }
                         )
                         .ToArray();
                 }

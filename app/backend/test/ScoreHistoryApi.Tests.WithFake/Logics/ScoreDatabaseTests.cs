@@ -857,11 +857,11 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
                 // 握りつぶす
             }
 
-            var actual = await target.GetSnapshotNamesAsync(ownerId, scoreId);
+            var actual = await target.GetSnapshotSummariesAsync(ownerId, scoreId);
 
             Assert.Equal(
-                snapshotNames.OrderBy(x => x.id).ToArray(),
-                actual.OrderBy(x => x.snapshotId).ToArray()
+                snapshotNames.OrderBy(x => x.id).Select(x=>(x.id,x.name)).ToArray(),
+                actual.OrderBy(x => x.Id).Select(x=>(x.Id,x.Name)).ToArray()
                 );
         }
 
