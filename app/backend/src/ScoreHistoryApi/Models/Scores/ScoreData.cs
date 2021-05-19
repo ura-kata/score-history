@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
@@ -13,8 +14,8 @@ namespace ScoreHistoryApi.Models.Scores
         [JsonPropertyName("title")]
         public string Title { get; set; }
 
-        [JsonPropertyName("description")]
-        public string Description { get; set; }
+        [JsonPropertyName("descriptionHash")]
+        public string DescriptionHash { get; set; }
 
         [JsonPropertyName("pages")]
         public ScorePage[] Pages { get; set; }
@@ -22,15 +23,25 @@ namespace ScoreHistoryApi.Models.Scores
         [JsonPropertyName("annotations")]
         public ScoreAnnotation[] Annotations { get; set; }
 
-        [JsonPropertyName("annotationDataSet")]
-        public Dictionary<string, string> AnnotationDataSet { get; set; }
+        [JsonPropertyName("hashSet")]
+        public Dictionary<string, string> HashSet { get; set; }
 
-        public static ScoreData Create( DynamoDbScoreDataV1 data, Dictionary<string,string> annotationDataSet)
+        public static ScoreData Create(DynamoDbScoreDataBase data, Dictionary<string,string> hashSet)
+        {
+            if (data is DynamoDbScoreDataV1 dataV1)
+            {
+                return Create(dataV1, hashSet);
+            }
+
+            throw new ArgumentException(nameof(data));
+        }
+
+        public static ScoreData Create( DynamoDbScoreDataV1 data, Dictionary<string,string> hashSet)
         {
             return new ScoreData()
             {
                 Title = data.Title,
-                Description = data.DescriptionHash,
+                DescriptionHash = data.DescriptionHash,
                 Pages = data.Page.Select(x => new ScorePage()
                 {
                     Id = x.Id,
@@ -42,7 +53,7 @@ namespace ScoreHistoryApi.Models.Scores
                     Id = x.Id,
                     ContentHash = x.ContentHash,
                 }).ToArray(),
-                AnnotationDataSet = annotationDataSet.ToDictionary(x => x.Key, x => x.Value),
+                HashSet = hashSet.ToDictionary(x => x.Key, x => x.Value),
             };
         }
     }

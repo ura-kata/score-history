@@ -34,7 +34,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
                 Data = new ScoreData()
                 {
                     Title = "楽譜",
-                    Description = "楽譜の説明",
+                    DescriptionHash = "楽譜の説明",
                     Annotations = new []{
                         new ScoreAnnotation()
                         {
@@ -62,7 +62,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
                             ItemId = new Guid("e3c0a4a6-344d-4247-9932-070ae822186b"),
                         },
                     },
-                    AnnotationDataSet = new Dictionary<string, string>()
+                    HashSet = new Dictionary<string, string>()
                     {
                         ["hash00"] = "アノテーション1",
                         ["hash01"] = "アノテーション2",
@@ -94,7 +94,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
                 Data = new ScoreData()
                 {
                     Title = "楽譜",
-                    Description = "楽譜の説明",
+                    DescriptionHash = "楽譜の説明",
                     Annotations = new []{
                         new ScoreAnnotation()
                         {
@@ -122,7 +122,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
                             ItemId = new Guid("e3c0a4a6-344d-4247-9932-070ae822186b"),
                         },
                     },
-                    AnnotationDataSet = new Dictionary<string, string>()
+                    HashSet = new Dictionary<string, string>()
                     {
                         ["hash00"] = "アノテーション1",
                         ["hash01"] = "アノテーション2",
@@ -169,7 +169,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
                 Data = new ScoreData()
                 {
                     Title = "楽譜",
-                    Description = "楽譜の説明",
+                    DescriptionHash = "楽譜の説明",
                     Annotations = new []{
                         new ScoreAnnotation()
                         {
@@ -197,7 +197,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
                             ItemId = new Guid("e3c0a4a6-344d-4247-9932-070ae822186b"),
                         },
                     },
-                    AnnotationDataSet = new Dictionary<string, string>()
+                    HashSet = new Dictionary<string, string>()
                     {
                         ["hash00"] = "アノテーション1",
                         ["hash01"] = "アノテーション2",
