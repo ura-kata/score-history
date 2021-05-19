@@ -64,16 +64,18 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static DynamoDbScoreDataV1 MapFromAttributeValue(AttributeValue value)
+        public static bool TryMapFromAttributeValue(AttributeValue value, out DynamoDbScoreDataV1 data)
         {
-            var version = value.M[DynamoDbScorePropertyNames.DataPropertyNames.DataVersion].S;
+            data = null;
+            if (!value.M.TryGetValue(DynamoDbScorePropertyNames.DataPropertyNames.DataVersion, out var versionValue))
+                return false;
 
-            if (version != ScoreDatabaseConstant.ScoreDataVersion1)
+            if (versionValue.S != ScoreDatabaseConstant.ScoreDataVersion1)
             {
-                throw new ArgumentException($"Version is not {ScoreDatabaseConstant.ScoreDataVersion1} ({version})");
+                return false;
             }
 
-            var result = new DynamoDbScoreDataV1();
+            data = new DynamoDbScoreDataV1();
 
             foreach (var (key, v) in value.M)
             {
@@ -81,17 +83,17 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                 {
                     case DynamoDbScorePropertyNames.DataPropertyNames.Title:
                     {
-                        result.Title = v.S;
+                        data.Title = v.S;
                         break;
                     }
                     case DynamoDbScorePropertyNames.DataPropertyNames.DescriptionHash:
                     {
-                        result.DescriptionHash = v.S;
+                        data.DescriptionHash = v.S;
                         break;
                     }
                     case DynamoDbScorePropertyNames.DataPropertyNames.DataVersion:
                     {
-                        result.Version = v.S;
+                        data.Version = v.S;
                         break;
                     }
                     case DynamoDbScorePropertyNames.DataPropertyNames.Pages:
@@ -130,7 +132,7 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                                 pages.Add(p);
                             }
                         }
-                        result.Page = pages;
+                        data.Page = pages;
                         break;
                     }
                     case DynamoDbScorePropertyNames.DataPropertyNames.Annotations:
@@ -164,13 +166,13 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                                 annotations.Add(annotation);
                             }
                         }
-                        result.Annotations = annotations;
+                        data.Annotations = annotations;
                         break;
                     }
                 }
             }
 
-            return result;
+            return true;
         }
 
         public override AttributeValue ConvertToAttributeValue()

@@ -572,7 +572,7 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
+                DynamoDbScoreDataV1.TryMapFromAttributeValue(data, out var result);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result,hash);
             }
@@ -663,7 +663,7 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
+                DynamoDbScoreDataV1.TryMapFromAttributeValue(data, out var result);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result,hash);
         }
@@ -774,7 +774,7 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
+                DynamoDbScoreDataV1.TryMapFromAttributeValue(data, out var result);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result,hash);
             }
@@ -916,7 +916,7 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
+                DynamoDbScoreDataV1.TryMapFromAttributeValue(data, out var result);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result, hash);
             }
@@ -1039,7 +1039,7 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
+                DynamoDbScoreDataV1.TryMapFromAttributeValue(data, out var result);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result, hash);
             }
@@ -1240,7 +1240,8 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
+                DynamoDbScoreDataV1.TryMapFromAttributeValue(data, out var result);
+
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result,hash);
             }
@@ -1386,7 +1387,7 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
+                DynamoDbScoreDataV1.TryMapFromAttributeValue(data, out var result);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result, hash);
             }
@@ -1577,7 +1578,8 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
+                DynamoDbScoreDataV1.TryMapFromAttributeValue(data, out var result);
+
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result, hash);
             }
@@ -1876,7 +1878,7 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
+                DynamoDbScoreDataV1.TryMapFromAttributeValue(data, out var result);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
 
                 var createAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[DynamoDbScorePropertyNames.CreateAt].S);
@@ -1974,7 +1976,7 @@ namespace ScoreHistoryApi.Logics
                 if(!response.Item.TryGetValue(DynamoDbScorePropertyNames.Data, out var data))
                     throw new NotFoundSnapshotException("Not found snapshot.");
 
-                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
+                DynamoDbScoreDataV1.TryMapFromAttributeValue(data, out var result);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
 
                 var createAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[DynamoDbScorePropertyNames.CreateAt].S);
@@ -2018,7 +2020,8 @@ namespace ScoreHistoryApi.Logics
             var snapshot = ScoreDatabaseUtils.ConvertToBase64(snapshotId);
 
             var (dataValue,hash,access) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
-            var scoreData = DynamoDbScoreDataV1.MapFromAttributeValue(dataValue);
+
+            DynamoDbScoreDataV1.TryMapFromAttributeValue(dataValue, out var scoreData);
             var annotations = await GetAnnotationsAsync(_dynamoDbClient, ScoreDataTableName, owner, score, snapshot);
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
@@ -2389,7 +2392,7 @@ namespace ScoreHistoryApi.Logics
                     throw new InvalidOperationException("not found.");
 
 
-                var result = DynamoDbScoreDataV1.MapFromAttributeValue(data);
+                DynamoDbScoreDataV1.TryMapFromAttributeValue(data, out var result);
                 var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result,hash);
             }

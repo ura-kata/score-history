@@ -22,9 +22,9 @@ namespace ScoreHistoryApi.Models.Scores
         [JsonPropertyName("access")]
         public ScoreAccesses Access { get; set; }
 
-        public static ScoreDetail Create(DatabaseScoreRecord scoreRecord, Dictionary<string, string> annotationSet, ScoreAccesses access)
+        public static ScoreDetail Create(DatabaseScoreRecord scoreRecord, Dictionary<string, string> hashSet, ScoreAccesses access)
         {
-            var data = ScoreData.Create(scoreRecord.Data, annotationSet);
+            var data = ScoreData.Create(scoreRecord.Data, hashSet);
             return new ScoreDetail()
             {
                 CreateAt = scoreRecord.CreateAt,
@@ -32,6 +32,18 @@ namespace ScoreHistoryApi.Models.Scores
                 DataHash = scoreRecord.DataHash,
                 Data = data,
                 Access = access,
+            };
+        }
+        public static ScoreDetail Create(DynamoDbScore score, Dictionary<string, string> hashSet)
+        {
+            var data = ScoreData.Create(score.Data, hashSet);
+            return new ScoreDetail()
+            {
+                CreateAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(score.CreateAt),
+                UpdateAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(score.UpdateAt),
+                DataHash = score.DataHash,
+                Data = data,
+                Access = ScoreDatabaseUtils.ConvertToScoreAccess(score.Access),
             };
         }
     }

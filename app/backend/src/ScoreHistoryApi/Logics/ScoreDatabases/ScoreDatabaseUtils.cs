@@ -91,5 +91,18 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
             ScoreAccesses.Public => ScoreDatabaseConstant.ScoreAccessPublic,
             _ => throw new InvalidOperationException()
         };
+
+        /// <summary>
+        /// 文字をアクセスに変換する
+        /// </summary>
+        /// <param name="access"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public static ScoreAccesses ConvertToScoreAccess(string access) => access.ToLower(CultureInfo.InvariantCulture) switch
+        {
+            ScoreDatabaseConstant.ScoreAccessPrivate => ScoreAccesses.Private,
+            ScoreDatabaseConstant.ScoreAccessPublic => ScoreAccesses.Public,
+            _ => throw new InvalidOperationException()
+        };
     }
 }
