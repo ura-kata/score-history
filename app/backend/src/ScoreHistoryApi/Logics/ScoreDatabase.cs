@@ -467,19 +467,20 @@ namespace ScoreHistoryApi.Logics
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
                         ["#owner"] = ScoreDataDatabasePropertyNames.OwnerId,
+                        ["#data"] = ScoreDataDatabasePropertyNames.DataId,
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
                         [":owner"] = new AttributeValue(owner + score),
                     },
                     KeyConditionExpression = "#owner = :owner",
-                    ProjectionExpression = "#score",
+                    ProjectionExpression = "#data",
                 };
                 try
                 {
                     var response = await client.QueryAsync(request);
 
-                    return response.Items.Select(x => x[ScoreDatabasePropertyNames.ScoreId]?.S)
+                    return response.Items.Select(x => x[ScoreDataDatabasePropertyNames.DataId]?.S)
                         .Where(x => !(x is null))
                         .ToArray();
                 }
