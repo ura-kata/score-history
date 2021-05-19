@@ -23,19 +23,19 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
         [JsonPropertyName(DynamoDbScorePropertyNames.DataPropertyNames.DataVersion)]
         public string Version { get; set; } = ScoreDatabaseConstant.ScoreDataVersion1;
 
-        private List<DatabaseScoreDataPageV1> _page;
+        private List<DynamoDbScorePageV1> _page;
         [JsonPropertyName(DynamoDbScorePropertyNames.DataPropertyNames.Pages)]
-        public List<DatabaseScoreDataPageV1> Page
+        public List<DynamoDbScorePageV1> Page
         {
-            get => _page ??= new List<DatabaseScoreDataPageV1>();
+            get => _page ??= new List<DynamoDbScorePageV1>();
             set => _page = value;
         }
 
-        private List<DatabaseScoreDataAnnotationV1> _annotations;
+        private List<DynamoDbScoreAnnotationV1> _annotations;
         [JsonPropertyName(DynamoDbScorePropertyNames.DataPropertyNames.Annotations)]
-        public List<DatabaseScoreDataAnnotationV1> Annotations
+        public List<DynamoDbScoreAnnotationV1> Annotations
         {
-            get => _annotations ??= new List<DatabaseScoreDataAnnotationV1>();
+            get => _annotations ??= new List<DynamoDbScoreAnnotationV1>();
             set => _annotations = value;
         }
 
@@ -96,7 +96,7 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                     }
                     case DynamoDbScorePropertyNames.DataPropertyNames.Pages:
                     {
-                        var pages = new List<DatabaseScoreDataPageV1>();
+                        var pages = new List<DynamoDbScorePageV1>();
                         if (0 < v.L.Count)
                         {
                             foreach (var pageValue in v.L)
@@ -104,7 +104,7 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                                 if(pageValue.M.Count == 0)
                                     continue;
 
-                                var p = new DatabaseScoreDataPageV1();
+                                var p = new DynamoDbScorePageV1();
                                 foreach (var (pageItemKey,pageItemValue) in pageValue.M)
                                 {
                                     switch (pageItemKey)
@@ -135,7 +135,7 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                     }
                     case DynamoDbScorePropertyNames.DataPropertyNames.Annotations:
                     {
-                        var annotations = new List<DatabaseScoreDataAnnotationV1>();
+                        var annotations = new List<DynamoDbScoreAnnotationV1>();
                         if (0 < v.L.Count)
                         {
                             foreach (var annotationValue in v.L)
@@ -143,7 +143,7 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                                 if(annotationValue.M.Count == 0)
                                     continue;
 
-                                var annotation = new DatabaseScoreDataAnnotationV1();
+                                var annotation = new DynamoDbScoreAnnotationV1();
                                 foreach (var (annotationItemKey,annotationItemValue) in annotationValue.M)
                                 {
                                     switch (annotationItemKey)

@@ -728,14 +728,14 @@ namespace ScoreHistoryApi.Logics
 
             var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
 
-            data.Page ??= new List<DatabaseScoreDataPageV1>();
+            data.Page ??= new List<DynamoDbScorePageV1>();
 
-            var newPages = new List<DatabaseScoreDataPageV1>();
+            var newPages = new List<DynamoDbScorePageV1>();
 
             var pageId = data.Page.Count == 0 ? 0 : data.Page.Select(x => x.Id).Max() + 1;
             foreach (var page in pages)
             {
-                var p = new DatabaseScoreDataPageV1()
+                var p = new DynamoDbScorePageV1()
                 {
                     Id = pageId++,
                     ItemId = ScoreDatabaseUtils.ConvertToBase64(page.ItemId),
@@ -779,7 +779,7 @@ namespace ScoreHistoryApi.Logics
                 return (result,hash);
             }
 
-            static AttributeValue ConvertFromPages(List<DatabaseScoreDataPageV1> pages)
+            static AttributeValue ConvertFromPages(List<DynamoDbScorePageV1> pages)
             {
                 var result = new AttributeValue()
                 {
@@ -816,7 +816,7 @@ namespace ScoreHistoryApi.Logics
                 string tableName,
                 string owner,
                 string score,
-                List<DatabaseScoreDataPageV1> newPages,
+                List<DynamoDbScorePageV1> newPages,
                 string newHash,
                 string oldHash,
                 DateTimeOffset now
@@ -872,7 +872,7 @@ namespace ScoreHistoryApi.Logics
 
             var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
 
-            data.Page ??= new List<DatabaseScoreDataPageV1>();
+            data.Page ??= new List<DynamoDbScorePageV1>();
 
             var existedIdSet = new HashSet<long>();
             pageIds.ForEach(id => existedIdSet.Add(id));
@@ -983,7 +983,7 @@ namespace ScoreHistoryApi.Logics
 
             var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
 
-            data.Page ??= new List<DatabaseScoreDataPageV1>();
+            data.Page ??= new List<DynamoDbScorePageV1>();
 
             // Key id, Value index
             var pageIndices = new Dictionary<long,int>();
@@ -992,7 +992,7 @@ namespace ScoreHistoryApi.Logics
                 pageIndices[databaseScoreDataPageV1.Id] = index;
             }
 
-            var replacingPages = new List<(DatabaseScoreDataPageV1 data, int targetIndex)>();
+            var replacingPages = new List<(DynamoDbScorePageV1 data, int targetIndex)>();
 
             foreach (var page in pages)
             {
@@ -1000,7 +1000,7 @@ namespace ScoreHistoryApi.Logics
                 if(!pageIndices.TryGetValue(id, out var index))
                     throw new InvalidOperationException();
 
-                var p = new DatabaseScoreDataPageV1()
+                var p = new DynamoDbScorePageV1()
                 {
                     Id = id,
                     ItemId = ScoreDatabaseUtils.ConvertToBase64(page.ItemId),
@@ -1045,7 +1045,7 @@ namespace ScoreHistoryApi.Logics
             }
 
 
-            static AttributeValue ConvertFromPage(DatabaseScoreDataPageV1 page)
+            static AttributeValue ConvertFromPage(DynamoDbScorePageV1 page)
             {
                 var p = new Dictionary<string, AttributeValue>()
                 {
@@ -1073,7 +1073,7 @@ namespace ScoreHistoryApi.Logics
                 string tableName,
                 string owner,
                 string score,
-                List<(DatabaseScoreDataPageV1 data, int targetIndex)> replacingPages,
+                List<(DynamoDbScorePageV1 data, int targetIndex)> replacingPages,
                 string newHash,
                 string oldHash,
                 DateTimeOffset now
@@ -1133,9 +1133,9 @@ namespace ScoreHistoryApi.Logics
 
             var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
 
-            data.Annotations ??= new List<DatabaseScoreDataAnnotationV1>();
+            data.Annotations ??= new List<DynamoDbScoreAnnotationV1>();
 
-            var newAnnotations = new List<DatabaseScoreDataAnnotationV1>();
+            var newAnnotations = new List<DynamoDbScoreAnnotationV1>();
 
             var annotationId = data.Annotations.Count == 0 ? 0 : data.Annotations.Select(x => x.Id).Max() + 1;
 
@@ -1150,7 +1150,7 @@ namespace ScoreHistoryApi.Logics
                 if(!existedContentHashSet.Contains(hash))
                     newAnnotationContentHashDic[hash] = annotation;
 
-                var a = new DatabaseScoreDataAnnotationV1()
+                var a = new DynamoDbScoreAnnotationV1()
                 {
                     Id = annotationId++,
                     ContentHash = hash,
@@ -1245,7 +1245,7 @@ namespace ScoreHistoryApi.Logics
                 return (result,hash);
             }
 
-            static AttributeValue ConvertFromAnnotations(List<DatabaseScoreDataAnnotationV1> annotations)
+            static AttributeValue ConvertFromAnnotations(List<DynamoDbScoreAnnotationV1> annotations)
             {
                 var result = new AttributeValue()
                 {
@@ -1278,7 +1278,7 @@ namespace ScoreHistoryApi.Logics
                 string tableName,
                 string owner,
                 string score,
-                List<DatabaseScoreDataAnnotationV1> newAnnotations,
+                List<DynamoDbScoreAnnotationV1> newAnnotations,
                 string newHash,
                 string oldHash,
                 DateTimeOffset now,
@@ -1338,7 +1338,7 @@ namespace ScoreHistoryApi.Logics
 
             var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
 
-            data.Annotations ??= new List<DatabaseScoreDataAnnotationV1>();
+            data.Annotations ??= new List<DynamoDbScoreAnnotationV1>();
 
             var existedIdSet = new HashSet<long>();
             annotationIds.ForEach(id => existedIdSet.Add(id));
@@ -1500,7 +1500,7 @@ namespace ScoreHistoryApi.Logics
 
             var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
 
-            data.Annotations ??= new List<DatabaseScoreDataAnnotationV1>();
+            data.Annotations ??= new List<DynamoDbScoreAnnotationV1>();
 
             // Key id, Value index
             var annotationIndices = new Dictionary<long,int>();
@@ -1509,7 +1509,7 @@ namespace ScoreHistoryApi.Logics
                 annotationIndices[ann.Id] = index;
             }
 
-            var replacingAnnotations = new List<(DatabaseScoreDataAnnotationV1 data, int targetIndex)>();
+            var replacingAnnotations = new List<(DynamoDbScoreAnnotationV1 data, int targetIndex)>();
 
             var existedAnnData = new HashSet<string>();
             data.Annotations.ForEach(x => existedAnnData.Add(x.ContentHash));
@@ -1528,7 +1528,7 @@ namespace ScoreHistoryApi.Logics
                     addAnnData[hash] = ann;
                 }
 
-                var a = new DatabaseScoreDataAnnotationV1()
+                var a = new DynamoDbScoreAnnotationV1()
                 {
                     Id = id,
                     ContentHash = hash,
@@ -1583,7 +1583,7 @@ namespace ScoreHistoryApi.Logics
             }
 
 
-            static AttributeValue ConvertFromAnnotation(DatabaseScoreDataAnnotationV1 annotation)
+            static AttributeValue ConvertFromAnnotation(DynamoDbScoreAnnotationV1 annotation)
             {
                 var a = new Dictionary<string, AttributeValue>()
                 {
@@ -1607,7 +1607,7 @@ namespace ScoreHistoryApi.Logics
                 string tableName,
                 string owner,
                 string score,
-                List<(DatabaseScoreDataAnnotationV1 data, int targetIndex)> replacingAnnotations,
+                List<(DynamoDbScoreAnnotationV1 data, int targetIndex)> replacingAnnotations,
                 string newHash,
                 string oldHash,
                 DateTimeOffset now

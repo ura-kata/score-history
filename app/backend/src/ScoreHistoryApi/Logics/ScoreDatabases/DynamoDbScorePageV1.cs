@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace ScoreHistoryApi.Logics.ScoreDatabases
 {
-    public class DatabaseScoreDataPageV1
+    public class DynamoDbScorePageV1
     {
         [JsonPropertyName(DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.Id)]
         public long Id { get; set; }
