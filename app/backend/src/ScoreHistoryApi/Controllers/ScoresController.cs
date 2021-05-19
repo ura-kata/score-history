@@ -236,9 +236,16 @@ namespace ScoreHistoryApi.Controllers
         /// <exception cref="NotImplementedException"></exception>
         [HttpGet]
         [Route("{owner:guid}")]
-        public Task<ActionResult<ScoreSummary[]>> GetOwnerScoresAsync([FromRoute(Name = "owner")] Guid owner)
+        public async Task<ActionResult<ScoreSummary[]>> GetOwnerScoresAsync([FromRoute(Name = "owner")] Guid owner)
         {
-            throw new NotImplementedException();
+            var authorizerData = this.GetAuthorizerData();
+            var ownerId = authorizerData.Sub;
+
+            var getter = _scoreLogicFactory.Getter;
+
+            var summaries = await getter.GetScoreSummaries(ownerId);
+
+            return summaries;
         }
 
         /// <summary>
