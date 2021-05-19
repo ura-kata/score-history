@@ -195,6 +195,32 @@ namespace ScoreHistoryApi.Controllers
 
         }
 
+        [HttpPatch]
+        [Route("user/{id:guid}/description")]
+        public async Task<IActionResult> SetTitleAsync([FromRoute(Name = "id")] Guid id, NewScoreDescription description)
+        {
+            var authorizerData = this.GetAuthorizerData();
+            var ownerId = authorizerData.Sub;
+
+            var descriptionSetter = _scoreLogicFactory.DescriptionSetter;
+
+            try
+            {
+                await descriptionSetter.SetDescriptionAsync(ownerId, id, description.Description);
+            }
+            catch (ArgumentNullException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+            catch (ArgumentException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+
+            return Ok();
+
+        }
+
         [HttpPost]
         [Route("user/{id:guid}/snapshots")]
         public async Task<IActionResult> CreateSnapshotAsync([FromRoute(Name = "id")] Guid id, [FromBody] NewScoreSnapshot snapshot)

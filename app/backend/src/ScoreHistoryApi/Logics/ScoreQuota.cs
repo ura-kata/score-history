@@ -13,6 +13,7 @@ namespace ScoreHistoryApi.Logics
         public int SnapshotCountMax { get; }
         public int AnnotationCountMax { get; }
         public int PageCountMax { get; }
+        public int DescriptionMaxLength { get; }
     }
 
     /// <summary>
@@ -35,5 +36,7 @@ namespace ScoreHistoryApi.Logics
         public int AnnotationCountMax { get; } = 1000;
 
         public int PageCountMax { get; } = 100;
+
+        public int DescriptionMaxLength { get; } = 1024;
     }
 }
