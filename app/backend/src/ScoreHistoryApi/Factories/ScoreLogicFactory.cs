@@ -30,7 +30,9 @@ namespace ScoreHistoryApi.Factories
         public ScoreSummaryGetter SummaryGetter => new ScoreSummaryGetter(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
 
         public ScoreDeleter Deleter =>
-            new ScoreDeleter(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+            new ScoreDeleter(
+                new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration),
+                new ScoreSnapshotStorage(_s3Client, _configuration));
 
         public ScoreTitleSetter TitleSetter =>
             new ScoreTitleSetter(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration), _scoreQuota);

@@ -6,10 +6,12 @@ namespace ScoreHistoryApi.Logics.Scores
     public class ScoreDeleter
     {
         private readonly IScoreDatabase _scoreDatabase;
+        private readonly IScoreSnapshotStorage _snapshotStorage;
 
-        public ScoreDeleter(IScoreDatabase scoreDatabase)
+        public ScoreDeleter(IScoreDatabase scoreDatabase, IScoreSnapshotStorage snapshotStorage)
         {
             _scoreDatabase = scoreDatabase;
+            _snapshotStorage = snapshotStorage;
         }
 
         public async Task DeleteAsync(Guid ownerId, Guid scoreId)
@@ -18,6 +20,7 @@ namespace ScoreHistoryApi.Logics.Scores
             // Item の削除は別の API で削除を行う
 
             await _scoreDatabase.DeleteAsync(ownerId, scoreId);
+            await _snapshotStorage.DeleteAllAsync(ownerId, scoreId);
         }
 
     }
