@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Configuration;
+using ScoreHistoryApi.Logics.Exceptions;
 using ScoreHistoryApi.Logics.ScoreObjectStorages;
 using ScoreHistoryApi.Models.Scores;
 
@@ -15,7 +17,7 @@ namespace ScoreHistoryApi.Logics
 {
     public static class ScoreSnapshotStorageUtils
     {
-        public static byte[] ConvertToJson(ScoreSnapshot snapshot)
+        public static byte[] ConvertToJson(ScoreSnapshotDetail snapshotDetail)
         {
             var option = new JsonSerializerOptions()
             {
@@ -29,7 +31,24 @@ namespace ScoreHistoryApi.Logics
                 WriteIndented = false,
                 Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             };
-            return JsonSerializer.SerializeToUtf8Bytes(snapshot, option);
+            return JsonSerializer.SerializeToUtf8Bytes(snapshotDetail, option);
+        }
+
+        public static ScoreSnapshotDetail MapFromJson(byte[] jsonData)
+        {
+            var option = new JsonSerializerOptions()
+            {
+                AllowTrailingCommas = false,
+                DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
+                IgnoreNullValues = false,
+                IgnoreReadOnlyProperties = true,
+                PropertyNameCaseInsensitive = false,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                ReadCommentHandling = JsonCommentHandling.Disallow,
+                WriteIndented = false,
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            };
+            return JsonSerializer.Deserialize<ScoreSnapshotDetail>(jsonData, option);
         }
 
         public static string CreateSnapshotKey(Guid ownerId, Guid scoreId, Guid snapshotId) =>
@@ -62,12 +81,12 @@ namespace ScoreHistoryApi.Logics
             _s3Client = s3Client;
         }
 
-        public async Task CreateAsync(Guid ownerId, Guid scoreId, ScoreSnapshot snapshot,
+        public async Task CreateAsync(Guid ownerId, Guid scoreId, ScoreSnapshotDetail snapshotDetail,
             ScoreObjectAccessControls accessControl)
         {
-            var key = ScoreSnapshotStorageUtils.CreateSnapshotKey(ownerId, scoreId, snapshot.Id);
+            var key = ScoreSnapshotStorageUtils.CreateSnapshotKey(ownerId, scoreId, snapshotDetail.Id);
 
-            var json = ScoreSnapshotStorageUtils.ConvertToJson(snapshot);
+            var json = ScoreSnapshotStorageUtils.ConvertToJson(snapshotDetail);
 
             await using var jsonStream = new MemoryStream(json);
 
@@ -175,6 +194,34 @@ namespace ScoreHistoryApi.Logics
                 };
                 await _s3Client.PutACLAsync(request);
             }
+        }
+
+        public async Task<ScoreSnapshotDetail> GetAsync(Guid ownerId, Guid scoreId, Guid snapshotId)
+        {
+            var key = ScoreSnapshotStorageUtils.CreateSnapshotKey(ownerId, scoreId, snapshotId);
+
+            var request = new GetObjectRequest()
+            {
+                BucketName = BucketName,
+                Key = key,
+            };
+            try
+            {
+                var response = await _s3Client.GetObjectAsync(request);
+
+                if (response.HttpStatusCode == HttpStatusCode.OK)
+                {
+                    byte[] buffer = new byte[response.ResponseStream.Length];
+                    await response.ResponseStream.ReadAsync(buffer);
+
+                    return ScoreSnapshotStorageUtils.MapFromJson(buffer);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new NotFoundSnapshotException(ex);
+            }
+            throw new NotFoundSnapshotException("Not found snapshot.");
         }
     }
 }

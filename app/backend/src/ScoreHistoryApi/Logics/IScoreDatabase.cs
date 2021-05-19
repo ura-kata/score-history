@@ -130,7 +130,7 @@ namespace ScoreHistoryApi.Logics
         /// <param name="ownerId"></param>
         /// <param name="scoreId"></param>
         /// <param name="snapshotName"></param>
-        Task<(ScoreSnapshot snapshot, ScoreAccesses access)> CreateSnapshotAsync(Guid ownerId, Guid scoreId,
+        Task<(ScoreSnapshotDetail snapshot, ScoreAccesses access)> CreateSnapshotAsync(Guid ownerId, Guid scoreId,
             string snapshotName);
 
         /// <summary>

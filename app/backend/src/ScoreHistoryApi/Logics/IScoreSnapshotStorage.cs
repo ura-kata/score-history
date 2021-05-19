@@ -16,10 +16,10 @@ namespace ScoreHistoryApi.Logics
         /// </summary>
         /// <param name="ownerId"></param>
         /// <param name="scoreId"></param>
-        /// <param name="snapshot"></param>
+        /// <param name="snapshotDetail"></param>
         /// <param name="accessControl"></param>
         /// <returns></returns>
-        public Task CreateAsync(Guid ownerId, Guid scoreId, ScoreSnapshot snapshot,
+        public Task CreateAsync(Guid ownerId, Guid scoreId, ScoreSnapshotDetail snapshotDetail,
             ScoreObjectAccessControls accessControl);
 
         /// <summary>
@@ -48,5 +48,14 @@ namespace ScoreHistoryApi.Logics
         /// <returns></returns>
         public Task SetAccessControlPolicyAsync(Guid ownerId, Guid scoreId,
             ScoreObjectAccessControls accessControl);
+
+        /// <summary>
+        /// 楽譜のスナップショットを取得する
+        /// </summary>
+        /// <param name="ownerId"></param>
+        /// <param name="scoreId"></param>
+        /// <param name="snapshotId"></param>
+        /// <returns></returns>
+        public Task<ScoreSnapshotDetail> GetAsync(Guid ownerId, Guid scoreId, Guid snapshotId);
     }
 }

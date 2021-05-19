@@ -239,6 +239,25 @@ namespace ScoreHistoryApi.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("user/{id:guid}/snapshots/{snapshotId:guid}")]
+        public async Task<ActionResult<ScoreSnapshotDetail>> GetSnapshotDetailAsync([FromRoute(Name = "id")] Guid id,[FromRoute(Name = "snapshotId")]  Guid snapshotId)
+        {
+            var authorizerData = this.GetAuthorizerData();
+            var ownerId = authorizerData.Sub;
+
+            var snapshotDetailGetter = _scoreLogicFactory.SnapshotDetailGetter;
+
+            try
+            {
+                return await snapshotDetailGetter.GetScoreSummaries(ownerId, id, snapshotId);
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+        }
+
         #endregion
 
         #region owner

@@ -27,7 +27,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var scoreId = Guid.Parse("fc4ac609-0914-4cd6-9caa-cada12c7b03d");
             var snapshotId = Guid.Parse("3dd43d78-ff83-46f5-8ed3-fddbc06ec943");
 
-            var data = new ScoreSnapshot()
+            var data = new ScoreSnapshotDetail()
             {
                 Id = snapshotId,
                 Name = "スナップショット名",
@@ -87,7 +87,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var scoreId = Guid.Parse("8a9aaa16-2ca2-4b22-9cf5-21e7b681dbc9");
             var snapshotId = Guid.Parse("f30cd5f5-b807-4273-9299-f95d0baf85b9");
 
-            var data = new ScoreSnapshot()
+            var data = new ScoreSnapshotDetail()
             {
                 Id = snapshotId,
                 Name = "スナップショット名(delete)",
@@ -163,7 +163,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
                 Guid.Parse("7569ad9a-1bb4-4c33-9cb8-11e5c680a404"),
             };
 
-            var data = new ScoreSnapshot()
+            var data = new ScoreSnapshotDetail()
             {
                 Name = "スナップショット名(delete all)",
                 Data = new ScoreData()

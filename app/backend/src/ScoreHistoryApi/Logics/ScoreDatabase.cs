@@ -1991,7 +1991,7 @@ namespace ScoreHistoryApi.Logics
             }
         }
 
-        public async Task<(ScoreSnapshot snapshot, ScoreAccesses access)> CreateSnapshotAsync(Guid ownerId,
+        public async Task<(ScoreSnapshotDetail snapshot, ScoreAccesses access)> CreateSnapshotAsync(Guid ownerId,
             Guid scoreId,
             string snapshotName)
         {
@@ -1999,7 +1999,7 @@ namespace ScoreHistoryApi.Logics
 
             var snapshotId = Guid.NewGuid();
             var response = await CreateSnapshotAsync(ownerId, scoreId, snapshotId, snapshotName);
-            var snapshot = new ScoreSnapshot()
+            var snapshot = new ScoreSnapshotDetail()
             {
                 Id = snapshotId,
                 Data = ScoreData.Create(response.data,response.annotations),

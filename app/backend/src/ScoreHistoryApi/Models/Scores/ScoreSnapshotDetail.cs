@@ -6,7 +6,7 @@ namespace ScoreHistoryApi.Models.Scores
     /// <summary>
     /// 楽譜のスナップショットデータ
     /// </summary>
-    public class ScoreSnapshot
+    public class ScoreSnapshotDetail
     {
         [JsonPropertyName("id")]
         public Guid Id { get; set; }
