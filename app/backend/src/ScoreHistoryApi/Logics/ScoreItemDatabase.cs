@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
@@ -206,14 +207,14 @@ namespace ScoreHistoryApi.Logics
                     if (sizeValue is null)
                         throw new InvalidOperationException("not found.");
 
-                    var size = long.Parse(sizeValue.N);
+                    var size = long.Parse(sizeValue.N, CultureInfo.InvariantCulture);
 
                     var type = response.Item[ScoreItemDatabasePropertyNames.Type];
                     if (type.S == ScoreItemDatabaseConstant.TypeImage)
                     {
                         var thumbnail = response.Item[ScoreItemDatabasePropertyNames.Thumbnail];
                         var thumbnailSizeValue = thumbnail.M[ScoreItemDatabasePropertyNames.ThumbnailPropertyNames.Size];
-                        size += long.Parse(thumbnailSizeValue.N);
+                        size += long.Parse(thumbnailSizeValue.N, CultureInfo.InvariantCulture);
                     }
 
                     return size;
@@ -343,7 +344,7 @@ namespace ScoreHistoryApi.Logics
                 static (string itemIdText, long size) GetItemAndSizeAsync(Dictionary<string, AttributeValue> items)
                 {
                     var sizeValue = items[ScoreItemDatabasePropertyNames.Size];
-                    var size = long.Parse(sizeValue.N);
+                    var size = long.Parse(sizeValue.N, CultureInfo.InvariantCulture);
 
                     try
                     {
@@ -353,7 +354,7 @@ namespace ScoreHistoryApi.Logics
                             var thumbnail = items[ScoreItemDatabasePropertyNames.Thumbnail];
                             var thumbnailSizeValue =
                                 thumbnail.M[ScoreItemDatabasePropertyNames.ThumbnailPropertyNames.Size];
-                            size += long.Parse(thumbnailSizeValue.N);
+                            size += long.Parse(thumbnailSizeValue.N, CultureInfo.InvariantCulture);
                         }
                     }
                     catch (Exception ex)

@@ -104,7 +104,7 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                                     {
                                         case ScoreDatabasePropertyNames.PagesId:
                                         {
-                                            p.Id = long.Parse(pageItemValue.N);
+                                            p.Id = long.Parse(pageItemValue.N, CultureInfo.InvariantCulture);
                                             break;
                                         }
                                         case ScoreDatabasePropertyNames.PagesItemId:
@@ -143,7 +143,7 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                                     {
                                         case ScoreDatabasePropertyNames.AnnotationsId:
                                         {
-                                            annotation.Id = long.Parse(annotationItemValue.N);
+                                            annotation.Id = long.Parse(annotationItemValue.N, CultureInfo.InvariantCulture);
                                             break;
                                         }
                                         case ScoreDatabasePropertyNames.AnnotationsContentHash:
@@ -260,7 +260,7 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
         /// <param name="datetime"></param>
         /// <returns></returns>
         public static DateTimeOffset ConvertFromUnixTimeMilli(string datetime) =>
-            DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(datetime, NumberStyles.HexNumber));
+            DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(datetime, NumberStyles.HexNumber, CultureInfo.InvariantCulture));
 
         /// <summary>
         /// 最小単位が Unix millisecond の現時間を取得する
