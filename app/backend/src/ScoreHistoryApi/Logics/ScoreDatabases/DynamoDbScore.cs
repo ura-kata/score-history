@@ -17,44 +17,50 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
     /// </summary>
     public class DynamoDbScore
     {
-        public DynamoDbScoreTypes Type { get; set; }
+        public DynamoDbScoreTypes Type { get; }
 
         /// <summary>
         /// Owner の ID
         /// Guid の base64
         /// </summary>
-        public string OwnerId { get; set; }
+        public string OwnerId { get; }
 
         /// <summary>
         /// Owner の ID
         /// Guid の base64
         /// </summary>
-        public string ScoreId { get; set; }
+        public string ScoreId { get; }
 
-        public string DataHash { get; set; }
+        public string DataHash { get; }
 
-        public string CreateAt { get; set; }
+        public string CreateAt { get; }
 
-        public string UpdateAt { get; set; }
+        public string UpdateAt { get; }
 
-        public string Access { get; set; }
+        public string Access { get; }
 
-        public int SnapshotCount { get; set; }
+        public int SnapshotCount { get; }
 
-        public DynamoDbScoreDataBase Data { get; set; }
+        public DynamoDbScoreDataBase Data { get; }
 
         /// <summary>
         /// Snapshot の ID
         /// Guid の base64
         /// </summary>
-        public string SnapshotId { get; set; }
+        public string SnapshotId { get; }
 
         /// <summary>
         /// Snapshot の名前
         /// </summary>
-        public string SnapshotName { get; set; }
+        public string SnapshotName { get; }
 
 
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="item"></param>
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="ArgumentException"></exception>
         public DynamoDbScore(Dictionary<string, AttributeValue> item)
         {
             OwnerId = item[DynamoDbScorePropertyNames.OwnerId].S;

@@ -1843,19 +1843,18 @@ namespace ScoreHistoryApi.Logics
             }
         }
 
-        public async Task<(DatabaseScoreRecord data, Dictionary<string, string> annotations, ScoreAccesses access)>
-            GetDatabaseScoreRecordAsync(Guid ownerId, Guid scoreId)
+        public async Task<(DynamoDbScore score, Dictionary<string, string> hashSet)> GetDynamoDbScoreDataAsync(
+            Guid ownerId, Guid scoreId)
         {
-
             var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
             var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
 
-            var record = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
-            var annotationDataSet = await GetAnnotationsAsync(_dynamoDbClient, ScoreDataTableName, owner, score);
+            var dynamoDbScore = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
+            var hashSet = await GetAnnotationsAsync(_dynamoDbClient, ScoreDataTableName, owner, score);
 
-            return (record.data, annotationDataSet, record.access);
+            return (dynamoDbScore, hashSet);
 
-            static async Task<(DatabaseScoreRecord data, ScoreAccesses access)> GetAsync(
+            static async Task<DynamoDbScore> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
                 string owner,
@@ -1872,30 +1871,10 @@ namespace ScoreHistoryApi.Logics
                     },
                 };
                 var response = await client.GetItemAsync(request);
-                var data = response.Item[DynamoDbScorePropertyNames.Data];
 
-                if (data is null)
-                    throw new InvalidOperationException("not found.");
+                var dynamoDbScore = new DynamoDbScore(response.Item);
 
-
-                DynamoDbScoreDataV1.TryMapFromAttributeValue(data, out var result);
-                var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
-
-                var createAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[DynamoDbScorePropertyNames.CreateAt].S);
-                var updateAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[DynamoDbScorePropertyNames.UpdateAt].S);
-
-                var access =
-                    response.Item[DynamoDbScorePropertyNames.Access].S == ScoreDatabaseConstant.ScoreAccessPublic
-                        ? ScoreAccesses.Public
-                        : ScoreAccesses.Private;
-
-                return (new DatabaseScoreRecord()
-                {
-                    CreateAt = createAt,
-                    UpdateAt = updateAt,
-                    DataHash = hash,
-                    Data = result,
-                }, access);
+                return dynamoDbScore;
             }
 
 

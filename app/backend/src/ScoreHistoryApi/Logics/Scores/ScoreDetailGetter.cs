@@ -15,9 +15,9 @@ namespace ScoreHistoryApi.Logics.Scores
 
         public async Task<ScoreDetail> GetScoreSummaries(Guid ownerId, Guid scoreId)
         {
-            var (data, annotations, access) = await _scoreDatabase.GetDatabaseScoreRecordAsync(ownerId, scoreId);
+            var (data, hashSet) = await _scoreDatabase.GetDynamoDbScoreDataAsync(ownerId, scoreId);
 
-            return ScoreDetail.Create(data, annotations, access);
+            return ScoreDetail.Create(data, hashSet);
         }
 
     }

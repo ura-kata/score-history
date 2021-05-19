@@ -551,7 +551,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
                 // 握りつぶす
             }
 
-            var record = await target.GetDatabaseScoreRecordAsync(ownerId, scoreId);
+            var record = await target.GetDynamoDbScoreDataAsync(ownerId, scoreId);
 
         }
 
