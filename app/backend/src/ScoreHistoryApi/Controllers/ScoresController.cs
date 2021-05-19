@@ -103,9 +103,24 @@ namespace ScoreHistoryApi.Controllers
         /// <exception cref="NotImplementedException"></exception>
         [HttpGet]
         [Route("user/{id:guid}")]
-        public Task<ActionResult<ScoreDetail>> GetAUserScoreAsync([FromRoute(Name = "id")] Guid id)
+        public async Task<ActionResult<ScoreDetail>> GetAUserScoreAsync([FromRoute(Name = "id")] Guid id)
         {
-            throw new NotImplementedException();
+            var ifNoneMatch = this.Request.Headers[HttpHeaderNames.IfNoneMatch];
+
+            // ETag が If-None-Match と一致する場合は NotModified を返す
+            // return this.StatusCode((int) HttpStatusCode.NotModified);
+
+            var authorizerData = this.GetAuthorizerData();
+            var ownerId = authorizerData.Sub;
+
+            var detailGetter = _scoreLogicFactory.DetailGetter;
+
+            // TODO 楽譜がないときにエラーコードを返す
+            var detail = await detailGetter.GetScoreSummaries(ownerId, id);
+
+            return detail;
+
+            // this.Response.Headers[HttpHeaderNames.ETag] = "";
         }
 
         /// <summary>
@@ -254,11 +269,23 @@ namespace ScoreHistoryApi.Controllers
         /// <exception cref="NotImplementedException"></exception>
         [HttpGet]
         [Route("{owner:guid}/{id:guid}")]
-        public Task<ActionResult<ScoreDetail>> GetAOwnerScoreAsync(
+        public async Task<ActionResult<ScoreDetail>> GetAOwnerScoreAsync(
             [FromRoute(Name = "owner")] Guid owner,
             [FromRoute(Name = "id")] Guid id)
         {
-            throw new NotImplementedException();
+            var ifNoneMatch = this.Request.Headers[HttpHeaderNames.IfNoneMatch];
+
+            // ETag が If-None-Match と一致する場合は NotModified を返す
+            // return this.StatusCode((int) HttpStatusCode.NotModified);
+
+            var detailGetter = _scoreLogicFactory.DetailGetter;
+
+            // TODO 楽譜がないときにエラーコードを返す
+            var detail = await detailGetter.GetScoreSummaries(owner, id);
+
+            return detail;
+
+            // this.Response.Headers[HttpHeaderNames.ETag] = "";
         }
 
         #endregion

@@ -1840,17 +1840,19 @@ namespace ScoreHistoryApi.Logics
             }
         }
 
-        public async Task<DatabaseScoreRecord> GetDatabaseScoreRecordAsync(Guid ownerId, Guid scoreId)
+        public async Task<(DatabaseScoreRecord data, Dictionary<string, string> annotations, ScoreAccesses access)>
+            GetDatabaseScoreRecordAsync(Guid ownerId, Guid scoreId)
         {
 
             var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
             var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
 
             var record = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
+            var annotationDataSet = await GetAnnotationsAsync(_dynamoDbClient, ScoreDataTableName, owner, score);
 
-            return record;
+            return (record.data, annotationDataSet, record.access);
 
-            static async Task<DatabaseScoreRecord> GetAsync(
+            static async Task<(DatabaseScoreRecord data, ScoreAccesses access)> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
                 string owner,
@@ -1878,13 +1880,63 @@ namespace ScoreHistoryApi.Logics
 
                 var createAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[ScoreDatabasePropertyNames.CreateAt].S);
                 var updateAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[ScoreDatabasePropertyNames.UpdateAt].S);
-                return new DatabaseScoreRecord()
+
+                var access =
+                    response.Item[ScoreDatabasePropertyNames.Access].S == ScoreDatabaseConstant.ScoreAccessPublic
+                        ? ScoreAccesses.Public
+                        : ScoreAccesses.Private;
+
+                return (new DatabaseScoreRecord()
                 {
                     CreateAt = createAt,
                     UpdateAt = updateAt,
                     DataHash = hash,
                     Data = result,
+                }, access);
+            }
+
+
+            static async Task<Dictionary<string, string>> GetAnnotationsAsync(
+                IAmazonDynamoDB client, string tableName,
+                string owner, string score)
+            {
+                var request = new QueryRequest()
+                {
+                    TableName = tableName,
+                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    {
+                        ["#owner"] = ScoreDataDatabasePropertyNames.OwnerId,
+                        ["#data"] = ScoreDataDatabasePropertyNames.DataId,
+                        ["#content"] = ScoreDataDatabasePropertyNames.Content,
+                    },
+                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                    {
+                        [":owner"] = new AttributeValue(owner + score),
+                    },
+                    KeyConditionExpression = "#owner = :owner",
+                    ProjectionExpression = "#data, #content",
                 };
+
+                try
+                {
+                    var response = await client.QueryAsync(request);
+
+                    var result = new Dictionary<string, string>();
+                    foreach (var item in response.Items)
+                    {
+                        var hashValue = item[ScoreDataDatabasePropertyNames.DataId];
+                        var contentValue = item[ScoreDataDatabasePropertyNames.Content];
+                        result[hashValue.S] = contentValue.S;
+                    }
+
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    throw;
+                }
+
             }
         }
 

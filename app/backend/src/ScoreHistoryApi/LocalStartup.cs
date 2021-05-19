@@ -1,5 +1,7 @@
 using System;
 using System.Security.Claims;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Amazon.Runtime;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -8,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using ScoreHistoryApi.Factories;
+using ScoreHistoryApi.JsonConverters;
 using ScoreHistoryApi.Logics;
 
 namespace ScoreHistoryApi
@@ -36,7 +39,11 @@ namespace ScoreHistoryApi
                     .Create());
             services.AddScoped<ScoreLogicFactory>();
 
-            services.AddControllers();
+            services.AddControllers()
+                .AddJsonOptions(option =>
+                {
+                    option.JsonSerializerOptions.Converters.Add(new ScoreAccessesJsonConverter());
+                });
 
             services.AddSwaggerGen(option =>
             {

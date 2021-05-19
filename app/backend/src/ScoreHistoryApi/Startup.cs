@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ScoreHistoryApi.Factories;
+using ScoreHistoryApi.JsonConverters;
 using ScoreHistoryApi.Logics;
 
 namespace ScoreHistoryApi
@@ -87,6 +88,7 @@ namespace ScoreHistoryApi
             {
                 option.JsonSerializerOptions.ReadCommentHandling = JsonCommentHandling.Skip;
                 option.JsonSerializerOptions.AllowTrailingCommas = true;
+                option.JsonSerializerOptions.Converters.Add(new ScoreAccessesJsonConverter());
                 option.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
             });
         }
