@@ -4,10 +4,10 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
 {
     public class DatabaseScoreDataAnnotationV1
     {
-        [JsonPropertyName(ScoreDatabasePropertyNames.AnnotationsId)]
+        [JsonPropertyName(DynamoDbScorePropertyNames.DataPropertyNames.AnnotationsPropertyNames.Id)]
         public long Id { get; set; }
 
-        [JsonPropertyName(ScoreDatabasePropertyNames.AnnotationsContentHash)]
+        [JsonPropertyName(DynamoDbScorePropertyNames.DataPropertyNames.AnnotationsPropertyNames.ContentHash)]
         public string ContentHash { get; set; }
     }
 }

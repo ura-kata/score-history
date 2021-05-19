@@ -32,7 +32,7 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        public static string CalcHash(DatabaseScoreDataV1 data)
+        public static string CalcHash(DynamoDbScoreDataV1 data)
         {
             var option = new JsonSerializerOptions()
             {
@@ -64,30 +64,30 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static DatabaseScoreDataV1 ConvertToDatabaseScoreDataV1(AttributeValue value)
+        public static DynamoDbScoreDataV1 ConvertToDatabaseScoreDataV1(AttributeValue value)
         {
-            var result = new DatabaseScoreDataV1();
+            var result = new DynamoDbScoreDataV1();
 
             foreach (var (key, v) in value.M)
             {
                 switch (key)
                 {
-                    case ScoreDatabasePropertyNames.Title:
+                    case DynamoDbScorePropertyNames.DataPropertyNames.Title:
                     {
                         result.Title = v.S;
                         break;
                     }
-                    case ScoreDatabasePropertyNames.Description:
+                    case DynamoDbScorePropertyNames.DataPropertyNames.DescriptionHash:
                     {
-                        result.Description = v.S;
+                        result.DescriptionHash = v.S;
                         break;
                     }
-                    case ScoreDatabasePropertyNames.DataVersion:
+                    case DynamoDbScorePropertyNames.DataPropertyNames.DataVersion:
                     {
                         result.Version = v.S;
                         break;
                     }
-                    case ScoreDatabasePropertyNames.Pages:
+                    case DynamoDbScorePropertyNames.DataPropertyNames.Pages:
                     {
                         var pages = new List<DatabaseScoreDataPageV1>();
                         if (0 < v.L.Count)
@@ -102,17 +102,17 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                                 {
                                     switch (pageItemKey)
                                     {
-                                        case ScoreDatabasePropertyNames.PagesId:
+                                        case DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.Id:
                                         {
                                             p.Id = long.Parse(pageItemValue.N, CultureInfo.InvariantCulture);
                                             break;
                                         }
-                                        case ScoreDatabasePropertyNames.PagesItemId:
+                                        case DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.ItemId:
                                         {
                                             p.ItemId = pageItemValue.S;
                                             break;
                                         }
-                                        case ScoreDatabasePropertyNames.PagesPage:
+                                        case DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.Page:
                                         {
                                             p.Page = pageItemValue.S;
                                             break;
@@ -126,7 +126,7 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                         result.Page = pages;
                         break;
                     }
-                    case ScoreDatabasePropertyNames.Annotations:
+                    case DynamoDbScorePropertyNames.DataPropertyNames.Annotations:
                     {
                         var annotations = new List<DatabaseScoreDataAnnotationV1>();
                         if (0 < v.L.Count)
@@ -141,12 +141,12 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                                 {
                                     switch (annotationItemKey)
                                     {
-                                        case ScoreDatabasePropertyNames.AnnotationsId:
+                                        case DynamoDbScorePropertyNames.DataPropertyNames.AnnotationsPropertyNames.Id:
                                         {
                                             annotation.Id = long.Parse(annotationItemValue.N, CultureInfo.InvariantCulture);
                                             break;
                                         }
-                                        case ScoreDatabasePropertyNames.AnnotationsContentHash:
+                                        case DynamoDbScorePropertyNames.DataPropertyNames.AnnotationsPropertyNames.ContentHash:
                                         {
                                             annotation.ContentHash = annotationItemValue.S;
                                             break;
@@ -171,21 +171,21 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        public static AttributeValue ConvertToDatabaseDataV1(DatabaseScoreDataV1 data)
+        public static AttributeValue ConvertToDatabaseDataV1(DynamoDbScoreDataV1 data)
         {
             var databaseData = new Dictionary<string, AttributeValue>();
 
             if (!string.IsNullOrWhiteSpace(data.Title))
             {
-                databaseData[ScoreDatabasePropertyNames.Title] = new AttributeValue(data.Title);
+                databaseData[DynamoDbScorePropertyNames.DataPropertyNames.Title] = new AttributeValue(data.Title);
             }
-            if (!string.IsNullOrWhiteSpace(data.Description))
+            if (!string.IsNullOrWhiteSpace(data.DescriptionHash))
             {
-                databaseData[ScoreDatabasePropertyNames.Description] = new AttributeValue(data.Description);
+                databaseData[DynamoDbScorePropertyNames.DataPropertyNames.DescriptionHash] = new AttributeValue(data.DescriptionHash);
             }
             if (!string.IsNullOrWhiteSpace(data.Version))
             {
-                databaseData[ScoreDatabasePropertyNames.DataVersion] = new AttributeValue(data.Version);
+                databaseData[DynamoDbScorePropertyNames.DataPropertyNames.DataVersion] = new AttributeValue(data.Version);
             }
 
             var pages = new List<AttributeValue>();
@@ -195,16 +195,16 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                 {
                     var page = new Dictionary<string, AttributeValue>
                     {
-                        [ScoreDatabasePropertyNames.PagesId] = new AttributeValue() {N = value.Id.ToString()}
+                        [DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.Id] = new AttributeValue() {N = value.Id.ToString()}
                     };
 
                     if (value.Page != null)
                     {
-                        page[ScoreDatabasePropertyNames.PagesPage] = new AttributeValue(value.Page);
+                        page[DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.Page] = new AttributeValue(value.Page);
                     }
                     if (value.ItemId != null)
                     {
-                        page[ScoreDatabasePropertyNames.PagesItemId] = new AttributeValue(value.ItemId);
+                        page[DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.ItemId] = new AttributeValue(value.ItemId);
                     }
 
                     if(page.Count == 0)
@@ -213,9 +213,9 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                 }
             }
 
-            databaseData[ScoreDatabasePropertyNames.DataPropertyNames.PageCount] =
+            databaseData[DynamoDbScorePropertyNames.DataPropertyNames.PageCount] =
                 new AttributeValue() {N = pages.Count.ToString()};
-            databaseData[ScoreDatabasePropertyNames.Pages] = new AttributeValue() {L = pages, IsLSet = true};
+            databaseData[DynamoDbScorePropertyNames.DataPropertyNames.Pages] = new AttributeValue() {L = pages, IsLSet = true};
 
             var annotations = new List<AttributeValue>();
             if (0 < data.Annotations?.Count)
@@ -224,12 +224,12 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                 {
                     var annotation = new Dictionary<string, AttributeValue>
                     {
-                        [ScoreDatabasePropertyNames.AnnotationsId] = new AttributeValue() {N = value.Id.ToString()}
+                        [DynamoDbScorePropertyNames.DataPropertyNames.AnnotationsPropertyNames.Id] = new AttributeValue() {N = value.Id.ToString()}
                     };
 
                     if (value.ContentHash != null)
                     {
-                        annotation[ScoreDatabasePropertyNames.AnnotationsContentHash] = new AttributeValue(value.ContentHash);
+                        annotation[DynamoDbScorePropertyNames.DataPropertyNames.AnnotationsPropertyNames.ContentHash] = new AttributeValue(value.ContentHash);
                     }
 
                     if(annotation.Count == 0)
@@ -238,9 +238,9 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                 }
             }
 
-            databaseData[ScoreDatabasePropertyNames.DataPropertyNames.AnnotationCount] =
+            databaseData[DynamoDbScorePropertyNames.DataPropertyNames.AnnotationCount] =
                 new AttributeValue() {N = annotations.Count.ToString()};
-            databaseData[ScoreDatabasePropertyNames.Annotations] =
+            databaseData[DynamoDbScorePropertyNames.DataPropertyNames.Annotations] =
                 new AttributeValue() {L = annotations, IsLSet = true};
 
             return new AttributeValue() {M = databaseData};

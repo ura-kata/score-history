@@ -4,11 +4,11 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
 {
     public class DatabaseScoreDataPageV1
     {
-        [JsonPropertyName(ScoreDatabasePropertyNames.PagesId)]
+        [JsonPropertyName(DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.Id)]
         public long Id { get; set; }
-        [JsonPropertyName(ScoreDatabasePropertyNames.PagesItemId)]
+        [JsonPropertyName(DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.ItemId)]
         public string ItemId { get; set; }
-        [JsonPropertyName(ScoreDatabasePropertyNames.PagesPage)]
+        [JsonPropertyName(DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.Page)]
         public string Page { get; set; }
     }
 }

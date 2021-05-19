@@ -94,7 +94,7 @@ UUID の Base64 エンコードは 24 byte
     "s_count": 0, // snapshot count
     "data": {
       "title": "",
-      "desc": "",
+      "des_h": "s2hRmHZaGkOC7PDFrXzypw==",
       "v": "1", // data 構造の version
       "p_count": 3, // page count
       "page": [
@@ -144,12 +144,18 @@ UUID の Base64 エンコードは 24 byte
 ]
 ```
 
+大きいデータ
+
 ```json
 {
   "o": "68yjpWHe5EOEnN6vv3UL1w==a62Xnv7FbkqPJQsmW1kBeg==", // owner id & score id
   "d": "ouWfeVUe4keu21CyOIZ0jg==", // data id アノテーションの内容のハッシュ値を計算し base64 にしたもの
-  "t": "a", // type annotation
   "c": "アノテーションの内容", // content
+},
+{
+  "o": "68yjpWHe5EOEnN6vv3UL1w==a62Xnv7FbkqPJQsmW1kBeg==", // owner id & score id
+  "d": "s2hRmHZaGkOC7PDFrXzypw==", // data id アノテーションの内容のハッシュ値を計算し base64 にしたもの
+  "c": "説明内容", // content
 }
 ```
 

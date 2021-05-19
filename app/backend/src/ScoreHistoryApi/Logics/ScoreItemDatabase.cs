@@ -57,7 +57,7 @@ namespace ScoreHistoryApi.Logics
                     TableName = tableName,
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#owner"] = ScoreDatabasePropertyNames.OwnerId
+                        ["#owner"] = DynamoDbScorePropertyNames.OwnerId
                     },
                     ConditionExpression = "attribute_not_exists(#owner)",
                 };

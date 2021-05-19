@@ -65,14 +65,14 @@ namespace ScoreHistoryApi.Logics
                 {
                     Item = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
-                        [ScoreDatabasePropertyNames.ScoreCount] = new AttributeValue(){N = "0"}
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
+                        [DynamoDbScorePropertyNames.ScoreCount] = new AttributeValue(){N = "0"}
                     },
                     TableName = tableName,
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#owner"] = ScoreDatabasePropertyNames.OwnerId
+                        ["#owner"] = DynamoDbScorePropertyNames.OwnerId
                     },
                     ConditionExpression = "attribute_not_exists(#owner)",
                 };
@@ -131,10 +131,10 @@ namespace ScoreHistoryApi.Logics
                 var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
                 var newScore = ScoreDatabaseUtils.ConvertToBase64(newScoreId);
 
-                var data = new DatabaseScoreDataV1()
+                var data = new DynamoDbScoreDataV1()
                 {
                     Title = title,
-                    Description = description,
+                    DescriptionHash = description,
                 };
                 var dataAttributeValue = ScoreDatabaseUtils.ConvertToDatabaseDataV1(data);
                 var dataHash = ScoreDatabaseUtils.CalcHash(data);
@@ -149,13 +149,13 @@ namespace ScoreHistoryApi.Logics
                         {
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                                [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
                             },
                             ExpressionAttributeNames = new Dictionary<string, string>()
                             {
-                                ["#count"] = ScoreDatabasePropertyNames.ScoreCount,
-                                ["#scores"] = ScoreDatabasePropertyNames.Scores,
+                                ["#count"] = DynamoDbScorePropertyNames.ScoreCount,
+                                ["#scores"] = DynamoDbScorePropertyNames.Scores,
                             },
                             ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                             {
@@ -180,19 +180,19 @@ namespace ScoreHistoryApi.Logics
                         {
                             Item = new Dictionary<string, AttributeValue>()
                             {
-                                [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                                [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + newScore),
-                                [ScoreDatabasePropertyNames.DataHash] = new AttributeValue(dataHash),
-                                [ScoreDatabasePropertyNames.CreateAt] = new AttributeValue(createAt),
-                                [ScoreDatabasePropertyNames.UpdateAt] = new AttributeValue(updateAt),
-                                [ScoreDatabasePropertyNames.Access] = new AttributeValue(ScoreDatabaseConstant.ScoreAccessPrivate),
-                                [ScoreDatabasePropertyNames.SnapshotCount] = new AttributeValue(){N = "0"},
-                                [ScoreDatabasePropertyNames.Data] = dataAttributeValue,
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + newScore),
+                                [DynamoDbScorePropertyNames.DataHash] = new AttributeValue(dataHash),
+                                [DynamoDbScorePropertyNames.CreateAt] = new AttributeValue(createAt),
+                                [DynamoDbScorePropertyNames.UpdateAt] = new AttributeValue(updateAt),
+                                [DynamoDbScorePropertyNames.Access] = new AttributeValue(ScoreDatabaseConstant.ScoreAccessPrivate),
+                                [DynamoDbScorePropertyNames.SnapshotCount] = new AttributeValue(){N = "0"},
+                                [DynamoDbScorePropertyNames.Data] = dataAttributeValue,
                             },
                             TableName = tableName,
                             ExpressionAttributeNames = new Dictionary<string, string>()
                             {
-                                ["#score"] = ScoreDatabasePropertyNames.ScoreId,
+                                ["#score"] = DynamoDbScorePropertyNames.ScoreId,
                             },
                             ConditionExpression = "attribute_not_exists(#score)",
                         }
@@ -227,13 +227,13 @@ namespace ScoreHistoryApi.Logics
                             TableName = tableName,
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                                [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
                             },
                         };
                         var checkResponse = await client.GetItemAsync(request);
 
-                        if (checkResponse.Item.TryGetValue(ScoreDatabasePropertyNames.ScoreCount, out _))
+                        if (checkResponse.Item.TryGetValue(DynamoDbScorePropertyNames.ScoreCount, out _))
                         {
                             throw new CreatedScoreException(CreatedScoreExceptionCodes.ExceededUpperLimit, ex);
                         }
@@ -285,12 +285,12 @@ namespace ScoreHistoryApi.Logics
                         {
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                                [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                             },
                             ExpressionAttributeNames = new Dictionary<string, string>()
                             {
-                                ["#score"] = ScoreDatabasePropertyNames.ScoreId,
+                                ["#score"] = DynamoDbScorePropertyNames.ScoreId,
                             },
                             ConditionExpression = "attribute_exists(#score)",
                             TableName = tableName,
@@ -302,13 +302,13 @@ namespace ScoreHistoryApi.Logics
                         {
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                                [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
                             },
                             ExpressionAttributeNames = new Dictionary<string, string>()
                             {
-                                ["#count"] = ScoreDatabasePropertyNames.ScoreCount,
-                                ["#scores"] = ScoreDatabasePropertyNames.Scores,
+                                ["#count"] = DynamoDbScorePropertyNames.ScoreCount,
+                                ["#scores"] = DynamoDbScorePropertyNames.Scores,
                             },
                             ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                             {
@@ -368,8 +368,8 @@ namespace ScoreHistoryApi.Logics
                     TableName = tableName,
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#owner"] = ScoreDatabasePropertyNames.OwnerId,
-                        ["#score"] = ScoreDatabasePropertyNames.ScoreId,
+                        ["#owner"] = DynamoDbScorePropertyNames.OwnerId,
+                        ["#score"] = DynamoDbScorePropertyNames.ScoreId,
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
@@ -383,7 +383,7 @@ namespace ScoreHistoryApi.Logics
                 {
                     var response = await client.QueryAsync(request);
 
-                    return response.Items.Select(x => x[ScoreDatabasePropertyNames.ScoreId]?.S)
+                    return response.Items.Select(x => x[DynamoDbScorePropertyNames.ScoreId]?.S)
                         .Where(x => !(x is null))
                         .ToArray();
                 }
@@ -439,8 +439,8 @@ namespace ScoreHistoryApi.Logics
                             {
                                 Key = new Dictionary<string, AttributeValue>()
                                 {
-                                    [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                                    [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(scoreId),
+                                    [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                    [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(scoreId),
                                 }
                             }
                         }).ToList(),
@@ -515,8 +515,8 @@ namespace ScoreHistoryApi.Logics
                             {
                                 Key = new Dictionary<string, AttributeValue>()
                                 {
-                                    [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner + score),
-                                    [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(dataId),
+                                    [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner + score),
+                                    [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(dataId),
                                 }
                             }
                         }).ToList(),
@@ -550,7 +550,7 @@ namespace ScoreHistoryApi.Logics
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
             await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, title, newHash, oldHash, now);
 
-            static async Task<(DatabaseScoreDataV1 data,string hash)> GetAsync(
+            static async Task<(DynamoDbScoreDataV1 data,string hash)> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
                 string owner,
@@ -561,19 +561,19 @@ namespace ScoreHistoryApi.Logics
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                 };
                 var response = await client.GetItemAsync(request);
-                var data = response.Item[ScoreDatabasePropertyNames.Data];
+                var data = response.Item[DynamoDbScorePropertyNames.Data];
 
                 if (data is null)
                     throw new InvalidOperationException("not found.");
 
 
                 var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
-                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result,hash);
             }
 
@@ -594,15 +594,15 @@ namespace ScoreHistoryApi.Logics
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#updateAt"] = ScoreDatabasePropertyNames.UpdateAt,
-                        ["#hash"] = ScoreDatabasePropertyNames.DataHash,
-                        ["#data"] = ScoreDatabasePropertyNames.Data,
-                        ["#title"] = ScoreDatabasePropertyNames.Title,
+                        ["#updateAt"] = DynamoDbScorePropertyNames.UpdateAt,
+                        ["#hash"] = DynamoDbScorePropertyNames.DataHash,
+                        ["#data"] = DynamoDbScorePropertyNames.Data,
+                        ["#title"] = DynamoDbScorePropertyNames.DataPropertyNames.Title,
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
@@ -634,14 +634,14 @@ namespace ScoreHistoryApi.Logics
 
             var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
 
-            data.Description = description;
+            data.DescriptionHash = description;
 
             var newHash = ScoreDatabaseUtils.CalcHash(data);
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
             await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, description, newHash, oldHash, now);
 
-            static async Task<(DatabaseScoreDataV1 data,string hash)> GetAsync(
+            static async Task<(DynamoDbScoreDataV1 data,string hash)> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
                 string owner,
@@ -652,19 +652,19 @@ namespace ScoreHistoryApi.Logics
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
         {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                 };
                 var response = await client.GetItemAsync(request);
-                var data = response.Item[ScoreDatabasePropertyNames.Data];
+                var data = response.Item[DynamoDbScorePropertyNames.Data];
 
                 if (data is null)
                     throw new InvalidOperationException("not found.");
 
 
                 var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
-                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result,hash);
         }
 
@@ -685,15 +685,15 @@ namespace ScoreHistoryApi.Logics
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#updateAt"] = ScoreDatabasePropertyNames.UpdateAt,
-                        ["#hash"] = ScoreDatabasePropertyNames.DataHash,
-                        ["#data"] = ScoreDatabasePropertyNames.Data,
-                        ["#desc"] = ScoreDatabasePropertyNames.Description,
+                        ["#updateAt"] = DynamoDbScorePropertyNames.UpdateAt,
+                        ["#hash"] = DynamoDbScorePropertyNames.DataHash,
+                        ["#data"] = DynamoDbScorePropertyNames.Data,
+                        ["#desc"] = DynamoDbScorePropertyNames.DataPropertyNames.DescriptionHash,
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
@@ -752,7 +752,7 @@ namespace ScoreHistoryApi.Logics
             // TODO ページの追加上限値判定を追加
             await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, newPages, newHash, oldHash, now);
 
-            static async Task<(DatabaseScoreDataV1 data,string hash)> GetAsync(
+            static async Task<(DynamoDbScoreDataV1 data,string hash)> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
                 string owner,
@@ -763,19 +763,19 @@ namespace ScoreHistoryApi.Logics
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                 };
                 var response = await client.GetItemAsync(request);
-                var data = response.Item[ScoreDatabasePropertyNames.Data];
+                var data = response.Item[DynamoDbScorePropertyNames.Data];
 
                 if (data is null)
                     throw new InvalidOperationException("not found.");
 
 
                 var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
-                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result,hash);
             }
 
@@ -790,18 +790,18 @@ namespace ScoreHistoryApi.Logics
                 {
                     var p = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.PagesId] = new AttributeValue()
+                        [DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.Id] = new AttributeValue()
                         {
                             N = page.Id.ToString(),
                         }
                     };
                     if (page.Page != null)
                     {
-                        p[ScoreDatabasePropertyNames.PagesPage] = new AttributeValue(page.Page);
+                        p[DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.Page] = new AttributeValue(page.Page);
                     }
                     if (page.ItemId != null)
                     {
-                        p[ScoreDatabasePropertyNames.PagesItemId] = new AttributeValue(page.ItemId);
+                        p[DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.ItemId] = new AttributeValue(page.ItemId);
                     }
                     if(p.Count == 0)
                         continue;
@@ -828,15 +828,15 @@ namespace ScoreHistoryApi.Logics
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#updateAt"] = ScoreDatabasePropertyNames.UpdateAt,
-                        ["#hash"] = ScoreDatabasePropertyNames.DataHash,
-                        ["#data"] = ScoreDatabasePropertyNames.Data,
-                        ["#pages"] = ScoreDatabasePropertyNames.Pages,
+                        ["#updateAt"] = DynamoDbScorePropertyNames.UpdateAt,
+                        ["#hash"] = DynamoDbScorePropertyNames.DataHash,
+                        ["#data"] = DynamoDbScorePropertyNames.Data,
+                        ["#pages"] = DynamoDbScorePropertyNames.DataPropertyNames.Pages,
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
@@ -893,7 +893,7 @@ namespace ScoreHistoryApi.Logics
 
             await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, removeIndices, newHash, oldHash, now);
 
-            static async Task<(DatabaseScoreDataV1 data, string hash)> GetAsync(
+            static async Task<(DynamoDbScoreDataV1 data, string hash)> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
                 string owner,
@@ -904,20 +904,20 @@ namespace ScoreHistoryApi.Logics
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] =
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                 };
                 var response = await client.GetItemAsync(request);
-                var data = response.Item[ScoreDatabasePropertyNames.Data];
+                var data = response.Item[DynamoDbScorePropertyNames.Data];
 
                 if (data is null)
                     throw new InvalidOperationException("not found.");
 
 
                 var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
-                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result, hash);
             }
 
@@ -938,16 +938,16 @@ namespace ScoreHistoryApi.Logics
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] =
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#updateAt"] = ScoreDatabasePropertyNames.UpdateAt,
-                        ["#hash"] = ScoreDatabasePropertyNames.DataHash,
-                        ["#data"] = ScoreDatabasePropertyNames.Data,
-                        ["#pages"] = ScoreDatabasePropertyNames.Pages,
+                        ["#updateAt"] = DynamoDbScorePropertyNames.UpdateAt,
+                        ["#hash"] = DynamoDbScorePropertyNames.DataHash,
+                        ["#data"] = DynamoDbScorePropertyNames.Data,
+                        ["#pages"] = DynamoDbScorePropertyNames.DataPropertyNames.Pages,
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
@@ -1016,7 +1016,7 @@ namespace ScoreHistoryApi.Logics
 
             await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, replacingPages, newHash, oldHash, now);
 
-            static async Task<(DatabaseScoreDataV1 data, string hash)> GetAsync(
+            static async Task<(DynamoDbScoreDataV1 data, string hash)> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
                 string owner,
@@ -1027,20 +1027,20 @@ namespace ScoreHistoryApi.Logics
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] =
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                 };
                 var response = await client.GetItemAsync(request);
-                var data = response.Item[ScoreDatabasePropertyNames.Data];
+                var data = response.Item[DynamoDbScorePropertyNames.Data];
 
                 if (data is null)
                     throw new InvalidOperationException("not found.");
 
 
                 var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
-                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result, hash);
             }
 
@@ -1049,18 +1049,18 @@ namespace ScoreHistoryApi.Logics
             {
                 var p = new Dictionary<string, AttributeValue>()
                 {
-                    [ScoreDatabasePropertyNames.PagesId] = new AttributeValue()
+                    [DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.Id] = new AttributeValue()
                     {
                         N = page.Id.ToString(),
                     }
                 };
                 if (page.Page != null)
                 {
-                    p[ScoreDatabasePropertyNames.PagesPage] = new AttributeValue(page.Page);
+                    p[DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.Page] = new AttributeValue(page.Page);
                 }
                 if (page.ItemId != null)
                 {
-                    p[ScoreDatabasePropertyNames.PagesItemId] = new AttributeValue(page.ItemId);
+                    p[DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.ItemId] = new AttributeValue(page.ItemId);
                 }
                 if(p.Count == 0)
                     return null;
@@ -1088,16 +1088,16 @@ namespace ScoreHistoryApi.Logics
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] =
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#updateAt"] = ScoreDatabasePropertyNames.UpdateAt,
-                        ["#hash"] = ScoreDatabasePropertyNames.DataHash,
-                        ["#data"] = ScoreDatabasePropertyNames.Data,
-                        ["#pages"] = ScoreDatabasePropertyNames.Pages,
+                        ["#updateAt"] = DynamoDbScorePropertyNames.UpdateAt,
+                        ["#hash"] = DynamoDbScorePropertyNames.DataHash,
+                        ["#data"] = DynamoDbScorePropertyNames.Data,
+                        ["#pages"] = DynamoDbScorePropertyNames.DataPropertyNames.Pages,
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>(replacingValues.ToDictionary(x=>x.key, x=>x.value))
                     {
@@ -1218,7 +1218,7 @@ namespace ScoreHistoryApi.Logics
                 }
             }
 
-            static async Task<(DatabaseScoreDataV1 data,string hash)> GetAsync(
+            static async Task<(DynamoDbScoreDataV1 data,string hash)> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
                 string owner,
@@ -1229,19 +1229,19 @@ namespace ScoreHistoryApi.Logics
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                 };
                 var response = await client.GetItemAsync(request);
-                var data = response.Item[ScoreDatabasePropertyNames.Data];
+                var data = response.Item[DynamoDbScorePropertyNames.Data];
 
                 if (data is null)
                     throw new InvalidOperationException("not found.");
 
 
                 var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
-                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result,hash);
             }
 
@@ -1256,14 +1256,14 @@ namespace ScoreHistoryApi.Logics
                 {
                     var a = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.AnnotationsId] = new AttributeValue()
+                        [DynamoDbScorePropertyNames.DataPropertyNames.AnnotationsPropertyNames.Id] = new AttributeValue()
                         {
                             N = annotation.Id.ToString(),
                         }
                     };
                     if (annotation.ContentHash != null)
                     {
-                        a[ScoreDatabasePropertyNames.AnnotationsContentHash] = new AttributeValue(annotation.ContentHash);
+                        a[DynamoDbScorePropertyNames.DataPropertyNames.AnnotationsPropertyNames.ContentHash] = new AttributeValue(annotation.ContentHash);
                     }
                     if(a.Count == 0)
                         continue;
@@ -1291,16 +1291,16 @@ namespace ScoreHistoryApi.Logics
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#updateAt"] = ScoreDatabasePropertyNames.UpdateAt,
-                        ["#hash"] = ScoreDatabasePropertyNames.DataHash,
-                        ["#data"] = ScoreDatabasePropertyNames.Data,
-                        ["#annotations"] = ScoreDatabasePropertyNames.Annotations,
-                        ["#a_count"] = ScoreDatabasePropertyNames.DataPropertyNames.AnnotationCount,
+                        ["#updateAt"] = DynamoDbScorePropertyNames.UpdateAt,
+                        ["#hash"] = DynamoDbScorePropertyNames.DataHash,
+                        ["#data"] = DynamoDbScorePropertyNames.Data,
+                        ["#annotations"] = DynamoDbScorePropertyNames.DataPropertyNames.Annotations,
+                        ["#a_count"] = DynamoDbScorePropertyNames.DataPropertyNames.AnnotationCount,
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
@@ -1363,7 +1363,7 @@ namespace ScoreHistoryApi.Logics
 
             await RemoveDataAsync(_dynamoDbClient, ScoreDataTableName, owner, score, removeHashSet);
 
-            static async Task<(DatabaseScoreDataV1 data, string hash)> GetAsync(
+            static async Task<(DynamoDbScoreDataV1 data, string hash)> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
                 string owner,
@@ -1374,20 +1374,20 @@ namespace ScoreHistoryApi.Logics
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] =
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                 };
                 var response = await client.GetItemAsync(request);
-                var data = response.Item[ScoreDatabasePropertyNames.Data];
+                var data = response.Item[DynamoDbScorePropertyNames.Data];
 
                 if (data is null)
                     throw new InvalidOperationException("not found.");
 
 
                 var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
-                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result, hash);
             }
 
@@ -1408,16 +1408,16 @@ namespace ScoreHistoryApi.Logics
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] =
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#updateAt"] = ScoreDatabasePropertyNames.UpdateAt,
-                        ["#hash"] = ScoreDatabasePropertyNames.DataHash,
-                        ["#data"] = ScoreDatabasePropertyNames.Data,
-                        ["#ann"] = ScoreDatabasePropertyNames.Annotations,
+                        ["#updateAt"] = DynamoDbScorePropertyNames.UpdateAt,
+                        ["#hash"] = DynamoDbScorePropertyNames.DataHash,
+                        ["#data"] = DynamoDbScorePropertyNames.Data,
+                        ["#ann"] = DynamoDbScorePropertyNames.DataPropertyNames.Annotations,
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
@@ -1554,7 +1554,7 @@ namespace ScoreHistoryApi.Logics
             await AddAnnListAsync(_dynamoDbClient, ScoreDataTableName, owner, score, addAnnData);
             await RemoveAnnListAsync(_dynamoDbClient, ScoreDataTableName, owner, score, removeAnnData);
 
-            static async Task<(DatabaseScoreDataV1 data, string hash)> GetAsync(
+            static async Task<(DynamoDbScoreDataV1 data, string hash)> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
                 string owner,
@@ -1565,20 +1565,20 @@ namespace ScoreHistoryApi.Logics
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] =
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                 };
                 var response = await client.GetItemAsync(request);
-                var data = response.Item[ScoreDatabasePropertyNames.Data];
+                var data = response.Item[DynamoDbScorePropertyNames.Data];
 
                 if (data is null)
                     throw new InvalidOperationException("not found.");
 
 
                 var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
-                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result, hash);
             }
 
@@ -1587,14 +1587,14 @@ namespace ScoreHistoryApi.Logics
             {
                 var a = new Dictionary<string, AttributeValue>()
                 {
-                    [ScoreDatabasePropertyNames.AnnotationsId] = new AttributeValue()
+                    [DynamoDbScorePropertyNames.DataPropertyNames.AnnotationsPropertyNames.Id] = new AttributeValue()
                     {
                         N = annotation.Id.ToString(),
                     }
                 };
                 if (annotation.ContentHash != null)
                 {
-                    a[ScoreDatabasePropertyNames.AnnotationsContentHash] = new AttributeValue(annotation.ContentHash);
+                    a[DynamoDbScorePropertyNames.DataPropertyNames.AnnotationsPropertyNames.ContentHash] = new AttributeValue(annotation.ContentHash);
                 }
                 if(a.Count == 0)
                     return null;
@@ -1622,16 +1622,16 @@ namespace ScoreHistoryApi.Logics
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] =
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#updateAt"] = ScoreDatabasePropertyNames.UpdateAt,
-                        ["#hash"] = ScoreDatabasePropertyNames.DataHash,
-                        ["#data"] = ScoreDatabasePropertyNames.Data,
-                        ["#ann"] = ScoreDatabasePropertyNames.Annotations,
+                        ["#updateAt"] = DynamoDbScorePropertyNames.UpdateAt,
+                        ["#hash"] = DynamoDbScorePropertyNames.DataHash,
+                        ["#data"] = DynamoDbScorePropertyNames.Data,
+                        ["#ann"] = DynamoDbScorePropertyNames.DataPropertyNames.Annotations,
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>(replacingValues.ToDictionary(x=>x.key, x=>x.value))
                     {
@@ -1772,11 +1772,11 @@ namespace ScoreHistoryApi.Logics
                     TableName = tableName,
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#owner"] = ScoreDatabasePropertyNames.OwnerId,
-                        ["#score"] = ScoreDatabasePropertyNames.ScoreId,
-                        ["#data"] = ScoreDatabasePropertyNames.Data,
-                        ["#title"] = ScoreDatabasePropertyNames.Title,
-                        ["#desc"] = ScoreDatabasePropertyNames.Description,
+                        ["#owner"] = DynamoDbScorePropertyNames.OwnerId,
+                        ["#score"] = DynamoDbScorePropertyNames.ScoreId,
+                        ["#data"] = DynamoDbScorePropertyNames.Data,
+                        ["#title"] = DynamoDbScorePropertyNames.DataPropertyNames.Title,
+                        ["#desc"] = DynamoDbScorePropertyNames.DataPropertyNames.DescriptionHash,
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
@@ -1795,10 +1795,10 @@ namespace ScoreHistoryApi.Logics
                     return response.Items
                         .Select(x =>
                         {
-                            var ownerId64 = x[ScoreDatabasePropertyNames.OwnerId].S;
-                            var scoreId64 = x[ScoreDatabasePropertyNames.ScoreId].S.Substring(subStartIndex);
-                            var title = x[ScoreDatabasePropertyNames.Data].M[ScoreDatabasePropertyNames.Title].S;
-                            var description = x[ScoreDatabasePropertyNames.Data].M[ScoreDatabasePropertyNames.Description].S;
+                            var ownerId64 = x[DynamoDbScorePropertyNames.OwnerId].S;
+                            var scoreId64 = x[DynamoDbScorePropertyNames.ScoreId].S.Substring(subStartIndex);
+                            var title = x[DynamoDbScorePropertyNames.Data].M[DynamoDbScorePropertyNames.DataPropertyNames.Title].S;
+                            var description = x[DynamoDbScorePropertyNames.Data].M[DynamoDbScorePropertyNames.DataPropertyNames.DescriptionHash].S;
 
                             var ownerId = ScoreDatabaseUtils.ConvertToGuid(ownerId64);
                             var scoreId = ScoreDatabaseUtils.ConvertToGuid(scoreId64);
@@ -1864,26 +1864,26 @@ namespace ScoreHistoryApi.Logics
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] =
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                 };
                 var response = await client.GetItemAsync(request);
-                var data = response.Item[ScoreDatabasePropertyNames.Data];
+                var data = response.Item[DynamoDbScorePropertyNames.Data];
 
                 if (data is null)
                     throw new InvalidOperationException("not found.");
 
 
                 var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
-                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
 
-                var createAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[ScoreDatabasePropertyNames.CreateAt].S);
-                var updateAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[ScoreDatabasePropertyNames.UpdateAt].S);
+                var createAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[DynamoDbScorePropertyNames.CreateAt].S);
+                var updateAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[DynamoDbScorePropertyNames.UpdateAt].S);
 
                 var access =
-                    response.Item[ScoreDatabasePropertyNames.Access].S == ScoreDatabaseConstant.ScoreAccessPublic
+                    response.Item[DynamoDbScorePropertyNames.Access].S == ScoreDatabaseConstant.ScoreAccessPublic
                         ? ScoreAccesses.Public
                         : ScoreAccesses.Private;
 
@@ -1964,23 +1964,23 @@ namespace ScoreHistoryApi.Logics
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] =
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + snapshot),
                     },
                 };
                 var response = await client.GetItemAsync(request);
 
-                if(!response.Item.TryGetValue(ScoreDatabasePropertyNames.Data, out var data))
+                if(!response.Item.TryGetValue(DynamoDbScorePropertyNames.Data, out var data))
                     throw new NotFoundSnapshotException("Not found snapshot.");
 
                 var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
-                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
 
-                var createAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[ScoreDatabasePropertyNames.CreateAt].S);
-                var updateAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[ScoreDatabasePropertyNames.UpdateAt].S);
+                var createAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[DynamoDbScorePropertyNames.CreateAt].S);
+                var updateAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(response.Item[DynamoDbScorePropertyNames.UpdateAt].S);
 
-                var snapshotName = response.Item[ScoreDatabasePropertyNames.SnapshotName].S;
+                var snapshotName = response.Item[DynamoDbScorePropertyNames.SnapshotName].S;
                 return new DatabaseScoreSnapshotRecord()
                 {
                     CreateAt = createAt,
@@ -2010,7 +2010,7 @@ namespace ScoreHistoryApi.Logics
             return (snapshot, response.access);
         }
 
-        public async Task<(DatabaseScoreDataV1 data, Dictionary<string, string> annotations, ScoreAccesses access)> CreateSnapshotAsync(
+        public async Task<(DynamoDbScoreDataV1 data, Dictionary<string, string> annotations, ScoreAccesses access)> CreateSnapshotAsync(
             Guid ownerId, Guid scoreId, Guid snapshotId, string snapshotName)
         {
             var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
@@ -2041,19 +2041,19 @@ namespace ScoreHistoryApi.Logics
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                 };
                 var response = await client.GetItemAsync(request);
-                var data = response.Item[ScoreDatabasePropertyNames.Data];
+                var data = response.Item[DynamoDbScorePropertyNames.Data];
 
                 if (data is null)
                     throw new NotFoundScoreException("Not found score.");
 
-                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
 
-                var accessText = response.Item[ScoreDatabasePropertyNames.Access].S;
+                var accessText = response.Item[DynamoDbScorePropertyNames.Access].S;
 
                 var access = ScoreDatabaseConstant.ScoreAccessPublic == accessText
                     ? ScoreAccesses.Public
@@ -2126,12 +2126,12 @@ namespace ScoreHistoryApi.Logics
                             TableName = tableName,
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                                [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                             },
                             ExpressionAttributeNames = new Dictionary<string, string>()
                             {
-                                ["#snapshotCount"] = ScoreDatabasePropertyNames.SnapshotCount,
+                                ["#snapshotCount"] = DynamoDbScorePropertyNames.SnapshotCount,
                             },
                             ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                             {
@@ -2152,15 +2152,15 @@ namespace ScoreHistoryApi.Logics
                             TableName = tableName,
                             Item = new Dictionary<string, AttributeValue>()
                             {
-                                [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                                [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + snapshot),
-                                [ScoreDatabasePropertyNames.CreateAt] = new AttributeValue(at),
-                                [ScoreDatabasePropertyNames.UpdateAt] = new AttributeValue(at),
-                                [ScoreDatabasePropertyNames.SnapshotName] = new AttributeValue(snapshotName),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + snapshot),
+                                [DynamoDbScorePropertyNames.CreateAt] = new AttributeValue(at),
+                                [DynamoDbScorePropertyNames.UpdateAt] = new AttributeValue(at),
+                                [DynamoDbScorePropertyNames.SnapshotName] = new AttributeValue(snapshotName),
                             },
                             ExpressionAttributeNames = new Dictionary<string, string>()
                             {
-                                ["#score"] = ScoreDatabasePropertyNames.ScoreId,
+                                ["#score"] = DynamoDbScorePropertyNames.ScoreId,
                             },
                             ConditionExpression = "attribute_not_exists(#score)",
                         }
@@ -2219,12 +2219,12 @@ namespace ScoreHistoryApi.Logics
                             TableName = tableName,
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                                [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + snapshot),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + snapshot),
                             },
                             ExpressionAttributeNames = new Dictionary<string, string>()
                             {
-                                ["#score"] = ScoreDatabasePropertyNames.ScoreId,
+                                ["#score"] = DynamoDbScorePropertyNames.ScoreId,
                             },
                             ConditionExpression = "attribute_exists(#score)",
                         },
@@ -2236,12 +2236,12 @@ namespace ScoreHistoryApi.Logics
                             TableName = tableName,
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                                [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                             },
                             ExpressionAttributeNames = new Dictionary<string, string>()
                             {
-                                ["#snapshotCount"] = ScoreDatabasePropertyNames.SnapshotCount,
+                                ["#snapshotCount"] = DynamoDbScorePropertyNames.SnapshotCount,
                             },
                             ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                             {
@@ -2295,10 +2295,10 @@ namespace ScoreHistoryApi.Logics
                     TableName = tableName,
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#owner"] = ScoreDatabasePropertyNames.OwnerId,
-                        ["#score"] = ScoreDatabasePropertyNames.ScoreId,
-                        ["#snapshotName"] = ScoreDatabasePropertyNames.SnapshotName,
-                        ["#createAt"] = ScoreDatabasePropertyNames.CreateAt,
+                        ["#owner"] = DynamoDbScorePropertyNames.OwnerId,
+                        ["#score"] = DynamoDbScorePropertyNames.ScoreId,
+                        ["#snapshotName"] = DynamoDbScorePropertyNames.SnapshotName,
+                        ["#createAt"] = DynamoDbScorePropertyNames.CreateAt,
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
@@ -2316,9 +2316,9 @@ namespace ScoreHistoryApi.Logics
 
                     return response.Items
                         .Select(x =>(
-                                score: x[ScoreDatabasePropertyNames.ScoreId].S,
-                                name: x[ScoreDatabasePropertyNames.SnapshotName].S,
-                                createAt: x[ScoreDatabasePropertyNames.CreateAt].S)
+                                score: x[DynamoDbScorePropertyNames.ScoreId].S,
+                                name: x[DynamoDbScorePropertyNames.SnapshotName].S,
+                                createAt: x[DynamoDbScorePropertyNames.CreateAt].S)
                         )
                         .Select(x =>
                             new ScoreSnapshotSummary()
@@ -2367,7 +2367,7 @@ namespace ScoreHistoryApi.Logics
 
             await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, access, now);
 
-            static async Task<(DatabaseScoreDataV1 data,string hash)> GetAsync(
+            static async Task<(DynamoDbScoreDataV1 data,string hash)> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
                 string owner,
@@ -2378,19 +2378,19 @@ namespace ScoreHistoryApi.Logics
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                 };
                 var response = await client.GetItemAsync(request);
-                var data = response.Item[ScoreDatabasePropertyNames.Data];
+                var data = response.Item[DynamoDbScorePropertyNames.Data];
 
                 if (data is null)
                     throw new InvalidOperationException("not found.");
 
 
                 var result = ScoreDatabaseUtils.ConvertToDatabaseScoreDataV1(data);
-                var hash = response.Item[ScoreDatabasePropertyNames.DataHash].S;
+                var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
                 return (result,hash);
             }
 
@@ -2410,14 +2410,14 @@ namespace ScoreHistoryApi.Logics
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreDatabasePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [ScoreDatabasePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#score"] = ScoreDatabasePropertyNames.ScoreId,
-                        ["#updateAt"] = ScoreDatabasePropertyNames.UpdateAt,
-                        ["#access"] = ScoreDatabasePropertyNames.Access,
+                        ["#score"] = DynamoDbScorePropertyNames.ScoreId,
+                        ["#updateAt"] = DynamoDbScorePropertyNames.UpdateAt,
+                        ["#access"] = DynamoDbScorePropertyNames.Access,
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {

@@ -25,12 +25,12 @@ namespace ScoreHistoryApi.Models.Scores
         [JsonPropertyName("annotationDataSet")]
         public Dictionary<string, string> AnnotationDataSet { get; set; }
 
-        public static ScoreData Create( DatabaseScoreDataV1 data, Dictionary<string,string> annotationDataSet)
+        public static ScoreData Create( DynamoDbScoreDataV1 data, Dictionary<string,string> annotationDataSet)
         {
             return new ScoreData()
             {
                 Title = data.Title,
-                Description = data.Description,
+                Description = data.DescriptionHash,
                 Pages = data.Page.Select(x => new ScorePage()
                 {
                     Id = x.Id,
