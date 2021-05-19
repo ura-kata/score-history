@@ -5,11 +5,11 @@ using ScoreHistoryApi.Models.Scores;
 
 namespace ScoreHistoryApi.Logics.Scores
 {
-    public class ScoreGetter
+    public class ScoreSummaryGetter
     {
         private readonly IScoreDatabase _scoreDatabase;
 
-        public ScoreGetter(IScoreDatabase scoreDatabase)
+        public ScoreSummaryGetter(IScoreDatabase scoreDatabase)
         {
             _scoreDatabase = scoreDatabase;
         }

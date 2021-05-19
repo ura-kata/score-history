@@ -60,7 +60,7 @@ namespace ScoreHistoryApi.Controllers
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
 
-            var getter = _scoreLogicFactory.Getter;
+            var getter = _scoreLogicFactory.SummaryGetter;
 
             var summaries = await getter.GetScoreSummaries(ownerId);
 
@@ -238,12 +238,9 @@ namespace ScoreHistoryApi.Controllers
         [Route("{owner:guid}")]
         public async Task<ActionResult<ScoreSummary[]>> GetOwnerScoresAsync([FromRoute(Name = "owner")] Guid owner)
         {
-            var authorizerData = this.GetAuthorizerData();
-            var ownerId = authorizerData.Sub;
+            var getter = _scoreLogicFactory.SummaryGetter;
 
-            var getter = _scoreLogicFactory.Getter;
-
-            var summaries = await getter.GetScoreSummaries(ownerId);
+            var summaries = await getter.GetScoreSummaries(owner);
 
             return summaries;
         }
