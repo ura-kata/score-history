@@ -30,6 +30,8 @@ namespace ScoreHistoryApi.Logics.Scores
                 throw new ArgumentException(nameof(snapshotName));
             }
 
+            // TODO ハッシュを確認して同じスナップショットを作成しないようにする
+
             var snapshot = await _scoreDatabase.CreateSnapshotAsync(ownerId, scoreId, trimSnapshotName);
 
             var access = snapshot.access == ScoreAccesses.Public
