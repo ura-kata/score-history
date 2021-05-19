@@ -65,7 +65,7 @@ namespace ScoreHistoryApi.Logics
         public async Task CreateAsync(Guid ownerId, Guid scoreId, ScoreSnapshot snapshot,
             ScoreObjectAccessControls accessControl)
         {
-            var key = ScoreSnapshotStorageUtils.CreateSnapshotKey(ownerId, scoreId, snapshot.id);
+            var key = ScoreSnapshotStorageUtils.CreateSnapshotKey(ownerId, scoreId, snapshot.Id);
 
             var json = ScoreSnapshotStorageUtils.ConvertToJson(snapshot);
 

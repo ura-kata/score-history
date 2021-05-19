@@ -29,7 +29,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
 
             var data = new ScoreSnapshot()
             {
-                id = snapshotId,
+                Id = snapshotId,
                 Name = "スナップショット名",
                 Data = new ScoreData()
                 {
@@ -89,7 +89,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
 
             var data = new ScoreSnapshot()
             {
-                id = snapshotId,
+                Id = snapshotId,
                 Name = "スナップショット名(delete)",
                 Data = new ScoreData()
                 {
@@ -209,7 +209,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             {
                 foreach (var snapshotId in snapshotIds)
                 {
-                    data.id = snapshotId;
+                    data.Id = snapshotId;
                     await target.CreateAsync(ownerId, scoreId, data, ScoreObjectAccessControls.Public);
                 }
             }

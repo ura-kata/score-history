@@ -1949,7 +1949,7 @@ namespace ScoreHistoryApi.Logics
             var response = await CreateSnapshotAsync(ownerId, scoreId, snapshotId, snapshotName);
             var snapshot = new ScoreSnapshot()
             {
-                id = snapshotId,
+                Id = snapshotId,
                 Data = ScoreData.Create(response.data,response.annotations),
                 Name = snapshotName,
             };

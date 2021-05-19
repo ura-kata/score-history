@@ -9,7 +9,7 @@ namespace ScoreHistoryApi.Models.Scores
     public class ScoreSnapshot
     {
         [JsonPropertyName("id")]
-        public Guid id { get; set; }
+        public Guid Id { get; set; }
 
         [JsonPropertyName("name")]
         public string Name { get; set; }
