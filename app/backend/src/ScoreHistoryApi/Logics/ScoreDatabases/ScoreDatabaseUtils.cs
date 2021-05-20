@@ -26,29 +26,6 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
             new Guid(Convert.FromBase64String(id));
 
         /// <summary>
-        /// データベースのデータからハッシュ値を計算する
-        /// </summary>
-        /// <param name="data"></param>
-        /// <returns></returns>
-        public static string CalcHash(DynamoDbScoreDataV1 data)
-        {
-            var option = new JsonSerializerOptions()
-            {
-                AllowTrailingCommas = false,
-                DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
-                IgnoreNullValues = true,
-                IgnoreReadOnlyProperties = true,
-                PropertyNameCaseInsensitive = false,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                ReadCommentHandling = JsonCommentHandling.Disallow,
-                WriteIndented = false,
-                Encoder = JavaScriptEncoder.Default,
-            };
-            var json = JsonSerializer.SerializeToUtf8Bytes(data, option);
-            return Convert.ToBase64String(MD5.Create().ComputeHash(json));
-        }
-
-        /// <summary>
         /// コンテンツのハッシュ値を計算する
         /// </summary>
         /// <param name="content"></param>

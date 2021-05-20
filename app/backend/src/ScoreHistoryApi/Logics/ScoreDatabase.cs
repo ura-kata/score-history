@@ -137,7 +137,7 @@ namespace ScoreHistoryApi.Logics
                     DescriptionHash = description,
                 };
                 var dataAttributeValue = data.ConvertToAttributeValue();
-                var dataHash = ScoreDatabaseUtils.CalcHash(data);
+                var dataHash = data.CalcDataHash();
                 var createAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
                 var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
 
@@ -545,7 +545,7 @@ namespace ScoreHistoryApi.Logics
 
             data.Title = title;
 
-            var newHash = ScoreDatabaseUtils.CalcHash(data);
+            var newHash = data.CalcDataHash();
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
             await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, title, newHash, oldHash, now);
@@ -636,7 +636,7 @@ namespace ScoreHistoryApi.Logics
 
             data.DescriptionHash = description;
 
-            var newHash = ScoreDatabaseUtils.CalcHash(data);
+            var newHash = data.CalcDataHash();
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
             await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, description, newHash, oldHash, now);
@@ -745,7 +745,7 @@ namespace ScoreHistoryApi.Logics
                 data.Page.Add(p);
             }
 
-            var newHash = ScoreDatabaseUtils.CalcHash(data);
+            var newHash = data.CalcDataHash();
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
@@ -887,7 +887,7 @@ namespace ScoreHistoryApi.Logics
                 data.Page.RemoveAt(index);
             }
 
-            var newHash = ScoreDatabaseUtils.CalcHash(data);
+            var newHash = data.CalcDataHash();
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
@@ -1010,7 +1010,7 @@ namespace ScoreHistoryApi.Logics
                 data.Page[index] = p;
             }
 
-            var newHash = ScoreDatabaseUtils.CalcHash(data);
+            var newHash = data.CalcDataHash();
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
@@ -1159,7 +1159,7 @@ namespace ScoreHistoryApi.Logics
                 data.Annotations.Add(a);
             }
 
-            var newHash = ScoreDatabaseUtils.CalcHash(data);
+            var newHash = data.CalcDataHash();
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
@@ -1356,7 +1356,7 @@ namespace ScoreHistoryApi.Logics
                 data.Annotations.RemoveAt(index);
             }
 
-            var newHash = ScoreDatabaseUtils.CalcHash(data);
+            var newHash = data.CalcDataHash();
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
@@ -1546,7 +1546,7 @@ namespace ScoreHistoryApi.Logics
                     removeAnnData.Remove(annotation.ContentHash);
             }
 
-            var newHash = ScoreDatabaseUtils.CalcHash(data);
+            var newHash = data.CalcDataHash();
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
