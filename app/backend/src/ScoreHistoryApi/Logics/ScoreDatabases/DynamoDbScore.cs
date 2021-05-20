@@ -71,8 +71,10 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
             {
                 Type = DynamoDbScoreTypes.Summary;
                 ScoreId = scoreId;
+                return;
             }
-            else if (scoreId.StartsWith(ScoreDatabaseConstant.ScoreIdMainPrefix))
+
+            if (scoreId.StartsWith(ScoreDatabaseConstant.ScoreIdMainPrefix))
             {
                 Type = DynamoDbScoreTypes.Main;
 
@@ -91,8 +93,10 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                     throw new InvalidOperationException("Data convert error.");
                 Data = data;
 
+                return;
             }
-            else if (scoreId.StartsWith(ScoreDatabaseConstant.ScoreIdSnapPrefix))
+
+            if (scoreId.StartsWith(ScoreDatabaseConstant.ScoreIdSnapPrefix))
             {
                 Type = DynamoDbScoreTypes.Snapshot;
 
@@ -102,6 +106,8 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                 CreateAt = item[DynamoDbScorePropertyNames.CreateAt].S;
                 UpdateAt = item[DynamoDbScorePropertyNames.UpdateAt].S;
                 SnapshotName = item[DynamoDbScorePropertyNames.SnapshotName].S;
+
+                return;
             }
 
             throw new ArgumentException();

@@ -116,15 +116,6 @@ namespace ScoreHistoryApi.Logics
             Guid scoreId);
 
         /// <summary>
-        /// 楽譜の詳細データを取得する
-        /// </summary>
-        /// <param name="ownerId"></param>
-        /// <param name="scoreId"></param>
-        /// <param name="snapshotId"></param>
-        /// <returns></returns>
-        Task<DatabaseScoreRecord> GetSnapshotScoreDetailAsync(Guid ownerId, Guid scoreId, Guid snapshotId);
-
-        /// <summary>
         /// スナップショットを作成する
         /// </summary>
         /// <param name="ownerId"></param>

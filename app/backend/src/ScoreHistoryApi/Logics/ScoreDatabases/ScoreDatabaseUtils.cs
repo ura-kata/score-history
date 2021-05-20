@@ -26,14 +26,6 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
             new Guid(Convert.FromBase64String(id));
 
         /// <summary>
-        /// コンテンツのハッシュ値を計算する
-        /// </summary>
-        /// <param name="content"></param>
-        /// <returns></returns>
-        public static string CalcContentHash(string content) =>
-            Convert.ToBase64String(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(content)));
-
-        /// <summary>
         /// <see cref="DateTimeOffset"/> から Unix millisecond の16進数表記に変換する
         /// </summary>
         /// <param name="datetime"></param>

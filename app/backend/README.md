@@ -144,7 +144,7 @@ UUID の Base64 エンコードは 24 byte
 ]
 ```
 
-大きいデータ
+Large Data Table
 
 ```json
 {
