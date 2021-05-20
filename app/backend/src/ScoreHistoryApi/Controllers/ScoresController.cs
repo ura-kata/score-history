@@ -197,7 +197,7 @@ namespace ScoreHistoryApi.Controllers
 
         [HttpPatch]
         [Route("user/{id:guid}/description")]
-        public async Task<IActionResult> SetTitleAsync([FromRoute(Name = "id")] Guid id, NewScoreDescription description)
+        public async Task<IActionResult> SetDescriptionAsync([FromRoute(Name = "id")] Guid id, NewScoreDescription description)
         {
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
