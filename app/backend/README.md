@@ -148,19 +148,25 @@ Large Data Table
 
 ```json
 {
-  "o": "68yjpWHe5EOEnN6vv3UL1w==a62Xnv7FbkqPJQsmW1kBeg==", // owner id & score id
-  "d": "ouWfeVUe4keu21CyOIZ0jg==", // data id アノテーションの内容のハッシュ値を計算し base64 にしたもの
+  "o": "68yjpWHe5EOEnN6vv3UL1w==", // owner id
+  "d": "anno:a62Xnv7FbkqPJQsmW1kBeg==ouWfeVUe4keu21CyOIZ0jg==", // prefix + score id + アノテーションの内容にプレフィックスを付けハッシュ値を計算し base64 にしたもの
   "c": "アノテーションの内容", // content
 },
 {
-  "o": "68yjpWHe5EOEnN6vv3UL1w==a62Xnv7FbkqPJQsmW1kBeg==", // owner id & score id
-  "d": "s2hRmHZaGkOC7PDFrXzypw==", // data id アノテーションの内容のハッシュ値を計算し base64 にしたもの
+  "o": "68yjpWHe5EOEnN6vv3UL1w==", // owner id
+  "d": "desc:a62Xnv7FbkqPJQsmW1kBeg==s2hRmHZaGkOC7PDFrXzypw==", // prefix + score id + アノテーションの内容にプレフィックスを付けハッシュ値を計算し base64 にしたもの
   "c": "説明内容", // content
 }
 ```
 
-- `"t": "a"`
-  - annotation
+prefix は以下とする
+
+- anno:
+  - アノテーション
+- desc:
+  - 説明
+
+prefix は 5 文字とする
 
 スナップショットは JSON に変換して S3 に保存する
 
