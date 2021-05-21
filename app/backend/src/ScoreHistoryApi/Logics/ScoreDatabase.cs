@@ -288,9 +288,12 @@ namespace ScoreHistoryApi.Logics
 
             await DeleteSnapshotsAsync(_dynamoDbClient, ScoreTableName, owner, snapshotScoreIds);
 
-            var dataIds = await GetScoreDataIdsAsync(_dynamoDbClient, ScoreDataTableName, owner, score);
+            var dataIds = await GetScoreAnnotationDataIdsAsync(_dynamoDbClient, ScoreDataTableName, owner, score);
+            var descriptionDataIds =
+                await GetScoreDescriptionDataIdsAsync(_dynamoDbClient, ScoreDataTableName, owner, score);
 
-            await DeleteDataAsync(_dynamoDbClient, ScoreDataTableName, owner, score, dataIds);
+            await DeleteDataAsync(_dynamoDbClient, ScoreDataTableName, owner, score,
+                dataIds.Concat(descriptionDataIds).ToArray());
 
             static async Task DeleteMainAsync(IAmazonDynamoDB client, string tableName, string owner, string score)
             {
@@ -476,7 +479,7 @@ namespace ScoreHistoryApi.Logics
                 }
             }
 
-            static async Task<string[]> GetScoreDataIdsAsync(IAmazonDynamoDB client, string tableName, string owner, string score)
+            static async Task<string[]> GetScoreAnnotationDataIdsAsync(IAmazonDynamoDB client, string tableName, string owner, string score)
             {
                 var request = new QueryRequest()
                 {
@@ -489,9 +492,42 @@ namespace ScoreHistoryApi.Logics
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
                         [":owner"] = new AttributeValue(owner),
-                        [":score"] = new AttributeValue(score),
+                        [":annScore"] = new AttributeValue(DynamoDbScoreDataConstant.PrefixAnnotation + score),
                     },
-                    KeyConditionExpression = "#owner = :owner and begins_with(#data, :score)",
+                    KeyConditionExpression = "#owner = :owner and begins_with(#data, :annScore)",
+                    ProjectionExpression = "#data",
+                };
+                try
+                {
+                    var response = await client.QueryAsync(request);
+
+                    return response.Items.Select(x => x[DynamoDbScoreDataPropertyNames.DataId]?.S)
+                        .Where(x => !(x is null))
+                        .ToArray();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    throw;
+                }
+            }
+
+            static async Task<string[]> GetScoreDescriptionDataIdsAsync(IAmazonDynamoDB client, string tableName, string owner, string score)
+            {
+                var request = new QueryRequest()
+                {
+                    TableName = tableName,
+                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    {
+                        ["#owner"] = DynamoDbScoreDataPropertyNames.OwnerId,
+                        ["#data"] = DynamoDbScoreDataPropertyNames.DataId,
+                    },
+                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                    {
+                        [":owner"] = new AttributeValue(owner),
+                        [":desScore"] = new AttributeValue(DynamoDbScoreDataConstant.PrefixDescription + score),
+                    },
+                    KeyConditionExpression = "#owner = :owner and begins_with(#data, :desScore)",
                     ProjectionExpression = "#data",
                 };
                 try
@@ -520,10 +556,10 @@ namespace ScoreHistoryApi.Logics
 
                 foreach (var ids in chunkList)
                 {
-                    await DeleteSnapshot25Async(client, tableName, owner, score, ids);
+                    await DeleteData25Async(client, tableName, owner, score, ids);
                 }
 
-                static async Task DeleteSnapshot25Async(IAmazonDynamoDB client, string tableName, string owner, string score, string[] dataIds)
+                static async Task DeleteData25Async(IAmazonDynamoDB client, string tableName, string owner, string score, string[] dataIds)
                 {
                     var request = new Dictionary<string, List<WriteRequest>>()
                     {
@@ -533,8 +569,8 @@ namespace ScoreHistoryApi.Logics
                             {
                                 Key = new Dictionary<string, AttributeValue>()
                                 {
-                                    [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner + score),
-                                    [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(dataId),
+                                    [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(owner),
+                                    [DynamoDbScoreDataPropertyNames.DataId] = new AttributeValue(dataId),
                                 }
                             }
                         }).ToList(),
