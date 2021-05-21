@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Serialization;
 using ScoreHistoryApi.Logics.ScoreDatabases;
 
@@ -22,6 +23,9 @@ namespace ScoreHistoryApi.Models.Scores
         [JsonPropertyName("access")]
         public ScoreAccesses Access { get; set; }
 
+        [JsonPropertyName("hashSet")]
+        public Dictionary<string, string> HashSet { get; set; }
+
         public static ScoreDetail Create(DynamoDbScore score, Dictionary<string, string> hashSet)
         {
             if (score.Type != DynamoDbScoreTypes.Main)
@@ -29,7 +33,7 @@ namespace ScoreHistoryApi.Models.Scores
                 throw new ArgumentException(nameof(score));
             }
 
-            var data = ScoreData.Create(score.Data, hashSet);
+            var data = ScoreData.Create(score.Data);
             return new ScoreDetail()
             {
                 CreateAt = ScoreDatabaseUtils.ConvertFromUnixTimeMilli(score.CreateAt),
@@ -37,6 +41,7 @@ namespace ScoreHistoryApi.Models.Scores
                 DataHash = score.DataHash,
                 Data = data,
                 Access = ScoreDatabaseUtils.ConvertToScoreAccess(score.Access),
+                HashSet = hashSet.ToDictionary(x=>x.Key, x=>x.Value),
             };
         }
     }

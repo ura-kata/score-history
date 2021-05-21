@@ -23,20 +23,17 @@ namespace ScoreHistoryApi.Models.Scores
         [JsonPropertyName("annotations")]
         public ScoreAnnotation[] Annotations { get; set; }
 
-        [JsonPropertyName("hashSet")]
-        public Dictionary<string, string> HashSet { get; set; }
-
-        public static ScoreData Create(DynamoDbScoreDataBase data, Dictionary<string,string> hashSet)
+        public static ScoreData Create(DynamoDbScoreDataBase data)
         {
             if (data is DynamoDbScoreDataV1 dataV1)
             {
-                return Create(dataV1, hashSet);
+                return Create(dataV1);
             }
 
             throw new ArgumentException(nameof(data));
         }
 
-        public static ScoreData Create( DynamoDbScoreDataV1 data, Dictionary<string,string> hashSet)
+        public static ScoreData Create(DynamoDbScoreDataV1 data)
         {
             return new ScoreData()
             {
@@ -53,7 +50,6 @@ namespace ScoreHistoryApi.Models.Scores
                     Id = x.Id,
                     ContentHash = x.ContentHash,
                 }).ToArray(),
-                HashSet = hashSet.ToDictionary(x => x.Key, x => x.Value),
             };
         }
     }

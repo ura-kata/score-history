@@ -2090,29 +2090,24 @@ namespace ScoreHistoryApi.Logics
 
             var snapshotId = Guid.NewGuid();
             var response = await CreateSnapshotAsync(ownerId, scoreId, snapshotId, snapshotName);
-            var snapshot = new ScoreSnapshotDetail()
-            {
-                Id = snapshotId,
-                Data = ScoreData.Create(response.data,response.hashSet),
-                Name = snapshotName,
-            };
+            var snapshot = ScoreSnapshotDetail.Create(snapshotId, snapshotName, response.dynamoDbScore, response.hashSet);
 
-            return (snapshot, response.access);
+            var access = ScoreDatabaseUtils.ConvertToScoreAccess(response.dynamoDbScore.Access);
+            return (snapshot, access);
         }
 
-        public async Task<(DynamoDbScoreDataV1 data, Dictionary<string, string> hashSet, ScoreAccesses access)>
+        public async Task<(DynamoDbScore dynamoDbScore, Dictionary<string, string> hashSet)>
             CreateSnapshotAsync(Guid ownerId, Guid scoreId, Guid snapshotId, string snapshotName)
         {
             var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
             var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
             var snapshot = ScoreDatabaseUtils.ConvertToBase64(snapshotId);
 
-            var (dataValue,hash,access) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
+            var dynamoDbScore = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
 
-            DynamoDbScoreDataV1.TryMapFromAttributeValue(dataValue, out var scoreData);
             var hashSet = await GetAnnotationsAsync(_dynamoDbClient, ScoreDataTableName, owner, score, snapshot);
 
-            var descriptionHash = scoreData.GetDescriptionHash();
+            var descriptionHash = dynamoDbScore.Data.GetDescriptionHash();
             var (success, description) =
                 await TryGetDescriptionAsync(_dynamoDbClient, ScoreDataTableName, owner, score, descriptionHash);
 
@@ -2128,9 +2123,9 @@ namespace ScoreHistoryApi.Logics
                 _dynamoDbClient, ScoreTableName, owner, score, snapshot
                 , snapshotName, now, maxSnapshotCount);
 
-            return (scoreData, hashSet, access);
+            return (dynamoDbScore, hashSet);
 
-            static async Task<(AttributeValue data,string hash, ScoreAccesses access)> GetAsync(
+            static async Task<DynamoDbScore> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
                 string owner,
@@ -2146,20 +2141,10 @@ namespace ScoreHistoryApi.Logics
                     },
                 };
                 var response = await client.GetItemAsync(request);
-                var data = response.Item[DynamoDbScorePropertyNames.Data];
 
-                if (data is null)
-                    throw new NotFoundScoreException("Not found score.");
+                var dynamoDbScore = new DynamoDbScore(response.Item);
 
-                var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
-
-                var accessText = response.Item[DynamoDbScorePropertyNames.Access].S;
-
-                var access = ScoreDatabaseConstant.ScoreAccessPublic == accessText
-                    ? ScoreAccesses.Public
-                    : ScoreAccesses.Private;
-
-                return (data, hash, access);
+                return dynamoDbScore;
             }
 
             static async Task<Dictionary<string, string>> GetAnnotationsAsync(
