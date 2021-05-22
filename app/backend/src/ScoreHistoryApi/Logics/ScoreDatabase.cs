@@ -2070,7 +2070,7 @@ namespace ScoreHistoryApi.Logics
                     var response = await client.QueryAsync(request);
 
                     var result = new Dictionary<string, string>();
-                    var substringStartIndex = DynamoDbScoreDataConstant.SeparatorLength + DynamoDbScoreDataConstant.PrefixAnnotation.Length;
+                    var substringStartIndex = DynamoDbScoreDataConstant.PrefixAnnotation.Length + score.Length;
                     foreach (var item in response.Items)
                     {
                         var hashValue = item[DynamoDbScoreDataPropertyNames.DataId];
@@ -2220,7 +2220,7 @@ namespace ScoreHistoryApi.Logics
                     var response = await client.QueryAsync(request);
 
                     var result = new Dictionary<string, string>();
-                    var substringStartIndex = DynamoDbScoreDataConstant.SeparatorLength + DynamoDbScoreDataConstant.PrefixAnnotation.Length;
+                    var substringStartIndex = DynamoDbScoreDataConstant.PrefixAnnotation.Length + score.Length;
                     foreach (var item in response.Items)
                     {
                         var hashValue = item[DynamoDbScoreDataPropertyNames.DataId];
