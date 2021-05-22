@@ -1,19 +1,17 @@
 using Amazon.DynamoDBv2;
 using Amazon.S3;
 using Microsoft.Extensions.Configuration;
-using ScoreHistoryApi.Logics;
-using ScoreHistoryApi.Logics.Scores;
 
-namespace ScoreHistoryApi.Factories
+namespace ScoreHistoryApi.Logics.Scores
 {
-    public class ScoreLogicFactory
+    public class ScoreLogics
     {
         private readonly IScoreQuota _scoreQuota;
         private readonly IAmazonDynamoDB _dynamoDbClient;
         private readonly IAmazonS3 _s3Client;
         private readonly IConfiguration _configuration;
 
-        public ScoreLogicFactory(IScoreQuota scoreQuota, IAmazonDynamoDB dynamoDbClient, IAmazonS3 s3Client, IConfiguration configuration)
+        public ScoreLogics(IScoreQuota scoreQuota, IAmazonDynamoDB dynamoDbClient, IAmazonS3 s3Client, IConfiguration configuration)
         {
             _scoreQuota = scoreQuota;
             _dynamoDbClient = dynamoDbClient;

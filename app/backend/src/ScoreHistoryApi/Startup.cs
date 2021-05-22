@@ -17,6 +17,7 @@ using Microsoft.Extensions.Logging;
 using ScoreHistoryApi.Factories;
 using ScoreHistoryApi.JsonConverters;
 using ScoreHistoryApi.Logics;
+using ScoreHistoryApi.Logics.Scores;
 
 namespace ScoreHistoryApi
 {
@@ -41,7 +42,7 @@ namespace ScoreHistoryApi
             services.AddSingleton(x =>
                 new S3ClientFactory().SetRegionSystemName(Configuration[EnvironmentNames.ScoreS3RegionSystemName])
                     .Create());
-            services.AddScoped<ScoreLogicFactory>();
+            services.AddScoped<ScoreLogics>();
 
             services.AddCors(options =>
             {

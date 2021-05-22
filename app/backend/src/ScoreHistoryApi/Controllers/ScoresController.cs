@@ -15,6 +15,7 @@ using Microsoft.Extensions.Logging;
 using ScoreHistoryApi.Factories;
 using ScoreHistoryApi.Logics;
 using ScoreHistoryApi.Logics.Exceptions;
+using ScoreHistoryApi.Logics.Scores;
 using ScoreHistoryApi.Models.Scores;
 
 namespace ScoreHistoryApi.Controllers
@@ -25,13 +26,13 @@ namespace ScoreHistoryApi.Controllers
     {
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
-        private readonly ScoreLogicFactory _scoreLogicFactory;
+        private readonly ScoreLogics _scoreLogics;
 
-        public ScoresController(ILogger<ScoresController> logger, IConfiguration configuration, ScoreLogicFactory scoreLogicFactory)
+        public ScoresController(ILogger<ScoresController> logger, IConfiguration configuration, ScoreLogics scoreLogics)
         {
             _logger = logger;
             _configuration = configuration;
-            _scoreLogicFactory = scoreLogicFactory;
+            _scoreLogics = scoreLogics;
         }
 
         [HttpPost]
@@ -40,7 +41,7 @@ namespace ScoreHistoryApi.Controllers
         {
             var authorizerData = this.GetAuthorizerData();
 
-            var initialise = _scoreLogicFactory.Initializer;
+            var initialise = _scoreLogics.Initializer;
 
             var ownerId = authorizerData.Sub;
 
@@ -61,7 +62,7 @@ namespace ScoreHistoryApi.Controllers
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
 
-            var getter = _scoreLogicFactory.SummaryGetter;
+            var getter = _scoreLogics.SummaryGetter;
 
             var summaries = await getter.GetScoreSummaries(ownerId);
 
@@ -81,7 +82,7 @@ namespace ScoreHistoryApi.Controllers
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
 
-            var creator = _scoreLogicFactory.Creator;
+            var creator = _scoreLogics.Creator;
 
             try
             {
@@ -114,7 +115,7 @@ namespace ScoreHistoryApi.Controllers
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
 
-            var detailGetter = _scoreLogicFactory.DetailGetter;
+            var detailGetter = _scoreLogics.DetailGetter;
 
             // TODO 楽譜がないときにエラーコードを返す
             var detail = await detailGetter.GetScoreSummaries(ownerId, id);
@@ -136,7 +137,7 @@ namespace ScoreHistoryApi.Controllers
         {
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
-            var deleter = _scoreLogicFactory.Deleter;
+            var deleter = _scoreLogics.Deleter;
 
             try
             {
@@ -177,7 +178,7 @@ namespace ScoreHistoryApi.Controllers
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
 
-            var titleSetter = _scoreLogicFactory.TitleSetter;
+            var titleSetter = _scoreLogics.TitleSetter;
 
             try
             {
@@ -203,7 +204,7 @@ namespace ScoreHistoryApi.Controllers
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
 
-            var descriptionSetter = _scoreLogicFactory.DescriptionSetter;
+            var descriptionSetter = _scoreLogics.DescriptionSetter;
 
             try
             {
@@ -229,7 +230,7 @@ namespace ScoreHistoryApi.Controllers
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
 
-            var annotationsAdder = _scoreLogicFactory.AnnotationAdder;
+            var annotationsAdder = _scoreLogics.AnnotationAdder;
 
             try
             {
@@ -254,7 +255,7 @@ namespace ScoreHistoryApi.Controllers
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
 
-            var annotationsRemover = _scoreLogicFactory.AnnotationRemover;
+            var annotationsRemover = _scoreLogics.AnnotationRemover;
 
             try
             {
@@ -279,7 +280,7 @@ namespace ScoreHistoryApi.Controllers
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
 
-            var annotationsReplacer = _scoreLogicFactory.AnnotationReplacer;
+            var annotationsReplacer = _scoreLogics.AnnotationReplacer;
 
             try
             {
@@ -304,7 +305,7 @@ namespace ScoreHistoryApi.Controllers
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
 
-            var pageAdder = _scoreLogicFactory.PageAdder;
+            var pageAdder = _scoreLogics.PageAdder;
 
             try
             {
@@ -329,7 +330,7 @@ namespace ScoreHistoryApi.Controllers
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
 
-            var pageRemover = _scoreLogicFactory.PageRemover;
+            var pageRemover = _scoreLogics.PageRemover;
 
             try
             {
@@ -354,7 +355,7 @@ namespace ScoreHistoryApi.Controllers
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
 
-            var pageReplacer = _scoreLogicFactory.PageReplacer;
+            var pageReplacer = _scoreLogics.PageReplacer;
 
             try
             {
@@ -379,7 +380,7 @@ namespace ScoreHistoryApi.Controllers
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
 
-            var snapshotCreator = _scoreLogicFactory.SnapshotCreator;
+            var snapshotCreator = _scoreLogics.SnapshotCreator;
 
             try
             {
@@ -404,7 +405,7 @@ namespace ScoreHistoryApi.Controllers
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
 
-            var snapshotSummaryGetter = _scoreLogicFactory.SnapshotSummaryGetter;
+            var snapshotSummaryGetter = _scoreLogics.SnapshotSummaryGetter;
 
             try
             {
@@ -423,7 +424,7 @@ namespace ScoreHistoryApi.Controllers
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
 
-            var snapshotDetailGetter = _scoreLogicFactory.SnapshotDetailGetter;
+            var snapshotDetailGetter = _scoreLogics.SnapshotDetailGetter;
 
             try
             {
@@ -449,7 +450,7 @@ namespace ScoreHistoryApi.Controllers
         [Route("{owner:guid}")]
         public async Task<ActionResult<ScoreSummary[]>> GetOwnerScoresAsync([FromRoute(Name = "owner")] Guid owner)
         {
-            var getter = _scoreLogicFactory.SummaryGetter;
+            var getter = _scoreLogics.SummaryGetter;
 
             var summaries = await getter.GetScoreSummaries(owner);
 
@@ -474,7 +475,7 @@ namespace ScoreHistoryApi.Controllers
             // ETag が If-None-Match と一致する場合は NotModified を返す
             // return this.StatusCode((int) HttpStatusCode.NotModified);
 
-            var detailGetter = _scoreLogicFactory.DetailGetter;
+            var detailGetter = _scoreLogics.DetailGetter;
 
             // TODO 楽譜がないときにエラーコードを返す
             var detail = await detailGetter.GetScoreSummaries(owner, id);

@@ -12,6 +12,7 @@ using Microsoft.OpenApi.Models;
 using ScoreHistoryApi.Factories;
 using ScoreHistoryApi.JsonConverters;
 using ScoreHistoryApi.Logics;
+using ScoreHistoryApi.Logics.Scores;
 
 namespace ScoreHistoryApi
 {
@@ -37,7 +38,7 @@ namespace ScoreHistoryApi
                     .SetEndpointUrl(new Uri(Configuration[EnvironmentNames.ScoreS3EndpointUrl]))
                     .SetCredentials(Configuration[EnvironmentNames.ScoreS3AccessKey],Configuration[EnvironmentNames.ScoreS3SecretKey])
                     .Create());
-            services.AddScoped<ScoreLogicFactory>();
+            services.AddScoped<ScoreLogics>();
 
             services.AddControllers()
                 .AddJsonOptions(option =>
