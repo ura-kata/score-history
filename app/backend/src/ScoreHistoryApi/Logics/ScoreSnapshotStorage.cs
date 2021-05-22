@@ -19,14 +19,15 @@ namespace ScoreHistoryApi.Logics
     {
         public static byte[] ConvertToJson(ScoreSnapshotDetail snapshotDetail)
         {
+
             var option = new JsonSerializerOptions()
             {
                 AllowTrailingCommas = false,
-                DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
+                DictionaryKeyPolicy = default,
                 IgnoreNullValues = false,
                 IgnoreReadOnlyProperties = true,
                 PropertyNameCaseInsensitive = false,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNamingPolicy = default,
                 ReadCommentHandling = JsonCommentHandling.Disallow,
                 WriteIndented = false,
                 Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -39,11 +40,11 @@ namespace ScoreHistoryApi.Logics
             var option = new JsonSerializerOptions()
             {
                 AllowTrailingCommas = false,
-                DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
+                DictionaryKeyPolicy = default,
                 IgnoreNullValues = false,
                 IgnoreReadOnlyProperties = true,
                 PropertyNameCaseInsensitive = false,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNamingPolicy = default,
                 ReadCommentHandling = JsonCommentHandling.Disallow,
                 WriteIndented = false,
                 Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,

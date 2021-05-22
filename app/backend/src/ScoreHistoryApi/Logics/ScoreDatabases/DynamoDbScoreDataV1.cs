@@ -44,11 +44,11 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
             var option = new JsonSerializerOptions()
             {
                 AllowTrailingCommas = false,
-                DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
+                DictionaryKeyPolicy = default,
                 IgnoreNullValues = true,
                 IgnoreReadOnlyProperties = true,
                 PropertyNameCaseInsensitive = false,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNamingPolicy = default,
                 ReadCommentHandling = JsonCommentHandling.Disallow,
                 WriteIndented = false,
                 Encoder = JavaScriptEncoder.Default,
