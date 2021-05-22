@@ -52,5 +52,14 @@ namespace ScoreHistoryApi.Factories
 
         public ScoreSnapshotDetailGetter SnapshotDetailGetter =>
             new ScoreSnapshotDetailGetter(new ScoreSnapshotStorage(_s3Client, _configuration));
+
+        public ScoreAnnotationsAdder AnnotationsAdder =>
+            new ScoreAnnotationsAdder(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+
+        public ScoreAnnotationsRemover AnnotationsRemover =>
+            new ScoreAnnotationsRemover(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+
+        public ScoreAnnotationsReplacer AnnotationsReplacer =>
+            new ScoreAnnotationsReplacer(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
     }
 }

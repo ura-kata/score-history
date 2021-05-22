@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text.Json;
@@ -219,6 +220,81 @@ namespace ScoreHistoryApi.Controllers
 
             return Ok();
 
+        }
+
+        [HttpPost]
+        [Route("user/{id:guid}/annotations")]
+        public async Task<IActionResult> AddAnnotationsAsync([FromRoute(Name = "id")] Guid id, List<NewScoreAnnotation> annotations)
+        {
+            var authorizerData = this.GetAuthorizerData();
+            var ownerId = authorizerData.Sub;
+
+            var annotationsAdder = _scoreLogicFactory.AnnotationsAdder;
+
+            try
+            {
+                await annotationsAdder.AddAnnotations(ownerId, id, annotations);
+            }
+            catch (ArgumentNullException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+            catch (ArgumentException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+
+            return Ok();
+        }
+
+        [HttpDelete]
+        [Route("user/{id:guid}/annotations")]
+        public async Task<IActionResult> RemoveAnnotationsAsync([FromRoute(Name = "id")] Guid id, List<long> annotationIds)
+        {
+            var authorizerData = this.GetAuthorizerData();
+            var ownerId = authorizerData.Sub;
+
+            var annotationsRemover = _scoreLogicFactory.AnnotationsRemover;
+
+            try
+            {
+                await annotationsRemover.RemoveAnnotations(ownerId, id, annotationIds);
+            }
+            catch (ArgumentNullException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+            catch (ArgumentException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+
+            return Ok();
+        }
+
+        [HttpPatch]
+        [Route("user/{id:guid}/annotations")]
+        public async Task<IActionResult> ReplaceAnnotationsAsync([FromRoute(Name = "id")] Guid id, List<PatchScoreAnnotation> annotations)
+        {
+            var authorizerData = this.GetAuthorizerData();
+            var ownerId = authorizerData.Sub;
+
+            var annotationsReplacer = _scoreLogicFactory.AnnotationsReplacer;
+
+            try
+            {
+                await annotationsReplacer.ReplaceAnnotations(ownerId, id, annotations);
+            }
+            catch (ArgumentNullException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+            catch (ArgumentException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+
+            return Ok();
         }
 
         [HttpPost]
