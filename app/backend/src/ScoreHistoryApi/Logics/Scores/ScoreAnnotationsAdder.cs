@@ -28,9 +28,9 @@ namespace ScoreHistoryApi.Logics.Scores
             {
                 var ann = annotations[i];
                 var trimContent = ann.Content?.Trim();
-                if (string.IsNullOrWhiteSpace(trimContent))
+                if (trimContent is null)
                 {
-                    throw new ArgumentException($"{nameof(annotations)}[{i}] is null or empty or white space.");
+                    throw new ArgumentException($"{nameof(annotations)}[{i}].{nameof(NewScoreAnnotation.Content)} is null.");
                 }
 
                 trimmedAnnotations.Add(new NewScoreAnnotation()
