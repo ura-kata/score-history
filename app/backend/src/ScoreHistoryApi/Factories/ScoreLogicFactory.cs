@@ -61,5 +61,14 @@ namespace ScoreHistoryApi.Factories
 
         public ScoreAnnotationsReplacer AnnotationsReplacer =>
             new ScoreAnnotationsReplacer(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+
+        public ScorePageAdder PageAdder =>
+            new ScorePageAdder(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+
+        public ScorePageRemover PageRemover =>
+            new ScorePageRemover(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+
+        public ScorePageReplacer PageReplacer =>
+            new ScorePageReplacer(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
     }
 }

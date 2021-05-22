@@ -298,6 +298,81 @@ namespace ScoreHistoryApi.Controllers
         }
 
         [HttpPost]
+        [Route("user/{id:guid}/pages")]
+        public async Task<IActionResult> AddPagesAsync([FromRoute(Name = "id")] Guid id, List<NewScorePage> pages)
+        {
+            var authorizerData = this.GetAuthorizerData();
+            var ownerId = authorizerData.Sub;
+
+            var pageAdder = _scoreLogicFactory.PageAdder;
+
+            try
+            {
+                await pageAdder.AddPages(ownerId, id, pages);
+            }
+            catch (ArgumentNullException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+            catch (ArgumentException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+
+            return Ok();
+        }
+
+        [HttpDelete]
+        [Route("user/{id:guid}/pages")]
+        public async Task<IActionResult> RemovePagesAsync([FromRoute(Name = "id")] Guid id, List<long> pageIds)
+        {
+            var authorizerData = this.GetAuthorizerData();
+            var ownerId = authorizerData.Sub;
+
+            var pageRemover = _scoreLogicFactory.PageRemover;
+
+            try
+            {
+                await pageRemover.RemovePages(ownerId, id, pageIds);
+            }
+            catch (ArgumentNullException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+            catch (ArgumentException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+
+            return Ok();
+        }
+
+        [HttpPatch]
+        [Route("user/{id:guid}/pages")]
+        public async Task<IActionResult> ReplacePagesAsync([FromRoute(Name = "id")] Guid id, List<PatchScorePage> pages)
+        {
+            var authorizerData = this.GetAuthorizerData();
+            var ownerId = authorizerData.Sub;
+
+            var pageReplacer = _scoreLogicFactory.PageReplacer;
+
+            try
+            {
+                await pageReplacer.ReplacePages(ownerId, id, pages);
+            }
+            catch (ArgumentNullException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+            catch (ArgumentException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+
+            return Ok();
+        }
+
+        [HttpPost]
         [Route("user/{id:guid}/snapshots")]
         public async Task<IActionResult> CreateSnapshotAsync([FromRoute(Name = "id")] Guid id, [FromBody] NewScoreSnapshot snapshot)
         {
