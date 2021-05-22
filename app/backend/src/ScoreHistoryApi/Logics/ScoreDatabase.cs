@@ -1583,7 +1583,7 @@ namespace ScoreHistoryApi.Logics
                                 {
                                     Key = new Dictionary<string, AttributeValue>()
                                     {
-                                        [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(owner + score),
+                                        [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(owner),
                                         [DynamoDbScoreDataPropertyNames.DataId] = new AttributeValue(dataId),
                                     },
                                 },
