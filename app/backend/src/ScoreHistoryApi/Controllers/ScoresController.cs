@@ -229,7 +229,7 @@ namespace ScoreHistoryApi.Controllers
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
 
-            var annotationsAdder = _scoreLogicFactory.AnnotationsAdder;
+            var annotationsAdder = _scoreLogicFactory.AnnotationAdder;
 
             try
             {
@@ -254,7 +254,7 @@ namespace ScoreHistoryApi.Controllers
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
 
-            var annotationsRemover = _scoreLogicFactory.AnnotationsRemover;
+            var annotationsRemover = _scoreLogicFactory.AnnotationRemover;
 
             try
             {
@@ -279,7 +279,7 @@ namespace ScoreHistoryApi.Controllers
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
 
-            var annotationsReplacer = _scoreLogicFactory.AnnotationsReplacer;
+            var annotationsReplacer = _scoreLogicFactory.AnnotationReplacer;
 
             try
             {

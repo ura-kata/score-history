@@ -5,11 +5,11 @@ using ScoreHistoryApi.Models.Scores;
 
 namespace ScoreHistoryApi.Logics.Scores
 {
-    public class ScoreAnnotationsReplacer
+    public class ScoreAnnotationReplacer
     {
         private readonly IScoreDatabase _scoreDatabase;
 
-        public ScoreAnnotationsReplacer(IScoreDatabase scoreDatabase)
+        public ScoreAnnotationReplacer(IScoreDatabase scoreDatabase)
         {
             _scoreDatabase = scoreDatabase;
         }

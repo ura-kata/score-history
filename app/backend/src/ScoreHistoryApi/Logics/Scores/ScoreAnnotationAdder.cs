@@ -6,11 +6,11 @@ using ScoreHistoryApi.Models.Scores;
 
 namespace ScoreHistoryApi.Logics.Scores
 {
-    public class ScoreAnnotationsAdder
+    public class ScoreAnnotationAdder
     {
         private readonly IScoreDatabase _scoreDatabase;
 
-        public ScoreAnnotationsAdder(IScoreDatabase scoreDatabase)
+        public ScoreAnnotationAdder(IScoreDatabase scoreDatabase)
         {
             _scoreDatabase = scoreDatabase;
         }

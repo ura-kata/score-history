@@ -4,11 +4,11 @@ using System.Threading.Tasks;
 
 namespace ScoreHistoryApi.Logics.Scores
 {
-    public class ScoreAnnotationsRemover
+    public class ScoreAnnotationRemover
     {
         private readonly IScoreDatabase _scoreDatabase;
 
-        public ScoreAnnotationsRemover(IScoreDatabase scoreDatabase)
+        public ScoreAnnotationRemover(IScoreDatabase scoreDatabase)
         {
             _scoreDatabase = scoreDatabase;
         }
