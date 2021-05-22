@@ -1466,13 +1466,24 @@ namespace ScoreHistoryApi.Logics
                 data.Annotations.RemoveAt(index);
             }
 
+            foreach (var annotation in data.Annotations)
+            {
+                if (removeHashSet.Contains(annotation.ContentHash))
+                {
+                    removeHashSet.Remove(annotation.ContentHash);
+                }
+            }
+
             var newHash = data.CalcDataHash();
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
             await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, removeIndices, newHash, oldHash, now);
 
-            await RemoveDataAsync(_dynamoDbClient, ScoreDataTableName, owner, score, removeHashSet);
+            if (removeHashSet.Count != 0)
+            {
+                await RemoveDataAsync(_dynamoDbClient, ScoreDataTableName, owner, score, removeHashSet);
+            }
 
             static async Task<(DynamoDbScoreDataV1 data, string hash)> GetAsync(
                 IAmazonDynamoDB client,
