@@ -1,15 +1,15 @@
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ScoreHistoryApi.Models.Objects
+namespace ScoreHistoryApi.Models.ScoreItems
 {
     /// <summary>
-    /// オブジェクトをアップロードしたときの結果情報
+    /// 楽譜のアイテムをアップロードしたときの結果情報
     /// </summary>
     public class UploadedScoreObjectResult
     {
-        [JsonPropertyName("uploadedObjectInfo")]
-        public ScoreObjectInfo ObjectInfo { get; set; }
+        [JsonPropertyName("itemInfo")]
+        public ScoreItemInfo ItemInfo { get; set; }
 
         [BindProperty(Name = "totalSize")]
         public long TotalSize { get; set; }
