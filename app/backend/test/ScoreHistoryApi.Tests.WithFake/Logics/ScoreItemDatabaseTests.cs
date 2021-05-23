@@ -1,12 +1,10 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel.DataCollection;
 using ScoreHistoryApi.Factories;
 using ScoreHistoryApi.Logics;
 using ScoreHistoryApi.Logics.ScoreItemDatabases;
 using Xunit;
 
-// TODO 冪等性が担保されるようにテストを修正する
 namespace ScoreHistoryApi.Tests.WithFake.Logics
 {
     public class ScoreItemDatabaseTests
@@ -18,9 +16,9 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var tableName = "ura-kata-score-history-item";
             var target = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName);
 
-            var ownerId = Guid.Parse("ceb9b868-0b9b-4c8d-be70-fba729b47b77");
-            var scoreId = Guid.Parse("e7bdb2c7-6b0a-4c4b-8246-0e118f4cc3f2");
-            var itemId = Guid.Parse("056d759e-38f5-4379-8e0e-a787bd666cc0");
+            var ownerId = Guid.Parse("5a56be69-af15-41a1-a879-08b6efd40eef");
+            var scoreId = Guid.Parse("79867694-f52d-406c-b519-9091153cf5d3");
+            var itemId = Guid.Parse("8228a9dd-d752-43f1-be84-31fce6b088d9");
             try
             {
                 await target.InitializeAsync(ownerId);
@@ -28,6 +26,15 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             catch
             {
                 // 初期化のエラーは握りつぶす
+            }
+
+            try
+            {
+                await target.DeleteAsync(ownerId, scoreId, itemId);
+            }
+            catch
+            {
+                // 握りつぶす
             }
 
             var objName = ScoreItemStorageConstant.JpegFileName;
@@ -62,9 +69,9 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var tableName = "ura-kata-score-history-item";
             var target = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName);
 
-            var ownerId = Guid.Parse("2700d519-2b1d-4b3a-b547-62bc0d7bc354");
-            var scoreId = Guid.Parse("2b3d6034-375d-46d5-a82e-8a4d15c77b1e");
-            var itemId = Guid.Parse("bc941740-9f98-41d9-ae97-ec47ef6e7555");
+            var ownerId = Guid.Parse("a585178e-a477-4fb8-8e2a-c385a45c0d08");
+            var scoreId = Guid.Parse("2533ffdd-9624-4c80-979f-95561edf5ed1");
+            var itemId = Guid.Parse("67ff2dbd-c6d4-41c1-a9e5-857b56a09361");
             try
             {
                 await target.InitializeAsync(ownerId);
@@ -105,8 +112,10 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
                 // エラーは握りつぶす
             }
 
-            await target.DeleteAsync(ownerId, itemId);
+            await target.DeleteAsync(ownerId, scoreId, itemId);
 
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await target.GetItemAsync(ownerId, scoreId, itemId));
         }
 
 
@@ -117,21 +126,21 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var tableName = "ura-kata-score-history-item";
             var target = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName);
 
-            var ownerId = Guid.Parse("2700d519-2b1d-4b3a-b547-62bc0d7bc354");
+            var ownerId = Guid.Parse("39b6bf0e-8c39-47ce-bae5-49c557f8d2fa");
 
             var ids = new (Guid scoreId, Guid[] itemIds)[]
             {
-                (Guid.Parse("2b3d6034-375d-46d5-a82e-8a4d15c77b1e"),
+                (Guid.Parse("361aaffb-6151-4bd4-a0a8-06af87a04565"),
                     new[]
                     {
-                        Guid.Parse("bc941740-9f98-41d9-ae97-ec47ef6e7555"),
-                        Guid.Parse("762b92da-66da-4857-99c2-7974c79b7670"),
+                        Guid.Parse("b45282b1-88e0-4079-beaf-583f58879bd9"),
+                        Guid.Parse("d41a3cd5-38a4-45bb-813a-53be5867b4ca"),
                     }),
-                (Guid.Parse("c687be8c-c8c1-42e4-9b1c-caf3ed21c4a0"),
+                (Guid.Parse("a8a5e141-633b-4481-ba50-d14fdde969a7"),
                     new[]
                     {
-                        Guid.Parse("44e1c4e0-59d9-45ff-b38a-bc588c599856"),
-                        Guid.Parse("4d9cf069-1623-410d-84cf-006bbcc78780"),
+                        Guid.Parse("daaea941-c626-4d03-9a2a-adbba45a9437"),
+                        Guid.Parse("a75f6884-ae65-4eb0-91c1-5a65239319c6"),
                     }),
             };
 

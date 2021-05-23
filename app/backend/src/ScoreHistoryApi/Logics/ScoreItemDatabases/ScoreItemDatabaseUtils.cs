@@ -7,7 +7,7 @@ namespace ScoreHistoryApi.Logics.ScoreItemDatabases
 {
     public static class ScoreItemDatabaseUtils
     {
-        public static (Dictionary<string, AttributeValue> items, string owner, string score, string item) CreateDynamoDbValue(ScoreItemDatabaseItemDataBase itemData, DateTimeOffset now)
+        public static (Dictionary<string, AttributeValue> items, string owner, string score, string item, long totalSize) CreateDynamoDbValue(ScoreItemDatabaseItemDataBase itemData, DateTimeOffset now)
         {
             var items = new Dictionary<string, AttributeValue>();
 
@@ -17,11 +17,12 @@ namespace ScoreHistoryApi.Logics.ScoreItemDatabases
             var at = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
 
             items[ScoreItemDatabasePropertyNames.OwnerId] = new AttributeValue(owner);
-            items[ScoreItemDatabasePropertyNames.ItemId] = new AttributeValue(item);
-            items[ScoreItemDatabasePropertyNames.ScoreId] = new AttributeValue(score);
+            items[ScoreItemDatabasePropertyNames.ItemId] = new AttributeValue(score + item);
             items[ScoreItemDatabasePropertyNames.ObjName] = new AttributeValue(itemData.ObjName);
             items[ScoreItemDatabasePropertyNames.Size] = new AttributeValue() {N = itemData.Size.ToString()};
             items[ScoreItemDatabasePropertyNames.At] = new AttributeValue(at);
+
+            var totalSize = itemData.Size;
 
             if ( itemData is ScoreItemDatabaseItemDataImage itemDataImage)
             {
@@ -39,21 +40,13 @@ namespace ScoreHistoryApi.Logics.ScoreItemDatabases
                             {N = itemDataImage.Thumbnail.Size.ToString()},
                     }
                 };
+
+                totalSize += itemDataImage.Thumbnail.Size;
             }
 
-            return (items, owner, score, item);
-        }
+            items[ScoreItemDatabasePropertyNames.TotalSize] = new AttributeValue() {N = totalSize.ToString()};
 
-        public static long GetSize(ScoreItemDatabaseItemDataBase itemData)
-        {
-            long size = itemData.Size;
-
-            if (itemData is ScoreItemDatabaseItemDataImage itemDataImage)
-            {
-                size += itemDataImage.Thumbnail.Size;
-            }
-
-            return size;
+            return (items, owner, score, item, totalSize);
         }
     }
 }
