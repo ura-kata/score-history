@@ -7,7 +7,15 @@ namespace ScoreHistoryApi.Logics.ScoreItemDatabases
 {
     public static class ScoreItemDatabaseUtils
     {
-        public static (Dictionary<string, AttributeValue> items, string owner, string score, string item) CreateDynamoDbValue(ScoreItemDatabaseItemDataBase itemData, DateTimeOffset now)
+        /// <summary>
+        /// DynamoDB のアイテムデータを作成する
+        /// </summary>
+        /// <param name="itemData"></param>
+        /// <param name="now"></param>
+        /// <returns></returns>
+        public static (Dictionary<string, AttributeValue> items,
+            string owner, string score, string item, long totalSize)
+            CreateDynamoDbValue(ScoreItemDatabaseItemDataBase itemData, DateTimeOffset now)
         {
             var items = new Dictionary<string, AttributeValue>();
 
@@ -17,43 +25,97 @@ namespace ScoreHistoryApi.Logics.ScoreItemDatabases
             var at = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
 
             items[ScoreItemDatabasePropertyNames.OwnerId] = new AttributeValue(owner);
-            items[ScoreItemDatabasePropertyNames.ItemId] = new AttributeValue(item);
-            items[ScoreItemDatabasePropertyNames.ScoreId] = new AttributeValue(score);
+            items[ScoreItemDatabasePropertyNames.ItemId] = new AttributeValue(score + item);
             items[ScoreItemDatabasePropertyNames.ObjName] = new AttributeValue(itemData.ObjName);
-            items[ScoreItemDatabasePropertyNames.Size] = new AttributeValue() {N = itemData.Size.ToString()};
+            items[ScoreItemDatabasePropertyNames.Size] = new AttributeValue {N = itemData.Size.ToString()};
             items[ScoreItemDatabasePropertyNames.At] = new AttributeValue(at);
 
-            if ( itemData is ScoreItemDatabaseItemDataImage itemDataImage)
+            var totalSize = itemData.Size;
+
+            if (itemData is ScoreItemDatabaseItemDataImage itemDataImage)
             {
                 items[ScoreItemDatabasePropertyNames.Type] = new AttributeValue(ScoreItemDatabaseConstant.TypeImage);
 
                 items[ScoreItemDatabasePropertyNames.OrgName] = new AttributeValue(itemDataImage.OrgName);
 
-                items[ScoreItemDatabasePropertyNames.Thumbnail] = new AttributeValue()
+                items[ScoreItemDatabasePropertyNames.Thumbnail] = new AttributeValue
                 {
-                    M = new Dictionary<string, AttributeValue>()
+                    M = new Dictionary<string, AttributeValue>
                     {
                         [ScoreItemDatabasePropertyNames.ThumbnailPropertyNames.ObjName] =
                             new AttributeValue(itemDataImage.Thumbnail.ObjName),
-                        [ScoreItemDatabasePropertyNames.ThumbnailPropertyNames.Size] = new AttributeValue()
-                            {N = itemDataImage.Thumbnail.Size.ToString()},
+                        [ScoreItemDatabasePropertyNames.ThumbnailPropertyNames.Size] = new AttributeValue
+                            {N = itemDataImage.Thumbnail.Size.ToString()}
+                    }
+                };
+
+                totalSize += itemDataImage.Thumbnail.Size;
+            }
+
+            items[ScoreItemDatabasePropertyNames.TotalSize] = new AttributeValue {N = totalSize.ToString()};
+
+            return (items, owner, score, item, totalSize);
+        }
+
+        /// <summary>
+        ///     DynamoDB のアイテムを変換する
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public static ScoreItemDatabaseItemDataBase ConvertFromDynamoDbValue(Dictionary<string, AttributeValue> item)
+        {
+            var ownerIdValue = item[ScoreItemDatabasePropertyNames.OwnerId];
+            var itemIdValue = item[ScoreItemDatabasePropertyNames.ItemId];
+            var sizeValue = item[ScoreItemDatabasePropertyNames.Size];
+
+            var atValue = item[ScoreItemDatabasePropertyNames.At];
+
+            var typeValue = item[ScoreItemDatabasePropertyNames.Type];
+
+            var objNameValue = item[ScoreItemDatabasePropertyNames.ObjName];
+
+            var totalSizeValue = item[ScoreItemDatabasePropertyNames.TotalSize];
+
+            ScoreItemDatabaseItemDataBase result = default;
+
+            if (typeValue.S == ScoreItemDatabaseConstant.TypeImage)
+            {
+                var orgNameValue = item[ScoreItemDatabasePropertyNames.OrgName];
+                var thumbnailValue = item[ScoreItemDatabasePropertyNames.Thumbnail];
+
+                var thumbObjNameValue =
+                    thumbnailValue.M[ScoreItemDatabasePropertyNames.ThumbnailPropertyNames.ObjName];
+                var thumbSizeValue =
+                    thumbnailValue.M[ScoreItemDatabasePropertyNames.ThumbnailPropertyNames.Size];
+
+                result = new ScoreItemDatabaseItemDataImage
+                {
+                    OrgName = orgNameValue.S,
+                    Thumbnail = new ScoreItemDatabaseItemDataImageThumbnail
+                    {
+                        ObjName = thumbObjNameValue.S,
+                        Size = long.Parse(thumbSizeValue.N)
                     }
                 };
             }
-
-            return (items, owner, score, item);
-        }
-
-        public static long GetSize(ScoreItemDatabaseItemDataBase itemData)
-        {
-            long size = itemData.Size;
-
-            if (itemData is ScoreItemDatabaseItemDataImage itemDataImage)
+            else
             {
-                size += itemDataImage.Thumbnail.Size;
+                throw new InvalidOperationException();
             }
 
-            return size;
+            result.Size = long.Parse(sizeValue.N);
+            result.TotalSize = long.Parse(totalSizeValue.N);
+            result.OwnerId = ScoreDatabaseUtils.ConvertToGuid(ownerIdValue.S);
+
+            var scoreBase64 = itemIdValue.S.Substring(0, ScoreItemDatabaseConstant.ScoreIdLength);
+            var itemBase64 = itemIdValue.S.Substring(ScoreItemDatabaseConstant.ScoreIdLength);
+
+            result.ScoreId = ScoreDatabaseUtils.ConvertToGuid(scoreBase64);
+            result.ItemId = ScoreDatabaseUtils.ConvertToGuid(itemBase64);
+            result.ObjName = objNameValue.S;
+
+            return result;
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
+using Amazon.Lambda.Serialization.SystemTextJson.Converters;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -17,6 +18,7 @@ using Microsoft.Extensions.Logging;
 using ScoreHistoryApi.Factories;
 using ScoreHistoryApi.JsonConverters;
 using ScoreHistoryApi.Logics;
+using ScoreHistoryApi.Logics.ScoreItems;
 using ScoreHistoryApi.Logics.Scores;
 
 namespace ScoreHistoryApi
@@ -43,6 +45,7 @@ namespace ScoreHistoryApi
                 new S3ClientFactory().SetRegionSystemName(Configuration[EnvironmentNames.ScoreS3RegionSystemName])
                     .Create());
             services.AddScoped<ScoreLogics>();
+            services.AddScoped<ScoreItemLogics>();
 
             services.AddCors(options =>
             {
