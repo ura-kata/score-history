@@ -476,8 +476,10 @@ namespace ScoreHistoryApi.Logics
                 };
                 try
                 {
-                    await client.BatchWriteItemAsync(request);
+                    var response = await client.BatchWriteItemAsync(request);
+
                     // TODO 失敗したときのリトライ処理を実装する
+                    // response.UnprocessedItems
                 }
                 catch (Exception ex)
                 {
