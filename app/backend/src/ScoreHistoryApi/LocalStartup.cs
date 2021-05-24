@@ -2,6 +2,7 @@ using System;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Amazon.Lambda.Serialization.SystemTextJson.Converters;
 using Amazon.Runtime;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -12,6 +13,7 @@ using Microsoft.OpenApi.Models;
 using ScoreHistoryApi.Factories;
 using ScoreHistoryApi.JsonConverters;
 using ScoreHistoryApi.Logics;
+using ScoreHistoryApi.Logics.ScoreItems;
 using ScoreHistoryApi.Logics.Scores;
 
 namespace ScoreHistoryApi
@@ -39,6 +41,7 @@ namespace ScoreHistoryApi
                     .SetCredentials(Configuration[EnvironmentNames.ScoreS3AccessKey],Configuration[EnvironmentNames.ScoreS3SecretKey])
                     .Create());
             services.AddScoped<ScoreLogics>();
+            services.AddScoped<ScoreItemLogics>();
 
             services.AddControllers()
                 .AddJsonOptions(option =>
