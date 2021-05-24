@@ -79,12 +79,12 @@ namespace ScoreHistoryApi.Controllers
         /// <summary>
         /// ログインユーザーの指定されたオブジェクトを削除する
         /// </summary>
-        /// <param name="itemIds"></param>
+        /// <param name="deletingScoreItems"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
         [HttpDelete]
         [Route("user")]
-        public async Task<IActionResult> DeleteObject([FromBody] List<Guid> itemIds)
+        public async Task<IActionResult> DeleteObject([FromBody] DeletingScoreItems deletingScoreItems)
         {
             var auth = this.GetAuthorizerData();
             var ownerId = auth.Sub;
@@ -93,7 +93,7 @@ namespace ScoreHistoryApi.Controllers
 
             try
             {
-                await deleter.DeleteItemsAsync(ownerId, itemIds);
+                await deleter.DeleteItemsAsync(ownerId, deletingScoreItems);
                 return Ok();
             }
             catch

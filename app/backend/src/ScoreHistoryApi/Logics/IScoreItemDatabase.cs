@@ -37,6 +37,14 @@ namespace ScoreHistoryApi.Logics
         /// 楽譜のアイテムを削除する
         /// </summary>
         /// <param name="ownerId"></param>
+        /// <param name="deletingScoreItems"></param>
+        /// <returns></returns>
+        Task DeleteItemsAsync(Guid ownerId, DeletingScoreItems deletingScoreItems);
+
+        /// <summary>
+        /// 楽譜のアイテムを削除する
+        /// </summary>
+        /// <param name="ownerId"></param>
         /// <returns></returns>
         Task DeleteOwnerItemsAsync(Guid ownerId);
 
