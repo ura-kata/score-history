@@ -32,7 +32,7 @@ namespace ScoreHistoryApi.Controllers
         /// <exception cref="NotImplementedException"></exception>
         [HttpGet]
         [Route("user")]
-        public async Task<ActionResult<UserItemsInfo>> GetUserObjects()
+        public async Task<ActionResult<UserItemsInfoApiResponse>> GetUserObjects()
         {
             var auth = this.GetAuthorizerData();
             var ownerId = auth.Sub;
@@ -41,7 +41,8 @@ namespace ScoreHistoryApi.Controllers
 
             try
             {
-                return await getter.GetUserItemsInfoAsync(ownerId);
+                var itemsInfo = await getter.GetUserItemsInfoAsync(ownerId);
+                return new UserItemsInfoApiResponse(itemsInfo);
             }
             catch
             {
