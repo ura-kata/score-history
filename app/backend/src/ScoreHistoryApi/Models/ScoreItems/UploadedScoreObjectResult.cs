@@ -10,11 +10,5 @@ namespace ScoreHistoryApi.Models.ScoreItems
     {
         [JsonPropertyName("itemInfo")]
         public ScoreImageItemInfo ImageItemInfo { get; set; }
-
-        [BindProperty(Name = "totalSize")]
-        public long TotalSize { get; set; }
-
-        [BindProperty(Name = "emptySize")]
-        public long EmptySize { get; set; }
     }
 }

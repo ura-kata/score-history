@@ -57,7 +57,7 @@ namespace ScoreHistoryApi.Controllers
         /// <exception cref="NotImplementedException"></exception>
         [HttpPost]
         [Route("user")]
-        public async Task<ActionResult<UploadedScoreObjectResult>> UploadObject([FromBody] UploadingScoreItem uploadingScoreItem)
+        public async Task<ActionResult<UploadedScoreObjectResult>> UploadObject([FromForm] UploadingScoreItem uploadingScoreItem)
         {
             // File Signature を確認
 
@@ -67,8 +67,7 @@ namespace ScoreHistoryApi.Controllers
             var adder = _scoreItemLogics.Adder;
             try
             {
-                await adder.AddAsync(ownerId, uploadingScoreItem);
-                return Ok();
+                return await adder.AddAsync(ownerId, uploadingScoreItem);
             }
             catch
             {

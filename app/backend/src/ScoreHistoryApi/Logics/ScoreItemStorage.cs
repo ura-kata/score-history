@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Microsoft.Extensions.Configuration;
 using ScoreHistoryApi.Logics.ScoreObjectStorages;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
@@ -90,8 +91,15 @@ namespace ScoreHistoryApi.Logics
         private readonly IScoreQuota _quota;
         private readonly IAmazonS3 _s3Client;
 
-        public ScoreItemStorage(IScoreQuota quota, IAmazonS3 s3Client)
+        public ScoreItemStorage(IScoreQuota quota, IAmazonS3 s3Client, IConfiguration configuration)
         {
+            var bucketName = configuration[EnvironmentNames.ScoreDataS3Bucket];
+            if (string.IsNullOrWhiteSpace(bucketName))
+            {
+                throw new InvalidOperationException($"'{EnvironmentNames.ScoreDataS3Bucket}' is not found.");
+            }
+
+            BucketName = bucketName;
             _quota = quota;
             _s3Client = s3Client;
         }
