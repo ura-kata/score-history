@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using ScoreHistoryApi.Logics.ScoreItemDatabases;
+using ScoreHistoryApi.Models.ScoreItems;
 
 namespace ScoreHistoryApi.Logics
 {
@@ -47,5 +48,14 @@ namespace ScoreHistoryApi.Logics
         /// <param name="itemId"></param>
         /// <returns></returns>
         Task<ScoreItemDatabaseItemDataBase> GetItemAsync(Guid ownerId, Guid scoreId, Guid itemId);
+
+
+        /// <summary>
+        /// owner の楽譜のアイテムを全て取得する
+        /// </summary>
+        /// <param name="ownerId"></param>
+        /// <returns></returns>
+        Task<ScoreItemDatabaseItemDataBase[]> GetItemsAsync(Guid ownerId);
+
     }
 }

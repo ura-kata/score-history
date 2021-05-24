@@ -441,6 +441,74 @@ namespace ScoreHistoryApi.Logics
             }
         }
 
+        public async Task<ScoreItemDatabaseItemDataBase[]> GetItemsAsync(Guid ownerId)
+        {
+             var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+
+            return await GetAsync(_dynamoDbClient, TableName, owner);
+
+            static async Task<ScoreItemDatabaseItemDataBase[]> GetAsync(IAmazonDynamoDB client, string tableName, string owner)
+            {
+                var request = new QueryRequest()
+                {
+                    TableName = tableName,
+                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    {
+                        ["#owner"] = ScoreItemDatabasePropertyNames.OwnerId,
+                    },
+                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                    {
+                        [":owner"] = new AttributeValue(owner),
+                    },
+                    KeyConditionExpression = "#owner = :owner",
+                    Limit = 500,
+                };
+
+                try
+                {
+                    var response = await client.QueryAsync(request);
+
+                    var items = response.Items.ToList();
+
+                    while(0 < response.LastEvaluatedKey?.Count)
+                    {
+                        var nextRequest = new QueryRequest()
+                        {
+                            TableName = tableName,
+                            ExpressionAttributeNames = new Dictionary<string, string>()
+                            {
+                                ["#owner"] = ScoreItemDatabasePropertyNames.OwnerId,
+                                ["#item"] = ScoreItemDatabasePropertyNames.ItemId,
+                            },
+                            ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                            {
+                                [":owner"] = new AttributeValue(owner),
+                                [":item"] = new AttributeValue(response
+                                    .LastEvaluatedKey[ScoreItemDatabasePropertyNames.ItemId].S),
+                            },
+                            KeyConditionExpression = "#owner = :owner and :item < #item",
+                            Limit = 500,
+                        };
+
+                        var nextResponse = await client.QueryAsync(nextRequest);
+                        items.AddRange(nextResponse.Items);
+
+                        response = nextResponse;
+                    }
+
+                    return items
+                        .Where(x=>x[ScoreItemDatabasePropertyNames.ItemId].S != ScoreItemDatabaseConstant.ItemIdSummary)
+                        .Select(ScoreItemDatabaseUtils.ConvertFromDynamoDbValue)
+                        .ToArray();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    throw;
+                }
+            }
+        }
+
 
         public async Task DeleteItemsAsync(string owner, (string item, long size)[] itemAndSizeList)
         {

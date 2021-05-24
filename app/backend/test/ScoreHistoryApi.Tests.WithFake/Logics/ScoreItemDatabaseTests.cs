@@ -1,14 +1,24 @@
 using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using ScoreHistoryApi.Factories;
 using ScoreHistoryApi.Logics;
 using ScoreHistoryApi.Logics.ScoreItemDatabases;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace ScoreHistoryApi.Tests.WithFake.Logics
 {
     public class ScoreItemDatabaseTests
     {
+        private readonly ITestOutputHelper _outputHelper;
+
+        public ScoreItemDatabaseTests(ITestOutputHelper outputHelper)
+        {
+            _outputHelper = outputHelper;
+        }
+
         [Fact]
         public async Task CreateAsyncTest()
         {
@@ -193,6 +203,121 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
 
             await target.DeleteOwnerItemsAsync(ownerId);
 
+        }
+
+
+        [Fact]
+        public async Task GetItemsAsyncTest()
+        {
+            var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
+            var tableName = "ura-kata-score-history-item";
+            var target = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName);
+
+            var ownerId = Guid.Parse("6f76e99b-6835-4067-b4ff-22d3eb1d1c33");
+
+            var ids = new (Guid scoreId, Guid[] itemIds)[]
+            {
+                (Guid.Parse("a4442515-24b2-490d-bb5b-7446e1be1e0b"),
+                    Enumerable
+                        .Range(0,1000)
+                        .Select(x=>new Guid(x.ToString("00000000000000000000000000000000")))
+                        .ToArray()),
+                (Guid.Parse("9b318593-66de-45c4-a9b3-f1f5a05bb52f"),
+                    Enumerable
+                        .Range(0,1000)
+                        .Select(x=>new Guid(x.ToString("00000000000000000000000000000000")))
+                        .ToArray()),
+            };
+
+            try
+            {
+                _outputHelper.WriteLine($"{nameof(target.InitializeAsync)}: start");
+                var sw = Stopwatch.StartNew();
+                await target.InitializeAsync(ownerId);
+                _outputHelper.WriteLine($"{nameof(target.InitializeAsync)}: {sw.Elapsed.TotalMilliseconds} msec");
+            }
+            catch
+            {
+                // 初期化のエラーは握りつぶす
+            }
+
+            try
+            {
+                _outputHelper.WriteLine($"{nameof(target.DeleteOwnerItemsAsync)}: start");
+                var sw = Stopwatch.StartNew();
+                await target.DeleteOwnerItemsAsync(ownerId);
+                _outputHelper.WriteLine($"{nameof(target.DeleteOwnerItemsAsync)}: {sw.Elapsed.TotalMilliseconds} msec");
+            }
+            catch
+            {
+                // エラーは握りつぶす
+            }
+
+            var objName = ScoreItemStorageConstant.JpegFileName;
+            var orgName = "origin_image.jpg";
+            var size = 1024 * 1;
+
+            var thumbnailObjName = ScoreItemStorageConstant.ThumbnailFileName;
+            var thumbnailSize = 1;
+
+
+            try
+            {
+                _outputHelper.WriteLine($"{nameof(target.CreateAsync)}: start");
+                var sw = Stopwatch.StartNew();
+                int i = 0;
+                foreach (var (scoreId, itemIds) in ids)
+                {
+                    foreach (var itemId in itemIds)
+                    {
+                        var itemData = new ScoreItemDatabaseItemDataImage()
+                        {
+                            OwnerId = ownerId,
+                            ScoreId = scoreId,
+                            ItemId = itemId,
+                            ObjName = objName,
+                            OrgName = orgName,
+                            Size = size,
+                            Thumbnail = new ScoreItemDatabaseItemDataImageThumbnail()
+                            {
+                                ObjName = thumbnailObjName,
+                                Size = thumbnailSize,
+                            }
+                        };
+
+                        await target.CreateAsync(itemData);
+
+                        if ((++i) % 200 == 0)
+                        {
+                            _outputHelper.WriteLine($"{i} / 2000");
+                        }
+                    }
+                }
+                _outputHelper.WriteLine($"{nameof(target.CreateAsync)}: {sw.Elapsed.TotalMilliseconds} msec");
+            }
+            catch
+            {
+                // エラーは握りつぶす
+            }
+
+            var sw2 = Stopwatch.StartNew();
+            _outputHelper.WriteLine($"{nameof(target.GetItemsAsync)}: start");
+            var data = await target.GetItemsAsync(ownerId);
+            _outputHelper.WriteLine($"{nameof(target.GetItemsAsync)}: {sw2.Elapsed.TotalMilliseconds} msec");
+
+            Assert.Equal(2000, data.Length);
+
+            var expectedIds = ids
+                .SelectMany(x => x.itemIds.Select(y => (s:x.scoreId,i: y)))
+                .OrderBy(x => x)
+                .ToArray();
+
+            var actualIds = data
+                .Select(x => (s: x.ScoreId, i: x.ItemId))
+                .OrderBy(x=>x)
+                .ToArray();
+
+            Assert.Equal(expectedIds, actualIds);
         }
     }
 }

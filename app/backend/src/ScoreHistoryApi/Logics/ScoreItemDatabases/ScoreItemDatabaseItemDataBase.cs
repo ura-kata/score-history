@@ -9,5 +9,6 @@ namespace ScoreHistoryApi.Logics.ScoreItemDatabases
         public Guid ItemId { get; set; }
         public string ObjName { get; set; }
         public long Size { get; set; }
+        public long TotalSize { get; set; }
     }
 }

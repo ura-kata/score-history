@@ -9,7 +9,7 @@ namespace ScoreHistoryApi.Models.ScoreItems
     public class UploadedScoreObjectResult
     {
         [JsonPropertyName("itemInfo")]
-        public ScoreItemInfo ItemInfo { get; set; }
+        public ScoreImageItemInfo ImageItemInfo { get; set; }
 
         [BindProperty(Name = "totalSize")]
         public long TotalSize { get; set; }
