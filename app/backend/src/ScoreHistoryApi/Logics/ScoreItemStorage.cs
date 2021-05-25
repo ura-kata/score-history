@@ -93,10 +93,10 @@ namespace ScoreHistoryApi.Logics
 
         public ScoreItemStorage(IScoreQuota quota, IAmazonS3 s3Client, IConfiguration configuration)
         {
-            var bucketName = configuration[EnvironmentNames.ScoreDataS3Bucket];
+            var bucketName = configuration[EnvironmentNames.ScoreItemS3Bucket];
             if (string.IsNullOrWhiteSpace(bucketName))
             {
-                throw new InvalidOperationException($"'{EnvironmentNames.ScoreDataS3Bucket}' is not found.");
+                throw new InvalidOperationException($"'{EnvironmentNames.ScoreItemS3Bucket}' is not found.");
             }
 
             BucketName = bucketName;

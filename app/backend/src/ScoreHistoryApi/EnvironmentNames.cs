@@ -10,9 +10,9 @@ namespace ScoreHistoryApi
 
         public const string ScoreItemDynamoDbTableName = "ScoreItemDynamoDbTableName";
         public const string ScoreDynamoDbTableName  = "ScoreDynamoDbTableName";
-        public const string ScoreDataDynamoDbTableName = "ScoreDataDynamoDbTableName";
+        public const string ScoreLargeDataDynamoDbTableName = "ScoreLargeDataDynamoDbTableName";
 
-        public const string ScoreDataS3Bucket = "ScoreDataS3Bucket";
+        public const string ScoreItemS3Bucket = "ScoreItemS3Bucket";
         public const string ScoreDataSnapshotS3Bucket = "ScoreDataSnapshotS3Bucket";
 
         public const string ScoreDynamoDbRegionSystemName = "ScoreDynamoDbRegionSystemName";
