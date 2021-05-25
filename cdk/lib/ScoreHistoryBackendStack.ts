@@ -56,6 +56,11 @@ if (!SCORE_DYNAMODB_TABLE_NAME) {
 }
 
 export class ScoreHistoryBackendStack extends cdk.Stack {
+  scoreDynamoDbTableArn: string;
+  scoreItemDynamoDbTableArn: string;
+  scoreLargeDataDynamoDbTableArn: string;
+  scoreHistoryBackendScoreDataBucketArn: string;
+  scoreHistoryBackendScoreDataSnapshotBucketArn: string;
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
@@ -65,11 +70,15 @@ export class ScoreHistoryBackendStack extends cdk.Stack {
       SCORE_DYNAMODB_TABLE_NAME
     );
 
+    this.scoreDynamoDbTableArn = scoreDynamoDbTable.tableArn;
+
     const scoreItemDynamoDbTable = new ScoreHistoryBackendScoreItemDynamoDb(
       this,
       'ScoreHistoryBackendScoreItemDynamoDb',
       SCORE_ITEM_DYNAMODB_TABLE_NAME
     );
+
+    this.scoreItemDynamoDbTableArn = scoreItemDynamoDbTable.tableArn;
 
     const scoreLargeDataDynamoDbTable =
       new ScoreHistoryBackendScoreLargeDataDynamoDb(
@@ -78,6 +87,8 @@ export class ScoreHistoryBackendStack extends cdk.Stack {
         SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME
       );
 
+    this.scoreLargeDataDynamoDbTableArn = scoreLargeDataDynamoDbTable.tableArn;
+
     const scoreHistoryBackendScoreDataBucket =
       new ScoreHistoryBackendScoreDataBucket(
         this,
@@ -85,11 +96,17 @@ export class ScoreHistoryBackendStack extends cdk.Stack {
         SCORE_ITEM_S3_BUCKET
       );
 
+    this.scoreHistoryBackendScoreDataBucketArn =
+      scoreHistoryBackendScoreDataBucket.bucketArn;
+
     const scoreHistoryBackendScoreDataSnapshotBucket =
       new ScoreHistoryBackendScoreDataSnapshotBucket(
         this,
         'ScoreHistoryBackendScoreDataSnapshotBucket',
         SCORE_SNAPSHOT_S3_BUCKET
       );
+
+    this.scoreHistoryBackendScoreDataSnapshotBucketArn =
+      scoreHistoryBackendScoreDataSnapshotBucket.bucketArn;
   }
 }

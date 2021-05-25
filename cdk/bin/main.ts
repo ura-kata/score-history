@@ -13,16 +13,35 @@ new ScoreHistoryFrontendStack(app, 'ScoreHistoryFrontendStack', {
   },
 });
 
-new ScoreHistoryApiStack(app, 'ScoreHistoryApiStack', {
-  stackName: 'ura-kata-score-history-api-stack',
-  env: {
-    region: 'ap-northeast-1',
-  },
-});
+const scoreHistoryBackendStack = new ScoreHistoryBackendStack(
+  app,
+  'ScoreHistoryBackendStack',
+  {
+    stackName: 'ura-kata-score-history-backend-stack',
+    env: {
+      region: 'ap-northeast-1',
+    },
+  }
+);
 
-new ScoreHistoryBackendStack(app, 'ScoreHistoryBackendStack', {
-  stackName: 'ura-kata-score-history-backend-stack',
-  env: {
-    region: 'ap-northeast-1',
+new ScoreHistoryApiStack(
+  app,
+  'ScoreHistoryApiStack',
+  {
+    stackName: 'ura-kata-score-history-api-stack',
+    env: {
+      region: 'ap-northeast-1',
+    },
   },
-});
+  {
+    scoreDynamoDbTableArn: scoreHistoryBackendStack.scoreDynamoDbTableArn,
+    scoreItemDynamoDbTableArn:
+      scoreHistoryBackendStack.scoreItemDynamoDbTableArn,
+    scoreLargeDataDynamoDbTableArn:
+      scoreHistoryBackendStack.scoreLargeDataDynamoDbTableArn,
+    scoreHistoryBackendScoreDataBucketArn:
+      scoreHistoryBackendStack.scoreHistoryBackendScoreDataBucketArn,
+    scoreHistoryBackendScoreDataSnapshotBucketArn:
+      scoreHistoryBackendStack.scoreHistoryBackendScoreDataSnapshotBucketArn,
+  }
+);

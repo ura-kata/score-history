@@ -1,13 +1,23 @@
+import { Effect, PolicyStatement } from '@aws-cdk/aws-iam';
 import { Function, Runtime, Code } from '@aws-cdk/aws-lambda';
-import { Construct } from '@aws-cdk/core';
+import { Construct, Duration } from '@aws-cdk/core';
 import * as path from 'path';
+
+export interface ScoreHistoryApiFunctionProps {
+  scoreDynamoDbTableArn: string;
+  scoreItemDynamoDbTableArn: string;
+  scoreLargeDataDynamoDbTableArn: string;
+  scoreHistoryBackendScoreDataBucketArn: string;
+  scoreHistoryBackendScoreDataSnapshotBucketArn: string;
+}
 
 export class ScoreHistoryApiFunction extends Function {
   constructor(
     scope: Construct,
     id: string,
     functionName: string,
-    environment?: { [key: string]: string }
+    environment: { [key: string]: string },
+    props: ScoreHistoryApiFunctionProps
   ) {
     super(scope, id, {
       functionName: functionName,
@@ -15,12 +25,34 @@ export class ScoreHistoryApiFunction extends Function {
       runtime: Runtime.DOTNET_CORE_3_1,
       handler:
         'ScoreHistoryApi::ScoreHistoryApi.LambdaEntryPoint::FunctionHandlerAsync',
-      code: Code.fromAsset(
-        path.join(
-          __dirname,
-          '../../app/backend/build'
-        )
-      ),
+      code: Code.fromAsset(path.join(__dirname, '../../app/backend/build')),
+      memorySize: 512,
+      timeout: Duration.seconds(60),
     });
+
+    this.addToRolePolicy(
+      new PolicyStatement({
+        effect: Effect.ALLOW,
+        resources: [
+          props.scoreDynamoDbTableArn,
+          props.scoreItemDynamoDbTableArn,
+          props.scoreLargeDataDynamoDbTableArn,
+        ],
+        actions: ['dynamodb:*'],
+      })
+    );
+
+    this.addToRolePolicy(
+      new PolicyStatement({
+        effect: Effect.ALLOW,
+        resources: [
+          props.scoreHistoryBackendScoreDataBucketArn,
+          props.scoreHistoryBackendScoreDataBucketArn + '/*',
+          props.scoreHistoryBackendScoreDataSnapshotBucketArn,
+          props.scoreHistoryBackendScoreDataSnapshotBucketArn + '/*',
+        ],
+        actions: ['s3:*'],
+      })
+    );
   }
 }

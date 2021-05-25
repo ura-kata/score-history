@@ -26,8 +26,85 @@ const URA_KATA_SCORE_HISTORY_API_STAGE_NAME = process.env
 const URA_KATA_SCORE_HISTORY_API_CORS_ORIGINS = process.env
   .URA_KATA_SCORE_HISTORY_API_CORS_ORIGINS as string;
 
+/** 楽譜データを格納する DynamoDB のテーブル */
+const SCORE_DYNAMODB_TABLE_NAME = process.env
+  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_DYNAMODB_TABLE_NAME as string;
+
+if (!SCORE_DYNAMODB_TABLE_NAME) {
+  throw new Error(
+    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_DYNAMODB_TABLE_NAME' is not found."
+  );
+}
+/** 楽譜アイテムデータのメタ情報を格納する DynamoDB のテーブル */
+const SCORE_ITEM_DYNAMODB_TABLE_NAME = process.env
+  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_DYNAMODB_TABLE_NAME as string;
+
+if (!SCORE_DYNAMODB_TABLE_NAME) {
+  throw new Error(
+    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_DYNAMODB_TABLE_NAME' is not found."
+  );
+}
+/** 楽譜データの大きいデータを格納する DynamoDB のテーブル */
+const SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME = process.env
+  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME as string;
+
+if (!SCORE_DYNAMODB_TABLE_NAME) {
+  throw new Error(
+    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME' is not found."
+  );
+}
+/** 楽譜のアイテムデータを格納する S3 バケット */
+const SCORE_ITEM_S3_BUCKET = process.env
+  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_S3_BUCKET as string;
+
+if (!SCORE_DYNAMODB_TABLE_NAME) {
+  throw new Error(
+    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_S3_BUCKET' is not found."
+  );
+}
+/** 楽譜のスナップショットデータを格納する S3 バケット */
+const SCORE_SNAPSHOT_S3_BUCKET = process.env
+  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_SNAPSHOT_S3_BUCKET as string;
+
+if (!SCORE_DYNAMODB_TABLE_NAME) {
+  throw new Error(
+    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_SNAPSHOT_S3_BUCKET' is not found."
+  );
+}
+/** DynamoDB のリージョン */
+const SCORE_DYNAMODB_REGION_SYSTEM_NAME = process.env
+  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_DYNAMODB_REGION_SYSTEM_NAME as string;
+
+if (!SCORE_DYNAMODB_TABLE_NAME) {
+  throw new Error(
+    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_DYNAMODB_REGION_SYSTEM_NAME' is not found."
+  );
+}
+/** S3 のリージョン */
+const SCORE_S3_REGION_SYSTEM_NAME = process.env
+  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_S3_REGION_SYSTEM_NAME as string;
+
+if (!SCORE_DYNAMODB_TABLE_NAME) {
+  throw new Error(
+    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_S3_REGION_SYSTEM_NAME' is not found."
+  );
+}
+
+export interface ScoreHistoryApiStackProps {
+  scoreDynamoDbTableArn: string;
+  scoreItemDynamoDbTableArn: string;
+  scoreLargeDataDynamoDbTableArn: string;
+  scoreHistoryBackendScoreDataBucketArn: string;
+  scoreHistoryBackendScoreDataSnapshotBucketArn: string;
+}
+
 export class ScoreHistoryApiStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+  constructor(
+    scope: cdk.Construct,
+    id: string,
+    props: cdk.StackProps,
+    stackProps: ScoreHistoryApiStackProps
+  ) {
     super(scope, id, props);
 
     const zoneName = URA_KATA_APP_DOMAIN_NAME;
@@ -73,10 +150,20 @@ export class ScoreHistoryApiStack extends cdk.Stack {
         URA_KATA_CorsOrigins: URA_KATA_SCORE_HISTORY_API_CORS_ORIGINS,
         URA_KATA_CorsHeaders:
           'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,Cookie',
-          URA_KATA_CorsMethods: 'GET,POST,DELETE,PATCH,OPTIONS',
-          URA_KATA_CorsCredentials: 'true',
+        URA_KATA_CorsMethods: 'GET,POST,DELETE,PATCH,OPTIONS',
+        URA_KATA_CorsCredentials: 'true',
         URA_KATA_ApiVersion: '1.0.0',
-      }
+        URA_KATA_ScoreDynamoDbTableName: SCORE_DYNAMODB_TABLE_NAME,
+        URA_KATA_ScoreItemDynamoDbTableName: SCORE_ITEM_DYNAMODB_TABLE_NAME,
+        URA_KATA_ScoreLargeDataDynamoDbTableName:
+          SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME,
+        URA_KATA_ScoreItemS3Bucket: SCORE_ITEM_S3_BUCKET,
+        URA_KATA_ScoreDataSnapshotS3Bucket: SCORE_SNAPSHOT_S3_BUCKET,
+        URA_KATA_ScoreDynamoDbRegionSystemName:
+          SCORE_DYNAMODB_REGION_SYSTEM_NAME,
+        URA_KATA_ScoreS3RegionSystemName: SCORE_S3_REGION_SYSTEM_NAME,
+      },
+      stackProps
     );
 
     const apiStageName = URA_KATA_SCORE_HISTORY_API_STAGE_NAME;
