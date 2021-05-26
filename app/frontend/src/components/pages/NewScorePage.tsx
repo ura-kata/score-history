@@ -56,12 +56,12 @@ const NewScorePage = () => {
     }
 
     try {
-      if (!_userMe?.name) {
+      if (!_userMe?.username) {
         console.log("ログインしてください");
         //window.location.href = loginUrl;
         return;
       }
-      const owner = _userMe.name;
+      const owner = _userMe.username;
       const newScoreData: NewScoreData = {
         owner: owner,
         scoreName: scoreName,

@@ -62,7 +62,7 @@ const AppBarIcons = (props: AppBarIconsProps)=>{
           color="inherit"
           startIcon={<AccountCircle />}
         >
-          {_userMe?.name}
+          {_userMe?.username}
         </Button>
       </div>
       <div className={classes.sectionMobile}>
