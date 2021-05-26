@@ -68,5 +68,10 @@ namespace ScoreHistoryApi.Logics.Scores
 
         public ScorePageReplacer PageReplacer =>
             new ScorePageReplacer(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+
+        public ScoreAccessSetter AccessSetter => new ScoreAccessSetter(
+            new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration),
+            new ScoreItemStorage(_scoreQuota, _s3Client, _configuration),
+            new ScoreSnapshotStorage(_s3Client, _configuration));
     }
 }
