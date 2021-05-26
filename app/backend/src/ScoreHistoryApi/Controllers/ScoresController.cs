@@ -436,6 +436,36 @@ namespace ScoreHistoryApi.Controllers
             }
         }
 
+
+        [HttpPatch]
+        [Route("user/{scoreId:guid}/access")]
+        public async Task<IActionResult> SetAccessAsync([FromRoute(Name = "id")] Guid scoreId, PatchScoreAccess access)
+        {
+            var authorizerData = this.GetAuthorizerData();
+            var ownerId = authorizerData.Sub;
+
+            var accessSetter = _scoreLogics.AccessSetter;
+
+            try
+            {
+                await accessSetter.SetAccessAsync(ownerId, scoreId, access);
+            }
+            catch (ArgumentNullException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+            catch (ArgumentException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+
+            return Ok();
+        }
+
         #endregion
 
         #region owner
