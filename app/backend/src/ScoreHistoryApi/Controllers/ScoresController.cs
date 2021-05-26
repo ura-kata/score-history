@@ -439,7 +439,7 @@ namespace ScoreHistoryApi.Controllers
 
         [HttpPatch]
         [Route("user/{scoreId:guid}/access")]
-        public async Task<IActionResult> SetAccessAsync([FromRoute(Name = "id")] Guid scoreId, PatchScoreAccess access)
+        public async Task<IActionResult> SetAccessAsync([FromRoute(Name = "scoreId")] Guid scoreId, PatchScoreAccess access)
         {
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
