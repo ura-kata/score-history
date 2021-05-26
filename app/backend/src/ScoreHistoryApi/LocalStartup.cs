@@ -39,6 +39,7 @@ namespace ScoreHistoryApi
                 new S3ClientFactory()
                     .SetEndpointUrl(new Uri(Configuration[EnvironmentNames.ScoreS3EndpointUrl]))
                     .SetCredentials(Configuration[EnvironmentNames.ScoreS3AccessKey],Configuration[EnvironmentNames.ScoreS3SecretKey])
+                    .SetUseMinio(true)
                     .Create());
             services.AddScoped<ScoreLogics>();
             services.AddScoped<ScoreItemLogics>();

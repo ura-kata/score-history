@@ -3,6 +3,7 @@ using System.Net;
 using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
+using ScoreHistoryApi.Logics;
 
 namespace ScoreHistoryApi.Factories
 {
@@ -37,6 +38,8 @@ namespace ScoreHistoryApi.Factories
             }
         }
 
+        public bool UseMinio { get; set; } = false;
+
         public AWSCredentials Credentials { get; set; }
 
         public S3ClientFactory SetRegionSystemName(string regionSystemName)
@@ -54,6 +57,12 @@ namespace ScoreHistoryApi.Factories
         public S3ClientFactory SetCredentials(AWSCredentials credentials)
         {
             Credentials = credentials;
+            return this;
+        }
+
+        public S3ClientFactory SetUseMinio(bool useMinio)
+        {
+            UseMinio = useMinio;
             return this;
         }
 
@@ -78,6 +87,10 @@ namespace ScoreHistoryApi.Factories
                 {
                     RegionEndpoint = region
                 };
+
+                if (UseMinio)
+                    return new MinioClient(config);
+
                 return new AmazonS3Client(config);
             }
 
@@ -92,10 +105,16 @@ namespace ScoreHistoryApi.Factories
 
                 if (Credentials is null)
                 {
+                    if (UseMinio)
+                        return new MinioClient(config);
+
                     return new AmazonS3Client(config);
                 }
                 else
                 {
+                    if (UseMinio)
+                        return new MinioClient(Credentials, config);
+
                     return new AmazonS3Client(Credentials, config);
                 }
             }
