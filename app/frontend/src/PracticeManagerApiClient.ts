@@ -241,7 +241,7 @@ export default class PracticeManagerApiClient {
   }
 
   async getVersion(): Promise<string> {
-    const url = new URL("api/version", this.baseUrl);
+    const url = new URL("version", this.baseUrl);
 
     try {
       const response = await fetch(url.href, {
