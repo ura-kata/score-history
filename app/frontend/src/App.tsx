@@ -12,6 +12,7 @@ import ScoreDetailPage from "./components/pages/ScoreDetailPage";
 import EditScorePropertyPage from "./components/pages/EditScorePropertyPage";
 import UpdateScorePagePage from "./components/pages/UpdateScorePagePage";
 import { HomeActionType } from "./PathCreator";
+import MainPage from "./components/pages/MainPage";
 
 const App = () => {
   const [state, dispatch] = useAppReducer();
@@ -33,7 +34,8 @@ const App = () => {
       <AppContextDispatch.Provider value={dispatch}>
         <Router>
           <Switch>
-            <Route path={["/", "/home/"]} component={ScoreListPage} exact />
+            <Route path="/" component={MainPage} />
+            {/* <Route path={["/", "/home/"]} component={ScoreListPage} exact />
             <Route
               path={`/home/:owner?/:scoreName?/${((): HomeActionType =>
                 "edit")()}/`}
@@ -55,7 +57,7 @@ const App = () => {
             <Route path="/new" component={NewScorePage} />
             <Route path="/upload" component={UploadScorePage} />
             <Route path="/display" component={DisplayPage} />
-            <Route path="/api-test" component={ApiTestPage} />
+            <Route path="/api-test" component={ApiTestPage} /> */}
           </Switch>
         </Router>
       </AppContextDispatch.Provider>
