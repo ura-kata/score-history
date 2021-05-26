@@ -10,7 +10,8 @@
     "test": "jest",
     "cdk": "cdk",
     "deploy-api": "cdk deploy ScoreHistoryApiStack",
-    "deploy-backend": "cdk deploy ScoreHistoryBackendStack"
+    "deploy-backend": "cdk deploy ScoreHistoryBackendStack",
+    "build-api": "pwsh ../app/backend/build.ps1"
   },
   "devDependencies": {
     "@aws-cdk/assert": "1.95.1",
