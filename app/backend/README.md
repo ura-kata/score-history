@@ -79,8 +79,8 @@ UUID の Base64 エンコードは 24 byte
 ```json
 [
   {
-    "owner_id": "68yjpWHe5EOEnN6vv3UL1w==",
-    "score_id": "summary",
+    "owner": "68yjpWHe5EOEnN6vv3UL1w==",
+    "score": "summary",
     "score_count": 1,
     "socres":["a62Xnv7FbkqPJQsmW1kBeg=="]
   },

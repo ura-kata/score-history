@@ -32,9 +32,9 @@ namespace ScoreHistoryApi.Logics
                 throw new InvalidOperationException($"'{EnvironmentNames.ScoreDynamoDbTableName}' is not found.");
             ScoreTableName = tableName;
 
-            var scoreDataTableName = configuration[EnvironmentNames.ScoreDataDynamoDbTableName];
+            var scoreDataTableName = configuration[EnvironmentNames.ScoreLargeDataDynamoDbTableName];
             if (string.IsNullOrWhiteSpace(scoreDataTableName))
-                throw new InvalidOperationException($"'{EnvironmentNames.ScoreDataDynamoDbTableName}' is not found.");
+                throw new InvalidOperationException($"'{EnvironmentNames.ScoreLargeDataDynamoDbTableName}' is not found.");
             ScoreDataTableName = scoreDataTableName;
 
             _quota = quota;
