@@ -1,4 +1,5 @@
 import { colors, createStyles, makeStyles, Theme } from "@material-ui/core";
+import ScoreListContent from "../organisms/ScoreListContent";
 import MainTemplate from "../templates/MainTemplate";
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -9,11 +10,11 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       flexWrap: "wrap",
     },
-    item: {
+    navi: {
       height: "100px",
-      width: "100px",
-      backgroundColor: colors.green[200],
+      width: "100%",
     },
+    content: {},
   })
 );
 
@@ -24,11 +25,7 @@ export default function MainPage(props: MainPageProps) {
   return (
     <MainTemplate>
       <div className={classes.root}>
-        {[...new Array(100)].map((_, index) => (
-          <div key={index} className={classes.item}>
-            aaaaaa
-          </div>
-        ))}
+        <ScoreListContent />
       </div>
     </MainTemplate>
   );

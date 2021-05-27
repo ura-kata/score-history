@@ -1,33 +1,34 @@
 import { colors, createStyles, makeStyles, Theme } from "@material-ui/core";
+import Copyright from "../atoms/Copyright";
+import React from "react";
+import MainAppBar from "../organisms/MainAppBar";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
-      minHeight: "100%",
       width: "100%",
+      backgroundColor: colors.blueGrey[100],
     },
     appBar: {
       height: "50px",
       width: "100%",
-      backgroundColor: colors.grey[500],
       position: "sticky",
-      top: 0,
-      display: "flex",
     },
-    appTitle: {
-      height: "100%",
-      width: "200px",
-      backgroundColor: colors.blue[200],
-    },
-    appButtonGroup: {
-      height: "100%",
-      width: "calc(100% - 200px)",
-      backgroundColor: colors.amber[200],
+    contentContainer: {
+      width: "100%",
+      minHeight: "calc(100vh - 100px)",
     },
     content: {
-      minHeight: "calc(100% - 50px)",
       width: "100%",
       backgroundColor: colors.red[200],
+    },
+    footer: {
+      height: "50px",
+      width: "100%",
+      backgroundColor: colors.green[500],
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
     },
   })
 );
@@ -44,12 +45,14 @@ export default function MainTemplate(props: MainTemplateProps) {
   return (
     <div className={classes.root}>
       <div className={classes.appBar}>
-        <div className={classes.appTitle}>
-          <h1>タイトル</h1>
-        </div>
-        <div className={classes.appButtonGroup}></div>
+        <MainAppBar />
       </div>
-      <div className={classes.content}>{_children}</div>
+      <div className={classes.contentContainer}>
+        <div className={classes.content}>{_children}</div>
+      </div>
+      <footer className={classes.footer}>
+        <Copyright />
+      </footer>
     </div>
   );
 }
