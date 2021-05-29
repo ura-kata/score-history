@@ -5,7 +5,7 @@ import DisplayPage from "./components/pages/DisplayPage";
 import ApiTestPage from "./components/pages/ApiTestPage";
 
 import useAppReducer, { AppContextDispatch, AppContext } from "./AppContext";
-import { apiClient } from "./global";
+import { accessClient, apiClient, userClient } from "./global";
 import NewScorePage from "./components/pages/NewScorePage";
 import ScoreListPage from "./components/pages/ScoreListPage";
 import ScoreDetailPage from "./components/pages/ScoreDetailPage";
@@ -20,10 +20,13 @@ const App = () => {
   useEffect(() => {
     const f = async () => {
       try {
-        const userMe = await apiClient.getUserMe();
+        var userData = await userClient.getMyData();
         console.log("get user me");
-        dispatch({ type: "updateUserMe", payload: userMe });
-      } catch (err) {}
+        dispatch({ type: "updateUserData", payload: userData });
+      } catch (err) {
+        console.log(err);
+        accessClient.gotoSignInPage("");
+      }
     };
 
     f();
