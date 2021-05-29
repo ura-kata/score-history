@@ -3,6 +3,7 @@ import HashObjectStore from "./HashObjectStore";
 import PracticeManagerApiClient from "./PracticeManagerApiClient";
 import ScoreClient from "./ScoreClient";
 import ScoreClientMock from "./ScoreClientMock";
+import ScoreClientV2 from "./ScoreClientV2";
 import UserClient from "./UserClient";
 
 const API_URI_BASE = process.env.REACT_APP_API_URI_BASE as string;
@@ -23,3 +24,5 @@ export const accessClient = new AccessClient(
 );
 
 export const userClient = new UserClient(API_URI_BASE);
+
+export const scoreClientV2 = new ScoreClientV2(API_URI_BASE);

@@ -15,7 +15,7 @@ export default class ScoreClientV2 {
   constructor(private baseUrl: string) {}
 
   /** 自分の楽譜のサマリーを一覧で取得する */
-  async getMyScoreSummaries(): Promise<ScoreSummary> {
+  async getMyScoreSummaries(): Promise<ScoreSummary[]> {
     const requestUrl = new URL("scores/user", this.baseUrl);
 
     try {

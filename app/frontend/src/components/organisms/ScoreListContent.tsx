@@ -1,10 +1,32 @@
-import { colors, createStyles, makeStyles, Theme } from "@material-ui/core";
+import {
+  Button,
+  colors,
+  createStyles,
+  makeStyles,
+  Theme,
+} from "@material-ui/core";
+import { AddBox } from "@material-ui/icons";
+import { useEffect, useState } from "react";
+import { useHistory } from "react-router";
+import { scoreClientV2 } from "../../global";
+import { ScoreSummary } from "../../ScoreClientV2";
 
 export interface ScoreListContentProps {}
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
+      height: "100%",
+      width: "100%",
+    },
+    controlBar: {
+      height: "40px",
+      width: "100%",
+    },
+    controlButton: {
+      margin: "5px",
+    },
+    itemContainer: {
       height: "100%",
       width: "100%",
       display: "flex",
@@ -20,14 +42,50 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export default function ScoreListContent(props: ScoreListContentProps) {
   const classes = useStyles();
+  const [scoreSummaries, setScoreSummaries] =
+    useState<ScoreSummary[] | undefined>(undefined);
+  const history = useHistory();
+
+  useEffect(() => {
+    const f = async () => {
+      if (scoreSummaries !== undefined) return;
+      try {
+        const scoreSummaries = await scoreClientV2.getMyScoreSummaries();
+        setScoreSummaries(scoreSummaries);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    f();
+  });
+
+  const hanldeNewScore = () => {
+    history.push("/score/new");
+  };
 
   return (
     <div className={classes.root}>
-      {[...new Array(10)].map((_, index) => (
-        <div key={index} className={classes.item}>
-          aaaaaa
-        </div>
-      ))}
+      <div className={classes.controlBar}>
+        <Button
+          variant="contained"
+          color="primary"
+          size="small"
+          className={classes.controlButton}
+          onClick={hanldeNewScore}
+          startIcon={<AddBox />}
+        >
+          新しい楽譜
+        </Button>
+      </div>
+      <div className={classes.itemContainer}>
+        {scoreSummaries?.map((score, index) => (
+          <div key={score.id} className={classes.item}>
+            <p>{score.title}</p>
+            <p>{score.description}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
