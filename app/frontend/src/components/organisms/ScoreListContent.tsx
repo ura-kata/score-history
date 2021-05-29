@@ -10,6 +10,7 @@ import React, { useEffect, useState } from "react";
 import { useHistory } from "react-router";
 import { scoreClientV2 } from "../../global";
 import { ScoreSummary } from "../../ScoreClientV2";
+import ScoreSummaryCard from "../atoms/ScoreSummaryCard";
 
 export interface ScoreListContentProps {}
 
@@ -33,9 +34,9 @@ const useStyles = makeStyles((theme: Theme) =>
       flexWrap: "wrap",
     },
     item: {
-      height: "100px",
-      width: "100px",
-      backgroundColor: colors.green[200],
+      height: "250px",
+      width: "250px",
+      margin: "5px",
     },
   })
 );
@@ -61,7 +62,7 @@ export default function ScoreListContent(props: ScoreListContentProps) {
   });
 
   const hanldeNewScore = () => {
-    history.push("/score/new");
+    history.push("/scores/new");
   };
 
   return (
@@ -81,8 +82,7 @@ export default function ScoreListContent(props: ScoreListContentProps) {
       <div className={classes.itemContainer}>
         {scoreSummaries?.map((score, index) => (
           <div key={score.id} className={classes.item}>
-            <p>{score.title}</p>
-            <p>{score.description}</p>
+            <ScoreSummaryCard scoreSummary={score} />
           </div>
         ))}
       </div>
