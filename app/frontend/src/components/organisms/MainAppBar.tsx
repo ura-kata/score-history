@@ -69,6 +69,7 @@ export default function MainAppBar(props: MainAppBarProps) {
   const handleSignOut = async () => {
     try {
       await accessClient.signout();
+      accessClient.gotoSignInPage("");
     } catch (err) {
       console.log(err);
     }
