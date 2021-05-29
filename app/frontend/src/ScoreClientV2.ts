@@ -6,7 +6,17 @@ export interface ScoreSummary {
   description: string;
 }
 
+/** 新しい楽譜 */
+export interface NewScore {
+  title: string;
+  description?: string;
+}
+
 const GET_HEADERS = {
+  "Content-Type": "application/json",
+};
+
+const POST_HEADERS = {
   "Content-Type": "application/json",
 };
 
@@ -27,6 +37,22 @@ export default class ScoreClientV2 {
 
       const json = await response.json();
       return json;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /** 楽譜を作成する */
+  async create(newScore: NewScore): Promise<void> {
+    const requestUrl = new URL("scores/user", this.baseUrl);
+
+    try {
+      const response = await fetch(requestUrl.href, {
+        method: "POST",
+        headers: POST_HEADERS,
+        credentials: "include",
+        body: JSON.stringify(newScore),
+      });
     } catch (err) {
       throw err;
     }
