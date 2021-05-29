@@ -7,7 +7,6 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
       width: "100%",
-      backgroundColor: colors.blueGrey[100],
     },
     appBar: {
       height: "50px",
@@ -20,7 +19,6 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     content: {
       width: "100%",
-      backgroundColor: colors.red[200],
     },
     footer: {
       height: "50px",
