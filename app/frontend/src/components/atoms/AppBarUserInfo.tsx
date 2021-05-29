@@ -1,4 +1,5 @@
 import { colors, createStyles, makeStyles, Theme } from "@material-ui/core";
+import { UserData } from "../../UserClient";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -16,15 +17,15 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 export interface AppBarUserInfoProps {
-  username?: string;
+  userData?: UserData;
 }
 
 export default function AppBarUserInfo(props: AppBarUserInfoProps) {
-  const _username = props.username;
+  const _userData = props.userData;
   var classes = useStyles();
   return (
     <div className={classes.root}>
-      <p>{_username ?? ""}</p>
+      <p>{_userData?.email ?? ""}</p>
     </div>
   );
 }

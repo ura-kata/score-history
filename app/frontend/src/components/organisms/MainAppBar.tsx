@@ -11,6 +11,7 @@ import React, { useState } from "react";
 import AppBarUserInfo from "../atoms/AppBarUserInfo";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
 import { accessClient } from "../../global";
+import { AppContext, AppContextDispatch } from "../../AppContext";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -58,6 +59,10 @@ export default function MainAppBar(props: MainAppBarProps) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const menuOpen = Boolean(anchorEl);
 
+  const appContext = React.useContext(AppContext);
+
+  const _userData = appContext.userData;
+
   const handleOpenMenuButton = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -83,7 +88,7 @@ export default function MainAppBar(props: MainAppBarProps) {
       </div>
       <div className={classes.appButtonGroup}>
         <div className={classes.appButtonGroupItem}>
-          <AppBarUserInfo username={"test"} />
+          <AppBarUserInfo userData={_userData} />
         </div>
         <div className={classes.appButtonGroupItem}>
           <IconButton onClick={handleOpenMenuButton}>
