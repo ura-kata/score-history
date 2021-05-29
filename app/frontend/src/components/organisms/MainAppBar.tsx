@@ -10,6 +10,7 @@ import {
 import React, { useState } from "react";
 import AppBarUserInfo from "../atoms/AppBarUserInfo";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
+import { accessClient } from "../../global";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -65,7 +66,13 @@ export default function MainAppBar(props: MainAppBarProps) {
     setAnchorEl(null);
   };
 
-  const handleSignOut = () => {};
+  const handleSignOut = async () => {
+    try {
+      await accessClient.signout();
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   return (
     <div className={classes.root}>
