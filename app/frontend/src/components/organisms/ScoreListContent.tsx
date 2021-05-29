@@ -5,8 +5,8 @@ import {
   makeStyles,
   Theme,
 } from "@material-ui/core";
-import { AddBox } from "@material-ui/icons";
-import { useEffect, useState } from "react";
+import { Add, AddBox } from "@material-ui/icons";
+import React, { useEffect, useState } from "react";
 import { useHistory } from "react-router";
 import { scoreClientV2 } from "../../global";
 import { ScoreSummary } from "../../ScoreClientV2";
@@ -73,7 +73,7 @@ export default function ScoreListContent(props: ScoreListContentProps) {
           size="small"
           className={classes.controlButton}
           onClick={hanldeNewScore}
-          startIcon={<AddBox />}
+          startIcon={<Add />}
         >
           新しい楽譜
         </Button>
