@@ -1,5 +1,6 @@
 import { colors, createStyles, makeStyles, Theme } from "@material-ui/core";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import ScoreDetail from "../organisms/ScoreDetailContent";
 import ScoreListContent from "../organisms/ScoreListContent";
 import ScoreNew from "../organisms/ScoreNew";
 import MainTemplate from "../templates/MainTemplate";
@@ -29,8 +30,9 @@ export default function MainPage(props: MainPageProps) {
       <div className={classes.root}>
         <Router>
           <Switch>
-            <Route path="/score/new" component={ScoreNew} />
-            <Route path="/score" component={ScoreListContent} />
+            <Route path="/scores/new" component={ScoreNew} />
+            <Route path="/scores/:scoreId" component={ScoreDetail} />
+            <Route path="/scores" component={ScoreListContent} />
             <Route path="/" component={ScoreListContent} />
           </Switch>
         </Router>

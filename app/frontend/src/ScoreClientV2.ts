@@ -12,6 +12,42 @@ export interface NewScore {
   description?: string;
 }
 
+/** 楽譜のページ */
+export interface ScorePage {
+  id: string;
+  itemId: string;
+  page: string;
+}
+
+/** 楽譜のアノテーション */
+export interface ScoreAnnotation {
+  id: string;
+  contentHash: string;
+}
+
+/** 楽譜のデータ */
+export interface ScoreData {
+  title: string;
+  descriptionHash: string;
+  pages: ScorePage[];
+  annotations: ScoreAnnotation[];
+}
+
+/** アクセスのタイプ */
+type Accesses = "private" | "public";
+
+/** 楽譜の詳細 */
+export interface ScoreDetail {
+  createAt: Date;
+  updateAt: Date;
+  data: ScoreData;
+  dataHash: string;
+  access: Accesses;
+  hashSet: { [hash: string]: string };
+}
+
+//-------------------------------------------------------------------------------
+
 const GET_HEADERS = {
   "Content-Type": "application/json",
 };
@@ -53,6 +89,23 @@ export default class ScoreClientV2 {
         credentials: "include",
         body: JSON.stringify(newScore),
       });
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async getDetail(scoreId: string): Promise<ScoreDetail> {
+    const requestUrl = new URL(`scores/user/${scoreId}`, this.baseUrl);
+
+    try {
+      const response = await fetch(requestUrl.href, {
+        method: "GET",
+        headers: GET_HEADERS,
+        credentials: "include",
+      });
+      var json = await response.json();
+
+      return json;
     } catch (err) {
       throw err;
     }
