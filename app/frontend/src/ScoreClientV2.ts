@@ -17,6 +17,7 @@ export interface ScorePage {
   id: string;
   itemId: string;
   page: string;
+  objectName: string;
 }
 
 /** 楽譜のアノテーション */
