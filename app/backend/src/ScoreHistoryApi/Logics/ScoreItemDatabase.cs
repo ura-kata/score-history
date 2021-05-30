@@ -18,6 +18,7 @@ namespace ScoreHistoryApi.Logics
         private readonly IScoreQuota _quota;
         private readonly IAmazonDynamoDB _dynamoDbClient;
         public string TableName { get; }
+        public string ScoreItemRelationTableName { get; }
 
         public ScoreItemDatabase(IScoreQuota quota, IAmazonDynamoDB dynamoDbClient, IConfiguration configuration)
         {
@@ -25,16 +26,24 @@ namespace ScoreHistoryApi.Logics
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new InvalidOperationException($"'{EnvironmentNames.ScoreItemDynamoDbTableName}' is not found.");
 
+            var scoreItemRelationTableName = configuration[EnvironmentNames.ScoreItemRelationDynamoDbTableName];
+            if (string.IsNullOrWhiteSpace(scoreItemRelationTableName))
+                throw new InvalidOperationException($"'{EnvironmentNames.ScoreItemRelationDynamoDbTableName}' is not found.");
+
             TableName = tableName;
+            ScoreItemRelationTableName = scoreItemRelationTableName;
             _quota = quota;
             _dynamoDbClient = dynamoDbClient;
         }
-        public ScoreItemDatabase(IScoreQuota quota, IAmazonDynamoDB dynamoDbClient,string tableName)
+        public ScoreItemDatabase(IScoreQuota quota, IAmazonDynamoDB dynamoDbClient,string tableName,string scoreItemRelationTableName)
         {
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new ArgumentException(nameof(tableName));
+            if (string.IsNullOrWhiteSpace(scoreItemRelationTableName))
+                throw new ArgumentException(nameof(scoreItemRelationTableName));
 
             TableName = tableName;
+            ScoreItemRelationTableName = scoreItemRelationTableName;
             _quota = quota;
             _dynamoDbClient = dynamoDbClient;
         }
@@ -301,6 +310,8 @@ namespace ScoreHistoryApi.Logics
             var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
             var score = ScoreDatabaseUtils.ConvertToBase64(deletingScoreItems.ScoreId);
 
+            await CheckDeleteAsync(_dynamoDbClient, ScoreItemRelationTableName, owner, deletingScoreItems.ItemIds);
+
             var itemAndSizeList = await GetItemAndSizeListAsync(_dynamoDbClient, TableName, owner, score);
 
             var targetHashSet = new HashSet<Guid>();
@@ -376,6 +387,35 @@ namespace ScoreHistoryApi.Logics
 
                     return (itemIdText, itemId, size);
                 }
+            }
+
+            static async Task CheckDeleteAsync(IAmazonDynamoDB client, string tableName, string owner, List<Guid> itemIds)
+            {
+                foreach (var itemId in itemIds)
+                {
+                    var item = ScoreDatabaseUtils.ConvertToBase64(itemId);
+                    var request = new QueryRequest()
+                    {
+                        TableName = tableName,
+                        Limit = 1,
+                        ExpressionAttributeNames = new Dictionary<string, string>()
+                        {
+                            ["#owner"] = DynamoDbScoreItemRelationPropertyNames.OwnerId,
+                            ["#itemRel"] = DynamoDbScoreItemRelationPropertyNames.ItemRelation,
+                        },
+                        ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                        {
+                            [":owner"] = new AttributeValue(owner),
+                            [":item"] = new AttributeValue(item),
+                        },
+                        KeyConditionExpression = "#owner = :owner and begins_with(#itemRel, :item)",
+                    };
+                    var response = await client.QueryAsync(request);
+
+                    if (0 < response.Count)
+                        throw new InvalidOperationException($"'{itemId}' は参照されているため削除できません");
+                }
+
             }
         }
 

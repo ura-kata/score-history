@@ -58,9 +58,11 @@ namespace ScoreHistoryApi.Logics.Scores
 
             var itemIds = detail.Data.Pages.Select(x => x.ItemId).ToArray();
 
+            await DeleteSnapshotAsync(ownerId, scoreId, snapshotId);
+
             await DeleteItemRelationsAsync(ownerId, snapshotId, itemIds);
 
-            await DeleteSnapshotAsync(ownerId, scoreId, snapshotId);
+            await DeleteSnapshotDataFromStorageAsync(ownerId, scoreId, snapshotId);
         }
 
         public async Task<ScoreSnapshotDetail> GetAsync(Guid ownerId, Guid scoreId, Guid snapshotId)
@@ -139,7 +141,7 @@ namespace ScoreHistoryApi.Logics.Scores
             }
         }
 
-        public async Task DeleteSnapshotAsync(Guid ownerId, Guid scoreId, Guid snapshotId)
+        public async Task DeleteSnapshotDataFromStorageAsync(Guid ownerId, Guid scoreId, Guid snapshotId)
         {
             var key = ScoreSnapshotStorageUtils.CreateSnapshotKey(ownerId, scoreId, snapshotId);
 
@@ -149,6 +151,91 @@ namespace ScoreHistoryApi.Logics.Scores
                 Key = key
             };
             await _s3Client.DeleteObjectAsync(request2);
+        }
+
+        public async Task DeleteSnapshotAsync(Guid ownerId, Guid scoreId, Guid snapshotId)
+        {
+            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+            var snapshot = ScoreDatabaseUtils.ConvertToBase64(snapshotId);
+
+            await DeleteItemAsync(_dynamoDbClient, ScoreTableName, owner, score, snapshot);
+
+            static async Task DeleteItemAsync(
+                IAmazonDynamoDB client,
+                string tableName,
+                string owner,
+                string score,
+                string snapshot
+                )
+            {
+                var actions = new List<TransactWriteItem>()
+                {
+                    new TransactWriteItem()
+                    {
+                        Delete = new Delete()
+                        {
+                            TableName = tableName,
+                            Key = new Dictionary<string, AttributeValue>()
+                            {
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + snapshot),
+                            },
+                            ExpressionAttributeNames = new Dictionary<string, string>()
+                            {
+                                ["#score"] = DynamoDbScorePropertyNames.ScoreId,
+                            },
+                            ConditionExpression = "attribute_exists(#score)",
+                        },
+                    },
+                    new TransactWriteItem()
+                    {
+                        Update = new Update()
+                        {
+                            TableName = tableName,
+                            Key = new Dictionary<string, AttributeValue>()
+                            {
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                            },
+                            ExpressionAttributeNames = new Dictionary<string, string>()
+                            {
+                                ["#snapshotCount"] = DynamoDbScorePropertyNames.SnapshotCount,
+                            },
+                            ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                            {
+                                [":increment"] = new AttributeValue(){N = "-1"},
+                            },
+                            UpdateExpression = "ADD #snapshotCount :increment",
+                        }
+                    },
+                };
+
+                try
+                {
+                    await client.TransactWriteItemsAsync(new TransactWriteItemsRequest()
+                    {
+                        TransactItems = actions,
+                        ReturnConsumedCapacity = ReturnConsumedCapacity.TOTAL,
+                    });
+                }
+                catch (TransactionCanceledException ex)
+                {
+                    var deleteReason = ex.CancellationReasons[0];
+
+                    if (deleteReason.Code == "ConditionalCheckFailed")
+                    {
+                        throw new NotFoundSnapshotException(ex);
+                    }
+
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    throw;
+                }
+            }
         }
     }
 }
