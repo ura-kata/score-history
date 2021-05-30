@@ -25,6 +25,8 @@ namespace ScoreHistoryApi.Logics
         public string ScoreTableName { get; } = "ura-kata-score-history";
         public string ScoreDataTableName { get; } = "ura-kata-score-history-data";
 
+        public string ScoreItemRelationTableName { get; } = "ura-kata-score-history-item-relation";
+
         public ScoreDatabase(IScoreQuota quota, IAmazonDynamoDB dynamoDbClient, IConfiguration configuration)
         {
             var tableName = configuration[EnvironmentNames.ScoreDynamoDbTableName];
@@ -37,18 +39,28 @@ namespace ScoreHistoryApi.Logics
                 throw new InvalidOperationException($"'{EnvironmentNames.ScoreLargeDataDynamoDbTableName}' is not found.");
             ScoreDataTableName = scoreDataTableName;
 
+            var scoreItemRelationDataTableName = configuration[EnvironmentNames.ScoreItemRelationDynamoDbTableName];
+            if (string.IsNullOrWhiteSpace(scoreItemRelationDataTableName))
+                throw new InvalidOperationException($"'{EnvironmentNames.ScoreItemRelationDynamoDbTableName}' is not found.");
+            ScoreItemRelationTableName = scoreItemRelationDataTableName;
+
             _quota = quota;
             _dynamoDbClient = dynamoDbClient;
         }
-        public ScoreDatabase(IScoreQuota quota, IAmazonDynamoDB dynamoDbClient,string scoreTableName,string scoreDataTableName)
+
+        public ScoreDatabase(IScoreQuota quota, IAmazonDynamoDB dynamoDbClient, string scoreTableName,
+            string scoreDataTableName, string scoreItemRelationTableName)
         {
             if (string.IsNullOrWhiteSpace(scoreTableName))
                 throw new ArgumentException(nameof(scoreTableName));
             if (string.IsNullOrWhiteSpace(scoreDataTableName))
                 throw new ArgumentException(nameof(scoreDataTableName));
+            if (string.IsNullOrWhiteSpace(scoreItemRelationTableName))
+                throw new ArgumentException(nameof(scoreItemRelationTableName));
 
             ScoreTableName = scoreTableName;
             ScoreDataTableName = scoreDataTableName;
+            ScoreItemRelationTableName = scoreItemRelationTableName;
             _quota = quota;
             _dynamoDbClient = dynamoDbClient;
         }
@@ -294,6 +306,10 @@ namespace ScoreHistoryApi.Logics
 
             await DeleteDataAsync(_dynamoDbClient, ScoreDataTableName, owner, score,
                 dataIds.Concat(descriptionDataIds).ToArray());
+
+            var itemRelations = await GetItemRelations(_dynamoDbClient, ScoreItemRelationTableName, owner);
+
+            await DeleteItemRelations(_dynamoDbClient, ScoreItemRelationTableName, owner, itemRelations);
 
             static async Task DeleteMainAsync(IAmazonDynamoDB client, string tableName, string owner, string score)
             {
@@ -588,6 +604,83 @@ namespace ScoreHistoryApi.Logics
                     }
                 }
             }
+
+            static async Task<string[]> GetItemRelations(IAmazonDynamoDB client, string tableName, string owner)
+            {
+                var request = new QueryRequest()
+                {
+                    TableName = tableName,
+                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    {
+                        ["#owner"] = DynamoDbScoreItemRelationPropertyNames.OwnerId,
+                        ["#itemRelation"] = DynamoDbScoreItemRelationPropertyNames.ItemRelation,
+                    },
+                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                    {
+                        [":owner"] = new AttributeValue(owner),
+                    },
+                    KeyConditionExpression = "#owner = :owner",
+                    ProjectionExpression = "#itemRelation",
+                };
+                try
+                {
+                    var response = await client.QueryAsync(request);
+
+                    return response.Items.Select(x => x[DynamoDbScoreItemRelationPropertyNames.ItemRelation]?.S)
+                        .Where(x => !(x is null))
+                        .ToArray();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    throw;
+                }
+            }
+
+            static async Task DeleteItemRelations(IAmazonDynamoDB client, string tableName, string owner, string[] itemRelations)
+            {
+                const int chunkSize = 25;
+
+                var chunkList = itemRelations.Select((x, index) => (x, index))
+                    .GroupBy(x => x.index / chunkSize)
+                    .Select(x=>x.Select(y=>y.x).ToArray())
+                    .ToArray();
+
+                foreach (var ids in chunkList)
+                {
+                    await DeleteData25Async(client, tableName, owner, ids);
+                }
+
+                static async Task DeleteData25Async(IAmazonDynamoDB client, string tableName, string owner, string[] ids)
+                {
+                    var request = new Dictionary<string, List<WriteRequest>>()
+                    {
+                        [tableName] = ids.Select(id=>new WriteRequest()
+                        {
+                            DeleteRequest = new DeleteRequest()
+                            {
+                                Key = new Dictionary<string, AttributeValue>()
+                                {
+                                    [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(owner),
+                                    [DynamoDbScoreItemRelationPropertyNames.ItemRelation] = new AttributeValue(id),
+                                }
+                            }
+                        }).ToList(),
+                    };
+
+                    try
+                    {
+                        await client.BatchWriteItemAsync(request);
+                    }
+                    catch (Exception ex)
+                    {
+                        // TODO 削除時に失敗したデータを取得しリトライ処理を入れる
+                        Console.WriteLine(ex.Message);
+                        throw;
+                    }
+                }
+            }
+
         }
 
         public async Task UpdateTitleAsync(Guid ownerId, Guid scoreId, string title)
@@ -838,18 +931,21 @@ namespace ScoreHistoryApi.Logics
             data.Page ??= new List<DynamoDbScorePageV1>();
 
             var newPages = new List<DynamoDbScorePageV1>();
+            var newItemRelationSet = new HashSet<string>();
 
             var pageId = data.Page.Count == 0 ? 0 : data.Page.Select(x => x.Id).Max() + 1;
             foreach (var page in pages)
             {
+                var itemId = ScoreDatabaseUtils.ConvertToBase64(page.ItemId);
                 var p = new DynamoDbScorePageV1()
                 {
                     Id = pageId++,
-                    ItemId = ScoreDatabaseUtils.ConvertToBase64(page.ItemId),
+                    ItemId = itemId,
                     Page = page.Page,
                 };
                 newPages.Add(p);
                 data.Page.Add(p);
+                newItemRelationSet.Add(itemId);
             }
 
             var newHash = data.CalcDataHash();
@@ -858,6 +954,9 @@ namespace ScoreHistoryApi.Logics
 
             // TODO ページの追加上限値判定を追加
             await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, newPages, newHash, oldHash, now);
+
+            await PutItemRelations(_dynamoDbClient, ScoreItemRelationTableName, owner, score, newItemRelationSet);
+
 
             static async Task<(DynamoDbScoreDataV1 data,string hash)> GetAsync(
                 IAmazonDynamoDB client,
@@ -966,6 +1065,51 @@ namespace ScoreHistoryApi.Logics
                     throw;
                 }
             }
+
+            static async Task PutItemRelations(IAmazonDynamoDB client, string tableName, string owner, string score, HashSet<string> items)
+            {
+                const int chunkSize = 25;
+
+                var chunkList = items.Select((x, index) => (x, index))
+                    .GroupBy(x => x.index / chunkSize)
+                    .Select(x=>x.Select(y=>y.x).ToArray())
+                    .ToArray();
+
+                foreach (var ids in chunkList)
+                {
+                    await PutItemRelations25Async(client, tableName, owner, score, ids);
+                }
+
+                static async Task PutItemRelations25Async(IAmazonDynamoDB client, string tableName, string owner, string score, string[] ids)
+                {
+                    var request = new Dictionary<string, List<WriteRequest>>()
+                    {
+                        [tableName] = ids.Select(id=>new WriteRequest()
+                        {
+                            PutRequest = new PutRequest()
+                            {
+                                Item = new Dictionary<string, AttributeValue>()
+                                {
+                                    [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(owner),
+                                    [DynamoDbScoreItemRelationPropertyNames.ItemRelation] = new AttributeValue(id + score),
+                                }
+                            }
+
+                        }).ToList(),
+                    };
+
+                    try
+                    {
+                        await client.BatchWriteItemAsync(request);
+                    }
+                    catch (Exception ex)
+                    {
+                        // TODO 削除時に失敗したデータを取得しリトライ処理を入れる
+                        Console.WriteLine(ex.Message);
+                        throw;
+                    }
+                }
+            }
         }
 
         public async Task RemovePagesAsync(Guid ownerId, Guid scoreId, List<long> pageIds)
@@ -981,6 +1125,13 @@ namespace ScoreHistoryApi.Logics
 
             data.Page ??= new List<DynamoDbScorePageV1>();
 
+            var removeItemRelationSet = new HashSet<string>();
+
+            foreach (var pageV1 in data.Page)
+            {
+                removeItemRelationSet.Add(pageV1.ItemId);
+            }
+
             var existedIdSet = new HashSet<long>();
             pageIds.ForEach(id => existedIdSet.Add(id));
 
@@ -994,11 +1145,18 @@ namespace ScoreHistoryApi.Logics
                 data.Page.RemoveAt(index);
             }
 
+            foreach (var pageV1 in data.Page)
+            {
+                removeItemRelationSet.Remove(pageV1.ItemId);
+            }
+
             var newHash = data.CalcDataHash();
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
             await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, removeIndices, newHash, oldHash, now);
+
+            await DeleteItemRelations(_dynamoDbClient, ScoreItemRelationTableName, owner, score, removeItemRelationSet);
 
             static async Task<(DynamoDbScoreDataV1 data, string hash)> GetAsync(
                 IAmazonDynamoDB client,
@@ -1077,6 +1235,52 @@ namespace ScoreHistoryApi.Logics
                     throw;
                 }
             }
+
+
+            static async Task DeleteItemRelations(IAmazonDynamoDB client, string tableName, string owner, string score, HashSet<string> items)
+            {
+                const int chunkSize = 25;
+
+                var chunkList = items.Select((x, index) => (x, index))
+                    .GroupBy(x => x.index / chunkSize)
+                    .Select(x=>x.Select(y=>y.x).ToArray())
+                    .ToArray();
+
+                foreach (var ids in chunkList)
+                {
+                    await DeleteItemRelations25Async(client, tableName, owner, score, ids);
+                }
+
+                static async Task DeleteItemRelations25Async(IAmazonDynamoDB client, string tableName, string owner, string score, string[] ids)
+                {
+                    var request = new Dictionary<string, List<WriteRequest>>()
+                    {
+                        [tableName] = ids.Select(id=>new WriteRequest()
+                        {
+                            DeleteRequest = new DeleteRequest()
+                            {
+                                Key = new Dictionary<string, AttributeValue>()
+                                {
+                                    [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(owner),
+                                    [DynamoDbScoreItemRelationPropertyNames.ItemRelation] = new AttributeValue(id + score),
+                                }
+                            }
+
+                        }).ToList(),
+                    };
+
+                    try
+                    {
+                        await client.BatchWriteItemAsync(request);
+                    }
+                    catch (Exception ex)
+                    {
+                        // TODO 削除時に失敗したデータを取得しリトライ処理を入れる
+                        Console.WriteLine(ex.Message);
+                        throw;
+                    }
+                }
+            }
         }
 
         public async Task ReplacePagesAsync(Guid ownerId, Guid scoreId, List<PatchScorePage> pages)
@@ -1091,6 +1295,14 @@ namespace ScoreHistoryApi.Logics
             var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
 
             data.Page ??= new List<DynamoDbScorePageV1>();
+
+            var removeRelationItemSet = new HashSet<string>();
+            var newRelationItemSet = new HashSet<string>();
+
+            foreach (var pageV1 in data.Page)
+            {
+                removeRelationItemSet.Add(pageV1.ItemId);
+            }
 
             // Key id, Value index
             var pageIndices = new Dictionary<long,int>();
@@ -1107,14 +1319,21 @@ namespace ScoreHistoryApi.Logics
                 if(!pageIndices.TryGetValue(id, out var index))
                     throw new InvalidOperationException();
 
+                var itemId = ScoreDatabaseUtils.ConvertToBase64(page.ItemId);
                 var p = new DynamoDbScorePageV1()
                 {
                     Id = id,
-                    ItemId = ScoreDatabaseUtils.ConvertToBase64(page.ItemId),
+                    ItemId = itemId,
                     Page = page.Page,
                 };
                 replacingPages.Add((p, index));
                 data.Page[index] = p;
+                newRelationItemSet.Add(itemId);
+            }
+
+            foreach (var pageV1 in data.Page)
+            {
+                removeRelationItemSet.Remove(pageV1.ItemId);
             }
 
             var newHash = data.CalcDataHash();
@@ -1122,6 +1341,11 @@ namespace ScoreHistoryApi.Logics
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
             await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, replacingPages, newHash, oldHash, now);
+
+            await PutItemRelations(_dynamoDbClient, ScoreItemRelationTableName, owner, score, newRelationItemSet);
+
+            await DeleteItemRelations(_dynamoDbClient, ScoreItemRelationTableName, owner, score, removeRelationItemSet);
+
 
             static async Task<(DynamoDbScoreDataV1 data, string hash)> GetAsync(
                 IAmazonDynamoDB client,
@@ -1227,6 +1451,98 @@ namespace ScoreHistoryApi.Logics
                     throw;
                 }
 
+            }
+
+
+            static async Task PutItemRelations(IAmazonDynamoDB client, string tableName, string owner, string score, HashSet<string> items)
+            {
+                const int chunkSize = 25;
+
+                var chunkList = items.Select((x, index) => (x, index))
+                    .GroupBy(x => x.index / chunkSize)
+                    .Select(x=>x.Select(y=>y.x).ToArray())
+                    .ToArray();
+
+                foreach (var ids in chunkList)
+                {
+                    await PutItemRelations25Async(client, tableName, owner, score, ids);
+                }
+
+                static async Task PutItemRelations25Async(IAmazonDynamoDB client, string tableName, string owner, string score, string[] ids)
+                {
+                    var request = new Dictionary<string, List<WriteRequest>>()
+                    {
+                        [tableName] = ids.Select(id=>new WriteRequest()
+                        {
+                            PutRequest = new PutRequest()
+                            {
+                                Item = new Dictionary<string, AttributeValue>()
+                                {
+                                    [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(owner),
+                                    [DynamoDbScoreItemRelationPropertyNames.ItemRelation] = new AttributeValue(id + score),
+                                }
+                            }
+
+                        }).ToList(),
+                    };
+
+                    try
+                    {
+                        await client.BatchWriteItemAsync(request);
+                    }
+                    catch (Exception ex)
+                    {
+                        // TODO 削除時に失敗したデータを取得しリトライ処理を入れる
+                        Console.WriteLine(ex.Message);
+                        throw;
+                    }
+                }
+            }
+
+
+            static async Task DeleteItemRelations(IAmazonDynamoDB client, string tableName, string owner, string score, HashSet<string> items)
+            {
+                const int chunkSize = 25;
+
+                var chunkList = items.Select((x, index) => (x, index))
+                    .GroupBy(x => x.index / chunkSize)
+                    .Select(x=>x.Select(y=>y.x).ToArray())
+                    .ToArray();
+
+                foreach (var ids in chunkList)
+                {
+                    await DeleteItemRelations25Async(client, tableName, owner, score, ids);
+                }
+
+                static async Task DeleteItemRelations25Async(IAmazonDynamoDB client, string tableName, string owner, string score, string[] ids)
+                {
+                    var request = new Dictionary<string, List<WriteRequest>>()
+                    {
+                        [tableName] = ids.Select(id=>new WriteRequest()
+                        {
+                            DeleteRequest = new DeleteRequest()
+                            {
+                                Key = new Dictionary<string, AttributeValue>()
+                                {
+                                    [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(owner),
+                                    [DynamoDbScoreItemRelationPropertyNames.ItemRelation] = new AttributeValue(id + score),
+                                }
+                            }
+
+                        }).ToList(),
+                    };
+
+                    try
+                    {
+                        await client.BatchWriteItemAsync(request);
+                    }
+                    catch (Exception ex)
+                    {
+                        // TODO 削除時に失敗したデータを取得しリトライ処理を入れる
+                        Console.WriteLine(ex.Message);
+                        throw;
+                    }
+                }
             }
         }
 
@@ -2158,6 +2474,8 @@ namespace ScoreHistoryApi.Logics
             var (success, description) =
                 await TryGetDescriptionAsync(_dynamoDbClient, ScoreDataTableName, owner, score, descriptionHash);
 
+            var itemRelationIds = dynamoDbScore.Data.GetPages().Select(x => x.ItemId).ToArray();
+
             if (success)
             {
                 hashSet[descriptionHash] = description;
@@ -2169,6 +2487,9 @@ namespace ScoreHistoryApi.Logics
             await UpdateAsync(
                 _dynamoDbClient, ScoreTableName, owner, score, snapshot
                 , snapshotName, now, maxSnapshotCount);
+
+            await PutItemRelations(_dynamoDbClient, ScoreItemRelationTableName, owner, snapshot, itemRelationIds);
+
 
             return (dynamoDbScore, hashSet);
 
@@ -2364,6 +2685,52 @@ namespace ScoreHistoryApi.Logics
                 {
                     Console.WriteLine(ex.Message);
                     throw;
+                }
+            }
+
+
+            static async Task PutItemRelations(IAmazonDynamoDB client, string tableName, string owner, string snapshot, string[] items)
+            {
+                const int chunkSize = 25;
+
+                var chunkList = items.Select((x, index) => (x, index))
+                    .GroupBy(x => x.index / chunkSize)
+                    .Select(x=>x.Select(y=>y.x).ToArray())
+                    .ToArray();
+
+                foreach (var ids in chunkList)
+                {
+                    await PutItemRelations25Async(client, tableName, owner, snapshot, ids);
+                }
+
+                static async Task PutItemRelations25Async(IAmazonDynamoDB client, string tableName, string owner, string snapshot, string[] ids)
+                {
+                    var request = new Dictionary<string, List<WriteRequest>>()
+                    {
+                        [tableName] = ids.Select(id=>new WriteRequest()
+                        {
+                            PutRequest = new PutRequest()
+                            {
+                                Item = new Dictionary<string, AttributeValue>()
+                                {
+                                    [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(owner),
+                                    [DynamoDbScoreItemRelationPropertyNames.ItemRelation] = new AttributeValue(id + snapshot),
+                                }
+                            }
+
+                        }).ToList(),
+                    };
+
+                    try
+                    {
+                        await client.BatchWriteItemAsync(request);
+                    }
+                    catch (Exception ex)
+                    {
+                        // TODO 削除時に失敗したデータを取得しリトライ処理を入れる
+                        Console.WriteLine(ex.Message);
+                        throw;
+                    }
                 }
             }
         }
