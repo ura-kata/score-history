@@ -4,6 +4,7 @@ import PracticeManagerApiClient from "./PracticeManagerApiClient";
 import ScoreClient from "./ScoreClient";
 import ScoreClientMock from "./ScoreClientMock";
 import ScoreClientV2 from "./ScoreClientV2";
+import ScoreItemUrlGen from "./ScoreItemUrlGen";
 import UserClient from "./UserClient";
 
 const API_URI_BASE = process.env.REACT_APP_API_URI_BASE as string;
@@ -26,3 +27,15 @@ export const accessClient = new AccessClient(
 export const userClient = new UserClient(API_URI_BASE);
 
 export const scoreClientV2 = new ScoreClientV2(API_URI_BASE);
+
+const PRIVATE_ITEM_CDN_URI = process.env
+  .REACT_APP_PRIVATE_ITEM_CDN_URI as string;
+const PUBLIC_ITEM_CDN_URI = process.env.REACT_APP_PUBLIC_ITEM_CDN_URI as string;
+const PUBLIC_SNAPSHOT_CDN_URI = process.env
+  .REACT_APP_PUBLIC_SNAPSHOT_CDN_URI as string;
+
+export const privateScoreItemUrlGen = new ScoreItemUrlGen(PRIVATE_ITEM_CDN_URI);
+export const publicScoreItemUrlGen = new ScoreItemUrlGen(PUBLIC_ITEM_CDN_URI);
+export const publicScoreSnapshotUrlGen = new ScoreItemUrlGen(
+  PUBLIC_SNAPSHOT_CDN_URI
+);
