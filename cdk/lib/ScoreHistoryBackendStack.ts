@@ -7,6 +7,11 @@ import { ScoreHistoryBackendScoreLargeDataDynamoDb } from './ScoreHistoryBackend
 import { ScoreHistoryBackendScoreDataBucket } from './ScoreHistoryBackendScoreDataBucket';
 import { ScoreHistoryBackendScoreDataSnapshotBucket } from './ScoreHistoryBackendScoreDataSnapshotBucket';
 import { ScoreHistoryBackendScoreItemRelationDynamoDb } from './ScoreHistoryBackendScoreItemRelationDynamoDb';
+import { OriginAccessIdentity } from '@aws-cdk/aws-cloudfront';
+import { ScoreHistoryBackendPrivateItemLambdaEdgeFunction } from './ScoreHistoryBackendPrivateItemLambdaEdgeFunction';
+import { ScoreHistoryBackendPrivateItemDistribution } from './ScoreHistoryBackendPrivateItemDistribution';
+import { HostedZone } from '@aws-cdk/aws-route53';
+import { ScoreHistoryBackendPrivateItemARecord } from './ScoreHistoryBackendPrivateItemARecord';
 
 dotenv.config();
 
@@ -64,6 +69,31 @@ if (!SCORE_SNAPSHOT_S3_BUCKET) {
     "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_SNAPSHOT_S3_BUCKET' is not found."
   );
 }
+/** ドメイン名 */
+const DOMAIN_NAME = process.env.URA_KATA_APP_DOMAIN_NAME as string;
+if (!DOMAIN_NAME) {
+  throw new Error("'URA_KATA_APP_DOMAIN_NAME' is not found.");
+}
+/** 楽譜のアイテムのプライベート CDN のホスト名 */
+const HISTORY_BACKEND_PRIVATE_ITEM_HOST_NAME = process.env
+  .URA_KATA_SCORE_HISTORY_BACKEND_PRIVATE_ITEM_HOST_NAME as string;
+
+if (!HISTORY_BACKEND_PRIVATE_ITEM_HOST_NAME) {
+  throw new Error(
+    "'URA_KATA_SCORE_HISTORY_BACKEND_PRIVATE_ITEM_HOST_NAME' is not found."
+  );
+}
+/** Certificate Arn */
+const URA_KATA_CERTIFICATE_ARN = process.env.URA_KATA_CERTIFICATE_ARN as string;
+if (!URA_KATA_CERTIFICATE_ARN) {
+  throw new Error("'URA_KATA_CERTIFICATE_ARN' is not found.");
+}
+/** HOST Zone の ID */
+const URA_KATA_PUBLIC_HOSTED_ZONE_ID = process.env
+  .URA_KATA_PUBLIC_HOSTED_ZONE_ID as string;
+if (!URA_KATA_PUBLIC_HOSTED_ZONE_ID) {
+  throw new Error("'URA_KATA_PUBLIC_HOSTED_ZONE_ID' is not found.");
+}
 
 export class ScoreHistoryBackendStack extends cdk.Stack {
   scoreDynamoDbTableArn: string;
@@ -101,11 +131,17 @@ export class ScoreHistoryBackendStack extends cdk.Stack {
 
     this.scoreLargeDataDynamoDbTableArn = scoreLargeDataDynamoDbTable.tableArn;
 
+    const identity = new OriginAccessIdentity(
+      this,
+      'ScoreHistoryBackendScoreDataBucketOriginAccessIdentity'
+    );
+
     const scoreHistoryBackendScoreDataBucket =
       new ScoreHistoryBackendScoreDataBucket(
         this,
         'ScoreHistoryBackendScoreDataBucket',
-        SCORE_ITEM_S3_BUCKET
+        SCORE_ITEM_S3_BUCKET,
+        identity
       );
 
     this.scoreHistoryBackendScoreDataBucketArn =
@@ -130,5 +166,41 @@ export class ScoreHistoryBackendStack extends cdk.Stack {
 
     this.scoreItemRelationDynamoDbTableArn =
       scoreHistoryBackendScoreItemRelationDynamoDb.tableArn;
+
+    const edgeFunction = new ScoreHistoryBackendPrivateItemLambdaEdgeFunction(
+      this,
+      'ScoreHistoryBackendPrivateItemLambdaEdgeFunction',
+      'ura-kata-backend-private-item-verify-token-filter',
+      path.join(__dirname, '../../verify-token-filter/build'),
+      'ScoreHistoryBackendPrivateItemLambdaEdgeFunctionStack'
+    );
+
+    const privateItemCdnFqdn = `${HISTORY_BACKEND_PRIVATE_ITEM_HOST_NAME}.${DOMAIN_NAME}`;
+
+    const distribution = new ScoreHistoryBackendPrivateItemDistribution(
+      this,
+      'ScoreHistoryBackendPrivateItemDistribution',
+      scoreHistoryBackendScoreDataBucket,
+      identity,
+      privateItemCdnFqdn,
+      URA_KATA_CERTIFICATE_ARN,
+      edgeFunction
+    );
+
+    const hostZone = HostedZone.fromHostedZoneAttributes(
+      this,
+      'UraKataPublicHostedZone',
+      {
+        hostedZoneId: URA_KATA_PUBLIC_HOSTED_ZONE_ID,
+        zoneName: DOMAIN_NAME,
+      }
+    );
+    new ScoreHistoryBackendPrivateItemARecord(
+      this,
+      'ScoreHistoryBackendPrivateItemARecord',
+      distribution,
+      hostZone,
+      privateItemCdnFqdn
+    );
   }
 }
