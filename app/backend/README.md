@@ -101,16 +101,19 @@ UUID の Base64 エンコードは 24 byte
         {
           "i": 0,
           "it": "JO1kjyJx1kKuucbt3JOziQ==",
+          "o": "image.jpg", // object name
           "p": "1"
         },
         {
           "i": 1,
           "it": "JO1kjyJx1kKuucbt3JOziQ==",
+          "o": "image.jpg",
           "p": "2"
         },
         {
           "i": 2,
           "it": "JO1kjyJx1kKuucbt3JOziQ==",
+          "o": "image.jpg",
           "p": "3"
         }
       ],

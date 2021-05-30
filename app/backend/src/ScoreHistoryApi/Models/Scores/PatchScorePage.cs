@@ -14,5 +14,7 @@ namespace ScoreHistoryApi.Models.Scores
         public Guid ItemId { get; set; }
         [JsonPropertyName("page")]
         public string Page { get; set; }
+        [JsonPropertyName("objectName")]
+        public string ObjectName { get; set; }
     }
 }

@@ -942,6 +942,7 @@ namespace ScoreHistoryApi.Logics
                     Id = pageId++,
                     ItemId = itemId,
                     Page = page.Page,
+                    ObjectName = page.ObjectName,
                 };
                 newPages.Add(p);
                 data.Page.Add(p);
@@ -1008,6 +1009,10 @@ namespace ScoreHistoryApi.Logics
                     if (page.ItemId != null)
                     {
                         p[DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.ItemId] = new AttributeValue(page.ItemId);
+                    }
+                    if (page.ObjectName != null)
+                    {
+                        p[DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.ObjectName] = new AttributeValue(page.ObjectName);
                     }
                     if(p.Count == 0)
                         continue;
@@ -1325,6 +1330,7 @@ namespace ScoreHistoryApi.Logics
                     Id = id,
                     ItemId = itemId,
                     Page = page.Page,
+                    ObjectName = page.ObjectName,
                 };
                 replacingPages.Add((p, index));
                 data.Page[index] = p;
@@ -1392,6 +1398,10 @@ namespace ScoreHistoryApi.Logics
                 if (page.ItemId != null)
                 {
                     p[DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.ItemId] = new AttributeValue(page.ItemId);
+                }
+                if (page.ObjectName != null)
+                {
+                    p[DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.ObjectName] = new AttributeValue(page.ObjectName);
                 }
                 if(p.Count == 0)
                     return null;
