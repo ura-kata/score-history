@@ -436,6 +436,26 @@ namespace ScoreHistoryApi.Controllers
             }
         }
 
+        [HttpDelete]
+        [Route("user/{scoreId:guid}/snapshots/{snapshotId:guid}")]
+        public async Task<IActionResult> DeleteSnapshotAsync([FromRoute(Name = "scoreId")] Guid scoreId,[FromRoute(Name = "snapshotId")]  Guid snapshotId)
+        {
+            var authorizerData = this.GetAuthorizerData();
+            var ownerId = authorizerData.Sub;
+
+            var snapshotRemover = _scoreLogics.SnapshotRemover;
+
+            try
+            {
+                await snapshotRemover.RemoveAsync(ownerId, scoreId, snapshotId);
+                return Ok();
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+        }
+
 
         [HttpPatch]
         [Route("user/{scoreId:guid}/access")]

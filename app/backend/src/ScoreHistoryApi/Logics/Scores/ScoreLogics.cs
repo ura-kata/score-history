@@ -51,6 +51,9 @@ namespace ScoreHistoryApi.Logics.Scores
         public ScoreSnapshotDetailGetter SnapshotDetailGetter =>
             new ScoreSnapshotDetailGetter(new ScoreSnapshotStorage(_s3Client, _configuration));
 
+        public ScoreSnapshotRemover SnapshotRemover =>
+            new ScoreSnapshotRemover(_dynamoDbClient, _s3Client, _configuration);
+
         public ScoreAnnotationAdder AnnotationAdder =>
             new ScoreAnnotationAdder(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
 
