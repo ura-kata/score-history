@@ -2364,6 +2364,11 @@ namespace ScoreHistoryApi.Logics
                 };
                 var response = await client.GetItemAsync(request);
 
+                if (!response.IsItemSet)
+                {
+                    throw new NotFoundScoreException("Not found score.");
+                }
+
                 var dynamoDbScore = new DynamoDbScore(response.Item);
 
                 return dynamoDbScore;

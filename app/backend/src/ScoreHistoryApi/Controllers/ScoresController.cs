@@ -117,10 +117,22 @@ namespace ScoreHistoryApi.Controllers
 
             var detailGetter = _scoreLogics.DetailGetter;
 
-            // TODO 楽譜がないときにエラーコードを返す
-            var detail = await detailGetter.GetScoreSummaries(ownerId, id);
+            try
+            {var detail = await detailGetter.GetScoreSummaries(ownerId, id);
 
-            return detail;
+                return detail;
+            }
+            catch (NotFoundScoreException ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return StatusCode(ExtensionHttpStatusCodes.NotFoundScore);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                throw;
+            }
+
 
             // this.Response.Headers[HttpHeaderNames.ETag] = "";
         }

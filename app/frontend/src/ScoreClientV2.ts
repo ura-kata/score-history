@@ -57,6 +57,9 @@ const POST_HEADERS = {
   "Content-Type": "application/json",
 };
 
+/** 楽譜がない */
+const NotFoundScore = 521;
+
 /** 楽譜に関するリクエストを実行するクライアント */
 export default class ScoreClientV2 {
   constructor(private baseUrl: string) {}
@@ -95,7 +98,7 @@ export default class ScoreClientV2 {
     }
   }
 
-  async getDetail(scoreId: string): Promise<ScoreDetail> {
+  async getDetail(scoreId: string): Promise<ScoreDetail | undefined> {
     const requestUrl = new URL(`scores/user/${scoreId}`, this.baseUrl);
 
     try {
@@ -104,9 +107,17 @@ export default class ScoreClientV2 {
         headers: GET_HEADERS,
         credentials: "include",
       });
-      var json = await response.json();
 
-      return json;
+      if (response.ok) {
+        var json = await response.json();
+
+        return json;
+      } else if (response.status === NotFoundScore) {
+        return undefined;
+      } else if (response.status === 404) {
+        return undefined;
+      }
+      throw new Error();
     } catch (err) {
       throw err;
     }
