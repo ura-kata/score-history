@@ -59,7 +59,7 @@ export default function ScoreListContent(props: ScoreListContentProps) {
     };
 
     f();
-  });
+  }, []);
 
   const hanldeNewScore = () => {
     history.push("/scores/new");
