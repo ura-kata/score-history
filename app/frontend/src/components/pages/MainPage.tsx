@@ -1,5 +1,8 @@
 import { colors, createStyles, makeStyles, Theme } from "@material-ui/core";
+import { useContext, useEffect } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import { AppContextDispatch } from "../../AppContext";
+import { UserData } from "../../UserClient";
 import ScoreDetail from "../organisms/ScoreDetailContent";
 import ScoreListContent from "../organisms/ScoreListContent";
 import ScoreNew from "../organisms/ScoreNew";
@@ -21,10 +24,21 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-export interface MainPageProps {}
+export interface MainPageProps {
+  userData?: UserData;
+}
 
 export default function MainPage(props: MainPageProps) {
+  const _userData = props.userData;
   const classes = useStyles();
+  const dispatch = useContext(AppContextDispatch);
+
+  useEffect(() => {
+    console.log("_userData");
+    console.log(_userData);
+    dispatch({ type: "updateUserData", payload: _userData });
+  }, [_userData]);
+
   return (
     <MainTemplate>
       <div className={classes.root}>

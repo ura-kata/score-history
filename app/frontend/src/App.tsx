@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { Suspense, useEffect } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import UploadScorePage from "./components/pages/UploadScorePage";
 import DisplayPage from "./components/pages/DisplayPage";
@@ -12,7 +12,19 @@ import ScoreDetailPage from "./components/pages/ScoreDetailPage";
 import EditScorePropertyPage from "./components/pages/EditScorePropertyPage";
 import UpdateScorePagePage from "./components/pages/UpdateScorePagePage";
 import { HomeActionType } from "./PathCreator";
-import MainPage from "./components/pages/MainPage";
+
+const MainPage = React.lazy(async () => {
+  try {
+    const mainPage = await import("./components/pages/MainPage");
+    const userData = await userClient.getMyData();
+    console.log("get user me");
+    return { default: () => mainPage.default({ userData: userData }) };
+  } catch (err) {
+    console.log(err);
+    accessClient.gotoSignInPage("");
+    throw new Error();
+  }
+});
 
 const App = () => {
   const [state, dispatch] = useAppReducer();
@@ -36,9 +48,10 @@ const App = () => {
     <AppContext.Provider value={state}>
       <AppContextDispatch.Provider value={dispatch}>
         <Router>
-          <Switch>
-            <Route path="/" component={MainPage} />
-            {/* <Route path={["/", "/home/"]} component={ScoreListPage} exact />
+          <Suspense fallback={<div>Loading...</div>}>
+            <Switch>
+              <Route path="/" component={MainPage} />
+              {/* <Route path={["/", "/home/"]} component={ScoreListPage} exact />
             <Route
               path={`/home/:owner?/:scoreName?/${((): HomeActionType =>
                 "edit")()}/`}
@@ -61,7 +74,8 @@ const App = () => {
             <Route path="/upload" component={UploadScorePage} />
             <Route path="/display" component={DisplayPage} />
             <Route path="/api-test" component={ApiTestPage} /> */}
-          </Switch>
+            </Switch>
+          </Suspense>
         </Router>
       </AppContextDispatch.Provider>
     </AppContext.Provider>
