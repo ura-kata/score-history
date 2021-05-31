@@ -1,9 +1,7 @@
 import { Button, createStyles, makeStyles, Theme } from "@material-ui/core";
 import { ArrowBack } from "@material-ui/icons";
-import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router";
-import { scoreClientV2 } from "../../global";
-import { ScoreDetail } from "../../ScoreClientV2";
+import useMeyScoreDetail from "../../hooks/scores/useMeyScoreDetail";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -31,26 +29,11 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
 
   const { scoreId } = useParams<{ scoreId: string }>();
   const history = useHistory();
-  const [scoreDetail, setScoreDetail] = useState<ScoreDetail | undefined>();
 
-  useEffect(() => {
-    if (scoreDetail !== undefined) {
-      return;
-    }
-
-    const f = async () => {
-      try {
-        var detail = await scoreClientV2.getDetail(scoreId);
-        setScoreDetail(detail);
-      } catch (err) {
-        console.log(err);
-      }
-    };
-    f();
-  }, [scoreDetail, scoreId]);
+  const detail = useMeyScoreDetail({ scoreId, retryCount: 3 });
 
   console.log(scoreId);
-  console.log(scoreDetail);
+  console.log(detail);
   const handleBack = () => {
     history.push("/");
   };
