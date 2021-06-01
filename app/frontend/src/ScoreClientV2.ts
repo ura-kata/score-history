@@ -12,6 +12,11 @@ export interface NewScore {
   description?: string;
 }
 
+/** 新しいく作られた楽譜 */
+export interface NewlyScore {
+  id: string;
+}
+
 /** 楽譜のページ */
 export interface ScorePage {
   id: string;
@@ -57,6 +62,9 @@ const POST_HEADERS = {
   "Content-Type": "application/json",
 };
 
+/** 初期化されていない */
+const NotInitializedScore = 520;
+
 /** 楽譜がない */
 const NotFoundScore = 521;
 
@@ -83,7 +91,7 @@ export default class ScoreClientV2 {
   }
 
   /** 楽譜を作成する */
-  async create(newScore: NewScore): Promise<void> {
+  async create(newScore: NewScore): Promise<NewlyScore> {
     const requestUrl = new URL("scores/user", this.baseUrl);
 
     try {
@@ -93,6 +101,31 @@ export default class ScoreClientV2 {
         credentials: "include",
         body: JSON.stringify(newScore),
       });
+
+      if (response.ok) {
+        return (await response.json()) as NewlyScore;
+      } else if (response.status === NotInitializedScore) {
+        const initRequestUrl = new URL("scores/new", this.baseUrl);
+        const initResponse = await fetch(initRequestUrl.href, {
+          method: "POST",
+          headers: POST_HEADERS,
+          credentials: "include",
+        });
+
+        if (initResponse.ok) {
+          const response2 = await fetch(requestUrl.href, {
+            method: "POST",
+            headers: POST_HEADERS,
+            credentials: "include",
+            body: JSON.stringify(newScore),
+          });
+
+          if (response2.ok) {
+            return (await response2.json()) as NewlyScore;
+          }
+        }
+      }
+      throw new Error("楽譜の作成に失敗");
     } catch (err) {
       throw err;
     }
