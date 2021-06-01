@@ -15,6 +15,10 @@ using ScoreHistoryApi.Models.Scores;
 
 namespace ScoreHistoryApi.Logics
 {
+    public static class ScoreSnapshotStorageConstant
+    {
+        public const string SnapshotFolderName = "snapshot";
+    }
     public static class ScoreSnapshotStorageUtils
     {
         public static byte[] ConvertToJson(ScoreSnapshotDetail snapshotDetail)
@@ -53,7 +57,7 @@ namespace ScoreHistoryApi.Logics
         }
 
         public static string CreateSnapshotKey(Guid ownerId, Guid scoreId, Guid snapshotId) =>
-            $"{ownerId:D}/{scoreId:D}/{snapshotId:D}.json";
+            $"{ownerId:D}/{scoreId:D}/{ScoreSnapshotStorageConstant.SnapshotFolderName}/{snapshotId:D}.json";
     }
 
     /// <summary>
@@ -125,7 +129,7 @@ namespace ScoreHistoryApi.Logics
             var objectKeyList = new List<string>();
             string continuationToken = default;
 
-            var prefix = $"{ownerId:D}/{scoreId:D}";
+            var prefix = $"{ownerId:D}/{scoreId:D}/{ScoreSnapshotStorageConstant.SnapshotFolderName}";
 
             do
             {
@@ -156,7 +160,7 @@ namespace ScoreHistoryApi.Logics
 
         public async Task SetAccessControlPolicyAsync(Guid ownerId, Guid scoreId, ScoreObjectAccessControls accessControl)
         {
-            var prefix = $"{ownerId:D}/{scoreId:D}";
+            var prefix = $"{ownerId:D}/{scoreId:D}/{ScoreSnapshotStorageConstant.SnapshotFolderName}";
 
             var objectKeyList = new List<string>();
             string continuationToken = default;
