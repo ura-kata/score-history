@@ -39,6 +39,13 @@ export interface ScoreData {
   annotations: ScoreAnnotation[];
 }
 
+/** 新しいタイトル */
+export interface NewScoreTitle {
+  title: string;
+}
+
+//--------------------------------------------------------------------
+
 /** アクセスのタイプ */
 type Accesses = "private" | "public";
 
@@ -59,6 +66,10 @@ const GET_HEADERS = {
 };
 
 const POST_HEADERS = {
+  "Content-Type": "application/json",
+};
+
+const PATCH_HEADERS = {
   "Content-Type": "application/json",
 };
 
@@ -151,6 +162,26 @@ export default class ScoreClientV2 {
         return undefined;
       }
       throw new Error();
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async updateTitle(scoreId: string, newTitle: NewScoreTitle): Promise<void> {
+    const requestUrl = new URL(`scores/user/${scoreId}/title`, this.baseUrl);
+
+    try {
+      const response = await fetch(requestUrl.href, {
+        method: "PATCH",
+        headers: PATCH_HEADERS,
+        credentials: "include",
+        body: JSON.stringify(newTitle),
+      });
+
+      if (response.ok) {
+        return;
+      }
+      throw new Error("タイトルの更新に失敗");
     } catch (err) {
       throw err;
     }
