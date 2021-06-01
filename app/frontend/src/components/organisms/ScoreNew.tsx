@@ -45,7 +45,7 @@ export default function ScoreNew(props: ScoreNewProps) {
   const history = useHistory();
 
   const handleBack = () => {
-    history.push("/");
+    history.goBack();
   };
 
   const handleCreate = async () => {
@@ -54,9 +54,14 @@ export default function ScoreNew(props: ScoreNewProps) {
         setErrorMessage("タイトルを入力してください");
         return;
       }
-      await scoreClientV2.create({ title: title, description: description });
-      history.push("/");
-    } catch (err) {}
+      const newlyScore = await scoreClientV2.create({
+        title: title,
+        description: description,
+      });
+      history.replace(`/scores/${newlyScore.id}`);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   const handleChangeTitle =
