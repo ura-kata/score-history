@@ -1,8 +1,9 @@
 import { Button, createStyles, makeStyles, Theme } from "@material-ui/core";
 import { ArrowBack } from "@material-ui/icons";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router";
 import useMeyScoreDetail from "../../hooks/scores/useMeyScoreDetail";
+import DetailEditableDescription from "../atoms/DetailEditableDescription";
 import DetailEditableTitle from "../atoms/DetailEditableTitle";
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -48,21 +49,27 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
   const detail = useMeyScoreDetail({ scoreId, retryCount: 3 });
 
   const [title, setTitle] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
 
   useEffect(() => {
     setTitle(detail?.data.title ?? "");
+
+    const desc = detail?.hashSet
+      ? detail.hashSet[detail.data.descriptionHash]
+      : "";
+    setDescription(desc);
   }, [detail]);
 
   const handleBack = () => {
     history.push("/");
   };
 
-  const description = detail?.hashSet
-    ? detail.hashSet[detail.data.descriptionHash]
-    : "";
-
   const handleOnChangeTitle = (newTitle: string) => {
     setTitle(newTitle);
+  };
+
+  const handleOnChangeDescription = (newDescription: string) => {
+    setDescription(newDescription);
   };
   return (
     <div className={classes.root}>
@@ -88,11 +95,11 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
             />
           </div>
           <div className={classes.descContainer}>
-            {description.split("\n").map((p, index) => (
-              <p key={index} className={classes.descP}>
-                {p}
-              </p>
-            ))}
+            <DetailEditableDescription
+              id={scoreId}
+              description={description}
+              onChangeDescription={handleOnChangeDescription}
+            />
           </div>
         </div>
         <div className={classes.thumbnailContainer}></div>
