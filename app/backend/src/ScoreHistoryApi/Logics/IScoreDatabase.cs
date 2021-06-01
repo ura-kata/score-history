@@ -26,7 +26,7 @@ namespace ScoreHistoryApi.Logics
         /// <param name="title"></param>
         /// <param name="description"></param>
         /// <returns></returns>
-        Task CreateAsync(Guid ownerId, [NotNull] string title, [AllowNull] string description);
+        Task<NewlyScore> CreateAsync(Guid ownerId, [NotNull] string title, [AllowNull] string description);
 
         /// <summary>
         /// 楽譜の削除

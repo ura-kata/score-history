@@ -108,12 +108,12 @@ namespace ScoreHistoryApi.Logics
             }
         }
 
-        public async Task CreateAsync(Guid ownerId, string title, string description)
+        public async Task<NewlyScore> CreateAsync(Guid ownerId, string title, string description)
         {
             var newScoreId = Guid.NewGuid();
-            await CreateAsync(ownerId, newScoreId, title, description);
+            return await CreateAsync(ownerId, newScoreId, title, description);
         }
-        public async Task CreateAsync(Guid ownerId, Guid newScoreId, string title, string description)
+        public async Task<NewlyScore> CreateAsync(Guid ownerId, Guid newScoreId, string title, string description)
         {
             if (title == null)
                 throw new ArgumentNullException(nameof(title));
@@ -129,6 +129,11 @@ namespace ScoreHistoryApi.Logics
             await PutScoreAsync(
                 _dynamoDbClient, ScoreTableName, ScoreDataTableName, ownerId, newScoreId, scoreCountMax,
                 title, description ?? "", now);
+
+            return new NewlyScore()
+            {
+                Id = newScoreId
+            };
 
             static async Task PutScoreAsync(
                 IAmazonDynamoDB client,

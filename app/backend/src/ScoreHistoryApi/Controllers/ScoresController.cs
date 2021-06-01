@@ -77,7 +77,7 @@ namespace ScoreHistoryApi.Controllers
         /// <exception cref="NotImplementedException"></exception>
         [HttpPost]
         [Route("user")]
-        public async Task<IActionResult> CreateUserScoreAsync([FromBody] NewScore newScore)
+        public async Task<ActionResult<NewlyScore>> CreateUserScoreAsync([FromBody] NewScore newScore)
         {
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
@@ -86,15 +86,13 @@ namespace ScoreHistoryApi.Controllers
 
             try
             {
-                await creator.CreateAsync(ownerId, newScore);
+                return await creator.CreateAsync(ownerId, newScore);
             }
             catch (UninitializedScoreException)
             {
                 return StatusCode(ExtensionHttpStatusCodes.NotInitializedScore,
                     new {message = "楽譜を作成するための初期化処理がされていない"});
             }
-
-            return Ok();
         }
 
         /// <summary>
