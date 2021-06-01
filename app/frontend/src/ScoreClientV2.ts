@@ -44,6 +44,11 @@ export interface NewScoreTitle {
   title: string;
 }
 
+/** 新しい説明 */
+export interface NewScoreDescription {
+  description: string;
+}
+
 //--------------------------------------------------------------------
 
 /** アクセスのタイプ */
@@ -182,6 +187,32 @@ export default class ScoreClientV2 {
         return;
       }
       throw new Error("タイトルの更新に失敗");
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async updateDescription(
+    scoreId: string,
+    newDescription: NewScoreDescription
+  ): Promise<void> {
+    const requestUrl = new URL(
+      `scores/user/${scoreId}/description`,
+      this.baseUrl
+    );
+
+    try {
+      const response = await fetch(requestUrl.href, {
+        method: "PATCH",
+        headers: PATCH_HEADERS,
+        credentials: "include",
+        body: JSON.stringify(newDescription),
+      });
+
+      if (response.ok) {
+        return;
+      }
+      throw new Error("説明の更新に失敗");
     } catch (err) {
       throw err;
     }
