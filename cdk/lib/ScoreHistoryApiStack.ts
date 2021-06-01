@@ -105,7 +105,6 @@ export interface ScoreHistoryApiStackProps {
   scoreLargeDataDynamoDbTableArn: string;
   scoreItemRelationDynamoDbTableArn: string;
   scoreHistoryBackendScoreDataBucketArn: string;
-  scoreHistoryBackendScoreDataSnapshotBucketArn: string;
 }
 
 export class ScoreHistoryApiStack extends cdk.Stack {

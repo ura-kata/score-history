@@ -9,7 +9,6 @@ export interface ScoreHistoryApiFunctionProps {
   scoreItemRelationDynamoDbTableArn: string;
   scoreLargeDataDynamoDbTableArn: string;
   scoreHistoryBackendScoreDataBucketArn: string;
-  scoreHistoryBackendScoreDataSnapshotBucketArn: string;
 }
 
 export class ScoreHistoryApiFunction extends Function {
@@ -50,8 +49,6 @@ export class ScoreHistoryApiFunction extends Function {
         resources: [
           props.scoreHistoryBackendScoreDataBucketArn,
           props.scoreHistoryBackendScoreDataBucketArn + '/*',
-          props.scoreHistoryBackendScoreDataSnapshotBucketArn,
-          props.scoreHistoryBackendScoreDataSnapshotBucketArn + '/*',
         ],
         actions: ['s3:*'],
       })

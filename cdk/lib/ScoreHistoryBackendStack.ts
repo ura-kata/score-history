@@ -5,7 +5,6 @@ import { ScoreHistoryBackendScoreDynamoDb } from './ScoreHistoryBackendScoreDyna
 import { ScoreHistoryBackendScoreItemDynamoDb } from './ScoreHistoryBackendScoreItemDynamoDb';
 import { ScoreHistoryBackendScoreLargeDataDynamoDb } from './ScoreHistoryBackendScoreLargeDataDynamoDb';
 import { ScoreHistoryBackendScoreDataBucket } from './ScoreHistoryBackendScoreDataBucket';
-import { ScoreHistoryBackendScoreDataSnapshotBucket } from './ScoreHistoryBackendScoreDataSnapshotBucket';
 import { ScoreHistoryBackendScoreItemRelationDynamoDb } from './ScoreHistoryBackendScoreItemRelationDynamoDb';
 import { OriginAccessIdentity } from '@aws-cdk/aws-cloudfront';
 import { ScoreHistoryBackendPrivateItemLambdaEdgeFunction } from './ScoreHistoryBackendPrivateItemLambdaEdgeFunction';
@@ -51,22 +50,13 @@ if (!SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME) {
     "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME' is not found."
   );
 }
-/** 楽譜のアイテムデータを格納する S3 バケット */
-const SCORE_ITEM_S3_BUCKET = process.env
-  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_S3_BUCKET as string;
+/** 楽譜のデータを格納する S3 バケット */
+const SCORE_DATA_S3_BUCKET = process.env
+  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_DATA_S3_BUCKET as string;
 
-if (!SCORE_ITEM_S3_BUCKET) {
+if (!SCORE_DATA_S3_BUCKET) {
   throw new Error(
-    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_S3_BUCKET' is not found."
-  );
-}
-/** 楽譜のスナップショットデータを格納する S3 バケット */
-const SCORE_SNAPSHOT_S3_BUCKET = process.env
-  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_SNAPSHOT_S3_BUCKET as string;
-
-if (!SCORE_SNAPSHOT_S3_BUCKET) {
-  throw new Error(
-    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_SNAPSHOT_S3_BUCKET' is not found."
+    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_DATA_S3_BUCKET' is not found."
   );
 }
 /** ドメイン名 */
@@ -100,7 +90,6 @@ export class ScoreHistoryBackendStack extends cdk.Stack {
   scoreItemDynamoDbTableArn: string;
   scoreLargeDataDynamoDbTableArn: string;
   scoreHistoryBackendScoreDataBucketArn: string;
-  scoreHistoryBackendScoreDataSnapshotBucketArn: string;
   scoreItemRelationDynamoDbTableArn: string;
 
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -140,22 +129,12 @@ export class ScoreHistoryBackendStack extends cdk.Stack {
       new ScoreHistoryBackendScoreDataBucket(
         this,
         'ScoreHistoryBackendScoreDataBucket',
-        SCORE_ITEM_S3_BUCKET,
+        SCORE_DATA_S3_BUCKET,
         identity
       );
 
     this.scoreHistoryBackendScoreDataBucketArn =
       scoreHistoryBackendScoreDataBucket.bucketArn;
-
-    const scoreHistoryBackendScoreDataSnapshotBucket =
-      new ScoreHistoryBackendScoreDataSnapshotBucket(
-        this,
-        'ScoreHistoryBackendScoreDataSnapshotBucket',
-        SCORE_SNAPSHOT_S3_BUCKET
-      );
-
-    this.scoreHistoryBackendScoreDataSnapshotBucketArn =
-      scoreHistoryBackendScoreDataSnapshotBucket.bucketArn;
 
     const scoreHistoryBackendScoreItemRelationDynamoDb =
       new ScoreHistoryBackendScoreItemRelationDynamoDb(
