@@ -6,5 +6,7 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
         public const string PrefixDescription = "desc:";
 
         public const int SeparatorLength = 5;
+
+        public const string PartitionKeyPrefix = "ld:";
     }
 }

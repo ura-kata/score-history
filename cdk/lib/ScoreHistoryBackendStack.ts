@@ -2,10 +2,7 @@ import * as cdk from '@aws-cdk/core';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
 import { ScoreHistoryBackendScoreDynamoDb } from './ScoreHistoryBackendScoreDynamoDb';
-import { ScoreHistoryBackendScoreItemDynamoDb } from './ScoreHistoryBackendScoreItemDynamoDb';
-import { ScoreHistoryBackendScoreLargeDataDynamoDb } from './ScoreHistoryBackendScoreLargeDataDynamoDb';
 import { ScoreHistoryBackendScoreDataBucket } from './ScoreHistoryBackendScoreDataBucket';
-import { ScoreHistoryBackendScoreItemRelationDynamoDb } from './ScoreHistoryBackendScoreItemRelationDynamoDb';
 import { OriginAccessIdentity } from '@aws-cdk/aws-cloudfront';
 import { ScoreHistoryBackendPrivateItemLambdaEdgeFunction } from './ScoreHistoryBackendPrivateItemLambdaEdgeFunction';
 import { ScoreHistoryBackendPrivateItemDistribution } from './ScoreHistoryBackendPrivateItemDistribution';
@@ -21,33 +18,6 @@ const SCORE_DYNAMODB_TABLE_NAME = process.env
 if (!SCORE_DYNAMODB_TABLE_NAME) {
   throw new Error(
     "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_DYNAMODB_TABLE_NAME' is not found."
-  );
-}
-/** 楽譜アイテムデータのメタ情報を格納する DynamoDB のテーブル */
-const SCORE_ITEM_DYNAMODB_TABLE_NAME = process.env
-  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_DYNAMODB_TABLE_NAME as string;
-
-if (!SCORE_ITEM_DYNAMODB_TABLE_NAME) {
-  throw new Error(
-    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_DYNAMODB_TABLE_NAME' is not found."
-  );
-}
-/** 楽譜のアイテムの関係を保存する DynamoDB のテーブル */
-const SCORE_ITEM_RELATION_DYNAMODB_TABLE_NAME = process.env
-  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_RELATION_DYNAMODB_TABLE_NAME as string;
-
-if (!SCORE_ITEM_RELATION_DYNAMODB_TABLE_NAME) {
-  throw new Error(
-    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_RELATION_DYNAMODB_TABLE_NAME' is not found."
-  );
-}
-/** 楽譜データの大きいデータを格納する DynamoDB のテーブル */
-const SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME = process.env
-  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME as string;
-
-if (!SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME) {
-  throw new Error(
-    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME' is not found."
   );
 }
 /** 楽譜のデータを格納する S3 バケット */
@@ -87,14 +57,12 @@ if (!URA_KATA_PUBLIC_HOSTED_ZONE_ID) {
 
 export class ScoreHistoryBackendStack extends cdk.Stack {
   scoreDynamoDbTableArn: string;
-  scoreItemDynamoDbTableArn: string;
-  scoreLargeDataDynamoDbTableArn: string;
   scoreHistoryBackendScoreDataBucketArn: string;
-  scoreItemRelationDynamoDbTableArn: string;
 
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    // DynamoDB ------------------------------------------------------------------
     const scoreDynamoDbTable = new ScoreHistoryBackendScoreDynamoDb(
       this,
       'ScoreHistoryBackendScoreDynamoDb',
@@ -103,23 +71,7 @@ export class ScoreHistoryBackendStack extends cdk.Stack {
 
     this.scoreDynamoDbTableArn = scoreDynamoDbTable.tableArn;
 
-    const scoreItemDynamoDbTable = new ScoreHistoryBackendScoreItemDynamoDb(
-      this,
-      'ScoreHistoryBackendScoreItemDynamoDb',
-      SCORE_ITEM_DYNAMODB_TABLE_NAME
-    );
-
-    this.scoreItemDynamoDbTableArn = scoreItemDynamoDbTable.tableArn;
-
-    const scoreLargeDataDynamoDbTable =
-      new ScoreHistoryBackendScoreLargeDataDynamoDb(
-        this,
-        'ScoreHistoryBackendScoreLargeDataDynamoDb',
-        SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME
-      );
-
-    this.scoreLargeDataDynamoDbTableArn = scoreLargeDataDynamoDbTable.tableArn;
-
+    // Bucket --------------------------------------------------------------------
     const identity = new OriginAccessIdentity(
       this,
       'ScoreHistoryBackendScoreDataBucketOriginAccessIdentity'
@@ -136,16 +88,7 @@ export class ScoreHistoryBackendStack extends cdk.Stack {
     this.scoreHistoryBackendScoreDataBucketArn =
       scoreHistoryBackendScoreDataBucket.bucketArn;
 
-    const scoreHistoryBackendScoreItemRelationDynamoDb =
-      new ScoreHistoryBackendScoreItemRelationDynamoDb(
-        this,
-        'ScoreHistoryBackendScoreItemRelationDynamoDb',
-        SCORE_ITEM_RELATION_DYNAMODB_TABLE_NAME
-      );
-
-    this.scoreItemRelationDynamoDbTableArn =
-      scoreHistoryBackendScoreItemRelationDynamoDb.tableArn;
-
+    // CloudFront ----------------------------------------------------------------
     const edgeFunction = new ScoreHistoryBackendPrivateItemLambdaEdgeFunction(
       this,
       'ScoreHistoryBackendPrivateItemLambdaEdgeFunction',

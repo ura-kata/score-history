@@ -5,9 +5,6 @@ import * as path from 'path';
 
 export interface ScoreHistoryApiFunctionProps {
   scoreDynamoDbTableArn: string;
-  scoreItemDynamoDbTableArn: string;
-  scoreItemRelationDynamoDbTableArn: string;
-  scoreLargeDataDynamoDbTableArn: string;
   scoreHistoryBackendScoreDataBucketArn: string;
 }
 
@@ -33,12 +30,7 @@ export class ScoreHistoryApiFunction extends Function {
     this.addToRolePolicy(
       new PolicyStatement({
         effect: Effect.ALLOW,
-        resources: [
-          props.scoreDynamoDbTableArn,
-          props.scoreItemDynamoDbTableArn,
-          props.scoreItemRelationDynamoDbTableArn,
-          props.scoreLargeDataDynamoDbTableArn,
-        ],
+        resources: [props.scoreDynamoDbTableArn],
         actions: ['dynamodb:*'],
       })
     );

@@ -67,17 +67,17 @@ namespace ScoreHistoryApi.Logics
 
         public async Task InitializeAsync(Guid ownerId)
         {
-            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
 
-            await PutAsync(_dynamoDbClient, ScoreTableName, owner);
+            await PutAsync(_dynamoDbClient, ScoreTableName, partitionKey);
 
-            static async Task PutAsync(IAmazonDynamoDB client, string tableName, string owner)
+            static async Task PutAsync(IAmazonDynamoDB client, string tableName, string partitionKey)
             {
                 var request = new PutItemRequest()
                 {
                     Item = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
                         [DynamoDbScorePropertyNames.ScoreCount] = new AttributeValue(){N = "0"}
                     },
@@ -146,7 +146,8 @@ namespace ScoreHistoryApi.Logics
                 string description,
                 DateTimeOffset now)
             {
-                var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+                var scorePartitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var largeDataPartitionKey = DynamoDbScoreDataUtils.ConvertToPartitionKey(ownerId);
                 var newScore = ScoreDatabaseUtils.ConvertToBase64(newScoreId);
 
                 var descriptionHash =
@@ -170,7 +171,7 @@ namespace ScoreHistoryApi.Logics
                         {
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(scorePartitionKey),
                                 [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
                             },
                             ExpressionAttributeNames = new Dictionary<string, string>()
@@ -201,7 +202,7 @@ namespace ScoreHistoryApi.Logics
                         {
                             Item = new Dictionary<string, AttributeValue>()
                             {
-                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(scorePartitionKey),
                                 [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + newScore),
                                 [DynamoDbScorePropertyNames.DataHash] = new AttributeValue(dataHash),
                                 [DynamoDbScorePropertyNames.CreateAt] = new AttributeValue(createAt),
@@ -224,7 +225,7 @@ namespace ScoreHistoryApi.Logics
                         {
                             Item = new Dictionary<string, AttributeValue>()
                             {
-                                [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(largeDataPartitionKey),
                                 [DynamoDbScoreDataPropertyNames.DataId] = new AttributeValue(dataId),
                                 [DynamoDbScoreDataPropertyNames.Content] = new AttributeValue(description),
                             },
@@ -261,7 +262,7 @@ namespace ScoreHistoryApi.Logics
                             TableName = tableName,
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(scorePartitionKey),
                                 [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
                             },
                         };
@@ -295,29 +296,28 @@ namespace ScoreHistoryApi.Logics
 
         public async Task DeleteAsync(Guid ownerId, Guid scoreId)
         {
-            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
-            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
-
-            await DeleteMainAsync(_dynamoDbClient, ScoreTableName, owner, score);
+            await DeleteMainAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId);
 
             // スナップショットの削除は SQS を使ったほうがいいかも
-            var snapshotScoreIds = await GetSnapshotScoreIdsAsync(_dynamoDbClient, ScoreTableName, owner, score);
+            var snapshotScoreIds = await GetSnapshotScoreIdsAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId);
 
-            await DeleteSnapshotsAsync(_dynamoDbClient, ScoreTableName, owner, snapshotScoreIds);
+            await DeleteSnapshotsAsync(_dynamoDbClient, ScoreTableName, ownerId, snapshotScoreIds);
 
-            var dataIds = await GetScoreAnnotationDataIdsAsync(_dynamoDbClient, ScoreDataTableName, owner, score);
+            var dataIds = await GetScoreAnnotationDataIdsAsync(_dynamoDbClient, ScoreDataTableName, ownerId, scoreId);
             var descriptionDataIds =
-                await GetScoreDescriptionDataIdsAsync(_dynamoDbClient, ScoreDataTableName, owner, score);
+                await GetScoreDescriptionDataIdsAsync(_dynamoDbClient, ScoreDataTableName, ownerId, scoreId);
 
-            await DeleteDataAsync(_dynamoDbClient, ScoreDataTableName, owner, score,
-                dataIds.Concat(descriptionDataIds).ToArray());
+            await DeleteDataAsync(_dynamoDbClient, ScoreDataTableName, ownerId, dataIds.Concat(descriptionDataIds).ToArray());
 
-            var itemRelations = await GetItemRelations(_dynamoDbClient, ScoreItemRelationTableName, owner);
+            var itemRelations = await GetItemRelations(_dynamoDbClient, ScoreItemRelationTableName, ownerId);
 
-            await DeleteItemRelations(_dynamoDbClient, ScoreItemRelationTableName, owner, itemRelations);
+            await DeleteItemRelations(_dynamoDbClient, ScoreItemRelationTableName, ownerId, itemRelations);
 
-            static async Task DeleteMainAsync(IAmazonDynamoDB client, string tableName, string owner, string score)
+            static async Task DeleteMainAsync(IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId)
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var actions = new List<TransactWriteItem>()
                 {
                     new TransactWriteItem()
@@ -326,7 +326,7 @@ namespace ScoreHistoryApi.Logics
                         {
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                 [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                             },
                             ExpressionAttributeNames = new Dictionary<string, string>()
@@ -343,7 +343,7 @@ namespace ScoreHistoryApi.Logics
                         {
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                 [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
                             },
                             ExpressionAttributeNames = new Dictionary<string, string>()
@@ -402,8 +402,11 @@ namespace ScoreHistoryApi.Logics
                 }
             }
 
-            static async Task<string[]> GetSnapshotScoreIdsAsync(IAmazonDynamoDB client, string tableName, string owner, string score)
+            static async Task<string[]> GetSnapshotScoreIdsAsync(IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId)
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var request = new QueryRequest()
                 {
                     TableName = tableName,
@@ -414,7 +417,7 @@ namespace ScoreHistoryApi.Logics
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
-                        [":owner"] = new AttributeValue(owner),
+                        [":owner"] = new AttributeValue(partitionKey),
                         [":snapPrefix"] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score),
                     },
                     KeyConditionExpression = "#owner = :owner and begins_with(#score, :snapPrefix)",
@@ -456,9 +459,11 @@ namespace ScoreHistoryApi.Logics
             }
 
 
-            static async Task DeleteSnapshotsAsync(IAmazonDynamoDB client, string tableName, string owner, string[] scoreIds)
+            static async Task DeleteSnapshotsAsync(IAmazonDynamoDB client, string tableName, Guid ownerId, string[] scoreIds)
             {
                 const int chunkSize = 25;
+
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
 
                 var chunkList = scoreIds.Select((x, index) => (x, index))
                     .GroupBy(x => x.index / chunkSize)
@@ -467,10 +472,10 @@ namespace ScoreHistoryApi.Logics
 
                 foreach (var ids in chunkList)
                 {
-                    await DeleteSnapshot25Async(client, tableName, owner, ids);
+                    await DeleteSnapshot25Async(client, tableName, partitionKey, ids);
                 }
 
-                static async Task DeleteSnapshot25Async(IAmazonDynamoDB client, string tableName, string owner, string[] scoreIds)
+                static async Task DeleteSnapshot25Async(IAmazonDynamoDB client, string tableName, string partitionKey, string[] scoreIds)
                 {
                     var request = new Dictionary<string, List<WriteRequest>>()
                     {
@@ -480,7 +485,7 @@ namespace ScoreHistoryApi.Logics
                             {
                                 Key = new Dictionary<string, AttributeValue>()
                                 {
-                                    [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                    [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                     [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(scoreId),
                                 }
                             }
@@ -500,8 +505,11 @@ namespace ScoreHistoryApi.Logics
                 }
             }
 
-            static async Task<string[]> GetScoreAnnotationDataIdsAsync(IAmazonDynamoDB client, string tableName, string owner, string score)
+            static async Task<string[]> GetScoreAnnotationDataIdsAsync(IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId)
             {
+                var partitionKey = DynamoDbScoreDataUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var request = new QueryRequest()
                 {
                     TableName = tableName,
@@ -512,7 +520,7 @@ namespace ScoreHistoryApi.Logics
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
-                        [":owner"] = new AttributeValue(owner),
+                        [":owner"] = new AttributeValue(partitionKey),
                         [":annScore"] = new AttributeValue(DynamoDbScoreDataConstant.PrefixAnnotation + score),
                     },
                     KeyConditionExpression = "#owner = :owner and begins_with(#data, :annScore)",
@@ -533,8 +541,11 @@ namespace ScoreHistoryApi.Logics
                 }
             }
 
-            static async Task<string[]> GetScoreDescriptionDataIdsAsync(IAmazonDynamoDB client, string tableName, string owner, string score)
+            static async Task<string[]> GetScoreDescriptionDataIdsAsync(IAmazonDynamoDB client, string tableName, Guid ownerId,Guid scoreId)
             {
+                var partitionKey = DynamoDbScoreDataUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var request = new QueryRequest()
                 {
                     TableName = tableName,
@@ -545,7 +556,7 @@ namespace ScoreHistoryApi.Logics
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
-                        [":owner"] = new AttributeValue(owner),
+                        [":owner"] = new AttributeValue(partitionKey),
                         [":desScore"] = new AttributeValue(DynamoDbScoreDataConstant.PrefixDescription + score),
                     },
                     KeyConditionExpression = "#owner = :owner and begins_with(#data, :desScore)",
@@ -566,9 +577,11 @@ namespace ScoreHistoryApi.Logics
                 }
             }
 
-            static async Task DeleteDataAsync(IAmazonDynamoDB client, string tableName, string owner, string score, string[] dataIds)
+            static async Task DeleteDataAsync(IAmazonDynamoDB client, string tableName, Guid ownerId, string[] dataIds)
             {
                 const int chunkSize = 25;
+
+                var partitionKey = DynamoDbScoreDataUtils.ConvertToPartitionKey(ownerId);
 
                 var chunkList = dataIds.Select((x, index) => (x, index))
                     .GroupBy(x => x.index / chunkSize)
@@ -577,10 +590,10 @@ namespace ScoreHistoryApi.Logics
 
                 foreach (var ids in chunkList)
                 {
-                    await DeleteData25Async(client, tableName, owner, score, ids);
+                    await DeleteData25Async(client, tableName, partitionKey, ids);
                 }
 
-                static async Task DeleteData25Async(IAmazonDynamoDB client, string tableName, string owner, string score, string[] dataIds)
+                static async Task DeleteData25Async(IAmazonDynamoDB client, string tableName, string partitionKey, string[] dataIds)
                 {
                     var request = new Dictionary<string, List<WriteRequest>>()
                     {
@@ -590,7 +603,7 @@ namespace ScoreHistoryApi.Logics
                             {
                                 Key = new Dictionary<string, AttributeValue>()
                                 {
-                                    [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(owner),
+                                    [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                     [DynamoDbScoreDataPropertyNames.DataId] = new AttributeValue(dataId),
                                 }
                             }
@@ -610,8 +623,10 @@ namespace ScoreHistoryApi.Logics
                 }
             }
 
-            static async Task<string[]> GetItemRelations(IAmazonDynamoDB client, string tableName, string owner)
+            static async Task<string[]> GetItemRelations(IAmazonDynamoDB client, string tableName, Guid ownerId)
             {
+                var partitionKey = DynamoDbScoreItemRelationUtils.ConvertToPartitionKey(ownerId);
+
                 var request = new QueryRequest()
                 {
                     TableName = tableName,
@@ -622,7 +637,7 @@ namespace ScoreHistoryApi.Logics
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
-                        [":owner"] = new AttributeValue(owner),
+                        [":owner"] = new AttributeValue(partitionKey),
                     },
                     KeyConditionExpression = "#owner = :owner",
                     ProjectionExpression = "#itemRelation",
@@ -642,9 +657,11 @@ namespace ScoreHistoryApi.Logics
                 }
             }
 
-            static async Task DeleteItemRelations(IAmazonDynamoDB client, string tableName, string owner, string[] itemRelations)
+            static async Task DeleteItemRelations(IAmazonDynamoDB client, string tableName, Guid ownerId, string[] itemRelations)
             {
                 const int chunkSize = 25;
+
+                var partitionKey = DynamoDbScoreItemRelationUtils.ConvertToPartitionKey(ownerId);
 
                 var chunkList = itemRelations.Select((x, index) => (x, index))
                     .GroupBy(x => x.index / chunkSize)
@@ -653,10 +670,10 @@ namespace ScoreHistoryApi.Logics
 
                 foreach (var ids in chunkList)
                 {
-                    await DeleteData25Async(client, tableName, owner, ids);
+                    await DeleteData25Async(client, tableName, partitionKey, ids);
                 }
 
-                static async Task DeleteData25Async(IAmazonDynamoDB client, string tableName, string owner, string[] ids)
+                static async Task DeleteData25Async(IAmazonDynamoDB client, string tableName, string partitionKey, string[] ids)
                 {
                     var request = new Dictionary<string, List<WriteRequest>>()
                     {
@@ -666,7 +683,7 @@ namespace ScoreHistoryApi.Logics
                             {
                                 Key = new Dictionary<string, AttributeValue>()
                                 {
-                                    [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(owner),
+                                    [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                     [DynamoDbScoreItemRelationPropertyNames.ItemRelation] = new AttributeValue(id),
                                 }
                             }
@@ -690,22 +707,22 @@ namespace ScoreHistoryApi.Logics
 
         public async Task UpdateTitleAsync(Guid ownerId, Guid scoreId, string title)
         {
-            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
             var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
 
-            var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
+            var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, partitionKey, score);
 
             data.Title = title;
 
             var newHash = data.CalcDataHash();
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
-            await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, title, newHash, oldHash, now);
+            await UpdateAsync(_dynamoDbClient, ScoreTableName, partitionKey, score, title, newHash, oldHash, now);
 
             static async Task<(DynamoDbScoreDataV1 data,string hash)> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
+                string partitionKey,
                 string score)
             {
                 var request = new GetItemRequest()
@@ -713,7 +730,7 @@ namespace ScoreHistoryApi.Logics
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                 };
@@ -732,7 +749,7 @@ namespace ScoreHistoryApi.Logics
             static async Task UpdateAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
+                string partitionKey,
                 string score,
                 string newTitle,
                 string newHash,
@@ -746,7 +763,7 @@ namespace ScoreHistoryApi.Logics
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                     ExpressionAttributeNames = new Dictionary<string, string>()
@@ -781,10 +798,8 @@ namespace ScoreHistoryApi.Logics
 
         public async Task UpdateDescriptionAsync(Guid ownerId, Guid scoreId, string description)
         {
-            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
-            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
 
-            var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
+            var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId);
 
             var descriptionHash =
                 DynamoDbScoreDataUtils.CalcHash(DynamoDbScoreDataUtils.DescriptionPrefix, description ?? "");
@@ -802,21 +817,24 @@ namespace ScoreHistoryApi.Logics
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
             await UpdateAsync(
                 _dynamoDbClient, ScoreTableName, ScoreDataTableName,
-                owner, score, descriptionHash, description, oldDescriptionHash,
+                ownerId, scoreId, descriptionHash, description, oldDescriptionHash,
                 newHash, oldHash, now);
 
             static async Task<(DynamoDbScoreDataV1 data,string hash)> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
-                string score)
+                Guid ownerId,
+                Guid scoreId)
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var request = new GetItemRequest()
                 {
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
-        {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                    {
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                 };
@@ -836,8 +854,8 @@ namespace ScoreHistoryApi.Logics
                 IAmazonDynamoDB client,
                 string tableName,
                 string dataTableName,
-                string owner,
-                string score,
+                Guid ownerId,
+                Guid scoreId,
                 string newDescriptionHash,
                 string newDescription,
                 string oldDescriptionHash,
@@ -846,6 +864,11 @@ namespace ScoreHistoryApi.Logics
                 DateTimeOffset now
                 )
             {
+                var scorePartitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var largeDataPartitionKey = DynamoDbScoreDataUtils.ConvertToPartitionKey(ownerId);
+
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
 
                 var newDataId = DynamoDbScoreDataConstant.PrefixDescription + score + newDescriptionHash;
@@ -858,7 +881,7 @@ namespace ScoreHistoryApi.Logics
                         {
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(scorePartitionKey),
                                 [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                             },
                             ExpressionAttributeNames = new Dictionary<string, string>()
@@ -887,7 +910,7 @@ namespace ScoreHistoryApi.Logics
                             TableName = dataTableName,
                             Item = new Dictionary<string, AttributeValue>()
                             {
-                                [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(largeDataPartitionKey),
                                 [DynamoDbScoreDataPropertyNames.DataId] = new AttributeValue(newDataId),
                                 [DynamoDbScoreDataPropertyNames.Content] = new AttributeValue(newDescription),
                             },
@@ -900,7 +923,7 @@ namespace ScoreHistoryApi.Logics
                             TableName = dataTableName,
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(largeDataPartitionKey),
                                 [DynamoDbScoreDataPropertyNames.DataId] = new AttributeValue(oldDataId),
                             }
                         },
@@ -928,10 +951,7 @@ namespace ScoreHistoryApi.Logics
             if (pages.Count == 0)
                 throw new ArgumentException(nameof(pages));
 
-            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
-            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
-
-            var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
+            var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId);
 
             data.Page ??= new List<DynamoDbScorePageV1>();
 
@@ -959,23 +979,26 @@ namespace ScoreHistoryApi.Logics
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
             // TODO ページの追加上限値判定を追加
-            await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, newPages, newHash, oldHash, now);
+            await UpdateAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId, newPages, newHash, oldHash, now);
 
-            await PutItemRelations(_dynamoDbClient, ScoreItemRelationTableName, owner, score, newItemRelationSet);
+            await PutItemRelations(_dynamoDbClient, ScoreItemRelationTableName, ownerId, scoreId, newItemRelationSet);
 
 
             static async Task<(DynamoDbScoreDataV1 data,string hash)> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
-                string score)
+                Guid ownerId,
+                Guid scoreId)
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var request = new GetItemRequest()
                 {
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                 };
@@ -1027,24 +1050,28 @@ namespace ScoreHistoryApi.Logics
 
                 return result;
             }
+
             static async Task UpdateAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
-                string score,
+                Guid ownerId,
+                Guid scoreId,
                 List<DynamoDbScorePageV1> newPages,
                 string newHash,
                 string oldHash,
                 DateTimeOffset now
                 )
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
 
                 var request = new UpdateItemRequest()
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                     ExpressionAttributeNames = new Dictionary<string, string>()
@@ -1076,9 +1103,12 @@ namespace ScoreHistoryApi.Logics
                 }
             }
 
-            static async Task PutItemRelations(IAmazonDynamoDB client, string tableName, string owner, string score, HashSet<string> items)
+            static async Task PutItemRelations(IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId, HashSet<string> items)
             {
                 const int chunkSize = 25;
+
+                var partitionKey = DynamoDbScoreItemRelationUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
 
                 var chunkList = items.Select((x, index) => (x, index))
                     .GroupBy(x => x.index / chunkSize)
@@ -1087,10 +1117,10 @@ namespace ScoreHistoryApi.Logics
 
                 foreach (var ids in chunkList)
                 {
-                    await PutItemRelations25Async(client, tableName, owner, score, ids);
+                    await PutItemRelations25Async(client, tableName, partitionKey, score, ids);
                 }
 
-                static async Task PutItemRelations25Async(IAmazonDynamoDB client, string tableName, string owner, string score, string[] ids)
+                static async Task PutItemRelations25Async(IAmazonDynamoDB client, string tableName, string partitionKey, string score, string[] ids)
                 {
                     var request = new Dictionary<string, List<WriteRequest>>()
                     {
@@ -1100,7 +1130,7 @@ namespace ScoreHistoryApi.Logics
                             {
                                 Item = new Dictionary<string, AttributeValue>()
                                 {
-                                    [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(owner),
+                                    [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                     [DynamoDbScoreItemRelationPropertyNames.ItemRelation] = new AttributeValue(id + score),
                                 }
                             }
@@ -1128,10 +1158,7 @@ namespace ScoreHistoryApi.Logics
             if (pageIds.Count == 0)
                 throw new ArgumentException(nameof(pageIds));
 
-            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
-            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
-
-            var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
+            var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId);
 
             data.Page ??= new List<DynamoDbScorePageV1>();
 
@@ -1164,22 +1191,25 @@ namespace ScoreHistoryApi.Logics
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
-            await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, removeIndices, newHash, oldHash, now);
+            await UpdateAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId, removeIndices, newHash, oldHash, now);
 
-            await DeleteItemRelations(_dynamoDbClient, ScoreItemRelationTableName, owner, score, removeItemRelationSet);
+            await DeleteItemRelations(_dynamoDbClient, ScoreItemRelationTableName, ownerId, scoreId, removeItemRelationSet);
 
             static async Task<(DynamoDbScoreDataV1 data, string hash)> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
-                string score)
+                Guid ownerId,
+                Guid scoreId)
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var request = new GetItemRequest()
                 {
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
@@ -1199,21 +1229,24 @@ namespace ScoreHistoryApi.Logics
             static async Task UpdateAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
-                string score,
+                Guid ownerId,
+                Guid scoreId,
                 int[] removeIndices,
                 string newHash,
                 string oldHash,
                 DateTimeOffset now
             )
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
 
                 var request = new UpdateItemRequest()
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
@@ -1247,8 +1280,11 @@ namespace ScoreHistoryApi.Logics
             }
 
 
-            static async Task DeleteItemRelations(IAmazonDynamoDB client, string tableName, string owner, string score, HashSet<string> items)
+            static async Task DeleteItemRelations(IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId, HashSet<string> items)
             {
+                var partitionKey = DynamoDbScoreItemRelationUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 const int chunkSize = 25;
 
                 var chunkList = items.Select((x, index) => (x, index))
@@ -1258,10 +1294,10 @@ namespace ScoreHistoryApi.Logics
 
                 foreach (var ids in chunkList)
                 {
-                    await DeleteItemRelations25Async(client, tableName, owner, score, ids);
+                    await DeleteItemRelations25Async(client, tableName, partitionKey, score, ids);
                 }
 
-                static async Task DeleteItemRelations25Async(IAmazonDynamoDB client, string tableName, string owner, string score, string[] ids)
+                static async Task DeleteItemRelations25Async(IAmazonDynamoDB client, string tableName, string partitionKey, string score, string[] ids)
                 {
                     var request = new Dictionary<string, List<WriteRequest>>()
                     {
@@ -1271,7 +1307,7 @@ namespace ScoreHistoryApi.Logics
                             {
                                 Key = new Dictionary<string, AttributeValue>()
                                 {
-                                    [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(owner),
+                                    [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                     [DynamoDbScoreItemRelationPropertyNames.ItemRelation] = new AttributeValue(id + score),
                                 }
                             }
@@ -1299,10 +1335,7 @@ namespace ScoreHistoryApi.Logics
             if (pages.Count == 0)
                 throw new ArgumentException(nameof(pages));
 
-            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
-            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
-
-            var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
+            var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId);
 
             data.Page ??= new List<DynamoDbScorePageV1>();
 
@@ -1351,25 +1384,28 @@ namespace ScoreHistoryApi.Logics
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
-            await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, replacingPages, newHash, oldHash, now);
+            await UpdateAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId, replacingPages, newHash, oldHash, now);
 
-            await PutItemRelations(_dynamoDbClient, ScoreItemRelationTableName, owner, score, newRelationItemSet);
+            await PutItemRelations(_dynamoDbClient, ScoreItemRelationTableName, ownerId, scoreId, newRelationItemSet);
 
-            await DeleteItemRelations(_dynamoDbClient, ScoreItemRelationTableName, owner, score, removeRelationItemSet);
+            await DeleteItemRelations(_dynamoDbClient, ScoreItemRelationTableName, ownerId, scoreId, removeRelationItemSet);
 
 
             static async Task<(DynamoDbScoreDataV1 data, string hash)> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
-                string score)
+                Guid ownerId,
+                Guid scoreId)
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var request = new GetItemRequest()
                 {
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
@@ -1417,14 +1453,17 @@ namespace ScoreHistoryApi.Logics
             static async Task UpdateAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
-                string score,
+                Guid ownerId,
+                Guid scoreId,
                 List<(DynamoDbScorePageV1 data, int targetIndex)> replacingPages,
                 string newHash,
                 string oldHash,
                 DateTimeOffset now
             )
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
 
                 var replacingValues = replacingPages
@@ -1434,7 +1473,7 @@ namespace ScoreHistoryApi.Logics
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
@@ -1469,9 +1508,12 @@ namespace ScoreHistoryApi.Logics
             }
 
 
-            static async Task PutItemRelations(IAmazonDynamoDB client, string tableName, string owner, string score, HashSet<string> items)
+            static async Task PutItemRelations(IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId, HashSet<string> items)
             {
                 const int chunkSize = 25;
+
+                var partitionKey = DynamoDbScoreItemRelationUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
 
                 var chunkList = items.Select((x, index) => (x, index))
                     .GroupBy(x => x.index / chunkSize)
@@ -1480,10 +1522,10 @@ namespace ScoreHistoryApi.Logics
 
                 foreach (var ids in chunkList)
                 {
-                    await PutItemRelations25Async(client, tableName, owner, score, ids);
+                    await PutItemRelations25Async(client, tableName, partitionKey, score, ids);
                 }
 
-                static async Task PutItemRelations25Async(IAmazonDynamoDB client, string tableName, string owner, string score, string[] ids)
+                static async Task PutItemRelations25Async(IAmazonDynamoDB client, string tableName, string partitionKey, string score, string[] ids)
                 {
                     var request = new Dictionary<string, List<WriteRequest>>()
                     {
@@ -1493,7 +1535,7 @@ namespace ScoreHistoryApi.Logics
                             {
                                 Item = new Dictionary<string, AttributeValue>()
                                 {
-                                    [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(owner),
+                                    [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                     [DynamoDbScoreItemRelationPropertyNames.ItemRelation] = new AttributeValue(id + score),
                                 }
                             }
@@ -1515,9 +1557,12 @@ namespace ScoreHistoryApi.Logics
             }
 
 
-            static async Task DeleteItemRelations(IAmazonDynamoDB client, string tableName, string owner, string score, HashSet<string> items)
+            static async Task DeleteItemRelations(IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId, HashSet<string> items)
             {
                 const int chunkSize = 25;
+
+                var partitionKey = DynamoDbScoreItemRelationUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
 
                 var chunkList = items.Select((x, index) => (x, index))
                     .GroupBy(x => x.index / chunkSize)
@@ -1526,10 +1571,10 @@ namespace ScoreHistoryApi.Logics
 
                 foreach (var ids in chunkList)
                 {
-                    await DeleteItemRelations25Async(client, tableName, owner, score, ids);
+                    await DeleteItemRelations25Async(client, tableName, partitionKey, score, ids);
                 }
 
-                static async Task DeleteItemRelations25Async(IAmazonDynamoDB client, string tableName, string owner, string score, string[] ids)
+                static async Task DeleteItemRelations25Async(IAmazonDynamoDB client, string tableName, string partitionKey, string score, string[] ids)
                 {
                     var request = new Dictionary<string, List<WriteRequest>>()
                     {
@@ -1539,7 +1584,7 @@ namespace ScoreHistoryApi.Logics
                             {
                                 Key = new Dictionary<string, AttributeValue>()
                                 {
-                                    [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(owner),
+                                    [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                     [DynamoDbScoreItemRelationPropertyNames.ItemRelation] = new AttributeValue(id + score),
                                 }
                             }
@@ -1566,10 +1611,7 @@ namespace ScoreHistoryApi.Logics
             if (annotations.Count == 0)
                 throw new ArgumentException(nameof(annotations));
 
-            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
-            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
-
-            var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
+            var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId);
 
             data.Annotations ??= new List<DynamoDbScoreAnnotationV1>();
 
@@ -1603,14 +1645,17 @@ namespace ScoreHistoryApi.Logics
 
             var annotationCountMax = _quota.AnnotationCountMax;
 
-            await AddAnnListAsync(_dynamoDbClient, ScoreDataTableName, owner, score, newAnnotationContentHashDic);
-            await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, newAnnotations, newHash, oldHash, now,annotationCountMax);
+            await AddAnnListAsync(_dynamoDbClient, ScoreDataTableName, ownerId, scoreId, newAnnotationContentHashDic);
+            await UpdateAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId, newAnnotations, newHash, oldHash, now,annotationCountMax);
 
             static async Task AddAnnListAsync(
-                IAmazonDynamoDB client, string tableName, string owner, string score,
+                IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId,
                 Dictionary<string, NewScoreAnnotation> newAnnotations)
             {
                 const int chunkSize = 25;
+
+                var partitionKey = DynamoDbScoreDataUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
 
                 var chunkList = newAnnotations.Select((x, index) => (x, index))
                     .GroupBy(x => x.index / chunkSize)
@@ -1619,11 +1664,11 @@ namespace ScoreHistoryApi.Logics
 
                 foreach (var valueTuples in chunkList)
                 {
-                    await AddAnnList25Async(client, tableName, owner, score, valueTuples);
+                    await AddAnnList25Async(client, tableName, partitionKey, score, valueTuples);
                 }
 
                 static async Task AddAnnList25Async(
-                    IAmazonDynamoDB client, string tableName, string owner, string score,
+                    IAmazonDynamoDB client, string tableName, string partitionKey, string score,
                     (string hash, NewScoreAnnotation ann)[] annotations)
                 {
                     Dictionary<string,List<WriteRequest>> request = new Dictionary<string, List<WriteRequest>>()
@@ -1637,7 +1682,7 @@ namespace ScoreHistoryApi.Logics
                                 {
                                     Item = new Dictionary<string, AttributeValue>()
                                     {
-                                        [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(owner),
+                                        [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                         [DynamoDbScoreDataPropertyNames.DataId] = new AttributeValue(dataId),
                                         [DynamoDbScoreDataPropertyNames.Content] = new AttributeValue(a.ann.Content),
                                     }
@@ -1662,15 +1707,18 @@ namespace ScoreHistoryApi.Logics
             static async Task<(DynamoDbScoreDataV1 data,string hash)> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
-                string score)
+                Guid ownerId,
+                Guid scoreId)
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var request = new GetItemRequest()
                 {
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                 };
@@ -1715,11 +1763,12 @@ namespace ScoreHistoryApi.Logics
 
                 return result;
             }
+
             static async Task UpdateAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
-                string score,
+                Guid ownerId,
+                Guid scoreId,
                 List<DynamoDbScoreAnnotationV1> newAnnotations,
                 string newHash,
                 string oldHash,
@@ -1727,13 +1776,16 @@ namespace ScoreHistoryApi.Logics
                 int annotationCountMax
                 )
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
 
                 var request = new UpdateItemRequest()
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                     ExpressionAttributeNames = new Dictionary<string, string>()
@@ -1775,10 +1827,7 @@ namespace ScoreHistoryApi.Logics
             if (annotationIds.Count == 0)
                 throw new ArgumentException(nameof(annotationIds));
 
-            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
-            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
-
-            var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
+            var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId);
 
             data.Annotations ??= new List<DynamoDbScoreAnnotationV1>();
 
@@ -1809,25 +1858,28 @@ namespace ScoreHistoryApi.Logics
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
-            await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, removeIndices, newHash, oldHash, now);
+            await UpdateAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId, removeIndices, newHash, oldHash, now);
 
             if (removeHashSet.Count != 0)
             {
-                await RemoveDataAsync(_dynamoDbClient, ScoreDataTableName, owner, score, removeHashSet);
+                await RemoveDataAsync(_dynamoDbClient, ScoreDataTableName, ownerId, scoreId, removeHashSet);
             }
 
             static async Task<(DynamoDbScoreDataV1 data, string hash)> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
-                string score)
+                Guid ownerId,
+                Guid scoreId)
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var request = new GetItemRequest()
                 {
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
@@ -1847,21 +1899,24 @@ namespace ScoreHistoryApi.Logics
             static async Task UpdateAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
-                string score,
+                Guid ownerId,
+                Guid scoreId,
                 int[] removeIndices,
                 string newHash,
                 string oldHash,
                 DateTimeOffset now
             )
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
 
                 var request = new UpdateItemRequest()
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
@@ -1895,10 +1950,13 @@ namespace ScoreHistoryApi.Logics
             }
 
             static async Task RemoveDataAsync(
-                IAmazonDynamoDB client, string tableName, string owner, string score,
+                IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId,
                 HashSet<string> removeHashSet)
             {
                 const int chunkSize = 25;
+
+                var partitionKey = DynamoDbScoreDataUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
 
                 var chunkList = removeHashSet.Select((h, index) => (h, index))
                     .GroupBy(x => x.index / chunkSize)
@@ -1907,11 +1965,11 @@ namespace ScoreHistoryApi.Logics
 
                 foreach (var hashList in chunkList)
                 {
-                    await RemoveData25Async(client, tableName, owner, score, hashList);
+                    await RemoveData25Async(client, tableName, partitionKey, score, hashList);
                 }
 
                 static async Task RemoveData25Async(
-                    IAmazonDynamoDB client, string tableName, string owner, string score,
+                    IAmazonDynamoDB client, string tableName, string partitionKey, string score,
                     string[] hashList)
                 {
                     var request = new Dictionary<string, List<WriteRequest>>()
@@ -1925,7 +1983,7 @@ namespace ScoreHistoryApi.Logics
                                 {
                                     Key = new Dictionary<string, AttributeValue>()
                                     {
-                                        [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(owner),
+                                        [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                         [DynamoDbScoreDataPropertyNames.DataId] = new AttributeValue(dataId),
                                     },
                                 },
@@ -1952,10 +2010,7 @@ namespace ScoreHistoryApi.Logics
             if (annotations.Count == 0)
                 throw new ArgumentException(nameof(annotations));
 
-            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
-            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
-
-            var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
+            var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId);
 
             data.Annotations ??= new List<DynamoDbScoreAnnotationV1>();
 
@@ -2006,23 +2061,26 @@ namespace ScoreHistoryApi.Logics
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
-            await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, replacingAnnotations, newHash, oldHash, now);
+            await UpdateAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId, replacingAnnotations, newHash, oldHash, now);
 
-            await AddAnnListAsync(_dynamoDbClient, ScoreDataTableName, owner, score, addAnnData);
-            await RemoveAnnListAsync(_dynamoDbClient, ScoreDataTableName, owner, score, removeAnnData);
+            await AddAnnListAsync(_dynamoDbClient, ScoreDataTableName, ownerId, scoreId, addAnnData);
+            await RemoveAnnListAsync(_dynamoDbClient, ScoreDataTableName, ownerId, scoreId, removeAnnData);
 
             static async Task<(DynamoDbScoreDataV1 data, string hash)> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
-                string score)
+                Guid ownerId,
+                Guid scoreId)
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var request = new GetItemRequest()
                 {
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
@@ -2063,14 +2121,17 @@ namespace ScoreHistoryApi.Logics
             static async Task UpdateAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
-                string score,
+                Guid ownerId,
+                Guid scoreId,
                 List<(DynamoDbScoreAnnotationV1 data, int targetIndex)> replacingAnnotations,
                 string newHash,
                 string oldHash,
                 DateTimeOffset now
             )
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
 
                 var replacingValues = replacingAnnotations
@@ -2080,7 +2141,7 @@ namespace ScoreHistoryApi.Logics
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
@@ -2116,10 +2177,13 @@ namespace ScoreHistoryApi.Logics
 
 
             static async Task AddAnnListAsync(
-                IAmazonDynamoDB client, string tableName, string owner, string score,
+                IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId,
                 Dictionary<string, PatchScoreAnnotation> newAnnotations)
             {
                 const int chunkSize = 25;
+
+                var partitionKey = DynamoDbScoreDataUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
 
                 var chunkList = newAnnotations.Select((x, index) => (x, index))
                     .GroupBy(x => x.index / chunkSize)
@@ -2128,11 +2192,11 @@ namespace ScoreHistoryApi.Logics
 
                 foreach (var valueTuples in chunkList)
                 {
-                    await AddAnnList25Async(client, tableName, owner, score, valueTuples);
+                    await AddAnnList25Async(client, tableName, partitionKey, score, valueTuples);
                 }
 
                 static async Task AddAnnList25Async(
-                    IAmazonDynamoDB client, string tableName, string owner, string score,
+                    IAmazonDynamoDB client, string tableName, string partitionKey, string score,
                     (string hash, PatchScoreAnnotation ann)[] annotations)
                 {
                     Dictionary<string,List<WriteRequest>> request = new Dictionary<string, List<WriteRequest>>()
@@ -2146,7 +2210,7 @@ namespace ScoreHistoryApi.Logics
                                 {
                                     Item = new Dictionary<string, AttributeValue>()
                                     {
-                                        [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(owner),
+                                        [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                         [DynamoDbScoreDataPropertyNames.DataId] = new AttributeValue(dataId),
                                         [DynamoDbScoreDataPropertyNames.Content] = new AttributeValue(a.ann.Content),
                                     }
@@ -2170,10 +2234,13 @@ namespace ScoreHistoryApi.Logics
 
 
             static async Task RemoveAnnListAsync(
-                IAmazonDynamoDB client, string tableName, string owner, string score,
+                IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId,
                 HashSet<string> removeAnnotations)
             {
                 const int chunkSize = 25;
+
+                var partitionKey = DynamoDbScoreDataUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
 
                 var chunkList = removeAnnotations.Select((x, index) => (x, index))
                     .GroupBy(x => x.index / chunkSize)
@@ -2182,11 +2249,11 @@ namespace ScoreHistoryApi.Logics
 
                 foreach (var hashList in chunkList)
                 {
-                    await RemoveAnnList25Async(client, tableName, owner, score, hashList);
+                    await RemoveAnnList25Async(client, tableName, partitionKey, score, hashList);
                 }
 
                 static async Task RemoveAnnList25Async(
-                    IAmazonDynamoDB client, string tableName, string owner, string score,
+                    IAmazonDynamoDB client, string tableName, string partitionKey, string score,
                     string[] annotations)
                 {
                     var request = new Dictionary<string, List<WriteRequest>>()
@@ -2200,7 +2267,7 @@ namespace ScoreHistoryApi.Logics
                                 {
                                     Key = new Dictionary<string, AttributeValue>()
                                     {
-                                        [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(owner),
+                                        [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                         [DynamoDbScoreDataPropertyNames.DataId] = new AttributeValue(dataId),
                                     }
                                 }
@@ -2230,7 +2297,8 @@ namespace ScoreHistoryApi.Logics
 
             static async Task<ScoreSummary[]> GetAsync(IAmazonDynamoDB client, string tableName, string dataTableName, Guid ownerId)
             {
-                var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+                var scorePartitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var largeDataPartitionKey = DynamoDbScoreDataUtils.ConvertToPartitionKey(ownerId);
 
                 var request = new QueryRequest()
                 {
@@ -2245,7 +2313,7 @@ namespace ScoreHistoryApi.Logics
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
-                        [":owner"] = new AttributeValue(owner),
+                        [":owner"] = new AttributeValue(scorePartitionKey),
                         [":mainPrefix"] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix),
                     },
                     KeyConditionExpression = "#owner = :owner and begins_with(#score, :mainPrefix)",
@@ -2263,7 +2331,7 @@ namespace ScoreHistoryApi.Logics
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
-                        [":owner"] = new AttributeValue(owner),
+                        [":owner"] = new AttributeValue(largeDataPartitionKey),
                         [":descPrefix"] = new AttributeValue(DynamoDbScoreDataConstant.PrefixDescription),
                     },
                     KeyConditionExpression = "#owner = :owner and begins_with(#data, :descPrefix)",
@@ -2290,7 +2358,7 @@ namespace ScoreHistoryApi.Logics
                             var descriptionHash = x[DynamoDbScorePropertyNames.Data].M[DynamoDbScorePropertyNames.DataPropertyNames.DescriptionHash].S;
                             var description = descriptionSet[scoreId64 + descriptionHash];
 
-                            var ownerId = ScoreDatabaseUtils.ConvertToGuid(ownerId64);
+                            var ownerId = ScoreDatabaseUtils.ConvertFromPartitionKey(ownerId64);
                             var scoreId = ScoreDatabaseUtils.ConvertToGuid(scoreId64);
 
                             return new ScoreSummary()
@@ -2334,15 +2402,13 @@ namespace ScoreHistoryApi.Logics
         public async Task<(DynamoDbScore score, Dictionary<string, string> hashSet)> GetDynamoDbScoreDataAsync(
             Guid ownerId, Guid scoreId)
         {
-            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
-            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
 
-            var dynamoDbScore = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
-            var hashSet = await GetAnnotationsAsync(_dynamoDbClient, ScoreDataTableName, owner, score);
+            var dynamoDbScore = await GetAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId);
+            var hashSet = await GetAnnotationsAsync(_dynamoDbClient, ScoreDataTableName, ownerId, scoreId);
 
             var descriptionHash = dynamoDbScore.Data.GetDescriptionHash();
             var (success, description) =
-                await TryGetDescriptionAsync(_dynamoDbClient, ScoreDataTableName, owner, score, descriptionHash);
+                await TryGetDescriptionAsync(_dynamoDbClient, ScoreDataTableName, ownerId, scoreId, descriptionHash);
 
             if (success)
             {
@@ -2354,15 +2420,18 @@ namespace ScoreHistoryApi.Logics
             static async Task<DynamoDbScore> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
-                string score)
+                Guid ownerId,
+                Guid scoreId)
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var request = new GetItemRequest()
                 {
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
@@ -2381,8 +2450,11 @@ namespace ScoreHistoryApi.Logics
 
 
             static async Task<Dictionary<string, string>> GetAnnotationsAsync(
-                IAmazonDynamoDB client, string tableName, string owner, string score)
+                IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId)
             {
+                var partitionKey = DynamoDbScoreDataUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var request = new QueryRequest()
                 {
                     TableName = tableName,
@@ -2394,7 +2466,7 @@ namespace ScoreHistoryApi.Logics
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
-                        [":owner"] = new AttributeValue(owner),
+                        [":owner"] = new AttributeValue(partitionKey),
                         [":annScore"] = new AttributeValue(DynamoDbScoreDataConstant.PrefixAnnotation + score),
                     },
                     KeyConditionExpression = "#owner = :owner and begins_with(#data, :annScore)",
@@ -2426,14 +2498,17 @@ namespace ScoreHistoryApi.Logics
             }
 
             static async Task<(bool success,string description)> TryGetDescriptionAsync(
-                IAmazonDynamoDB client, string tableName, string owner, string score, string descriptionHash)
+                IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId, string descriptionHash)
             {
+                var partitionKey = DynamoDbScoreDataUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var request = new GetItemRequest()
                 {
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScoreDataPropertyNames.DataId] = new AttributeValue(DynamoDbScoreDataConstant.PrefixDescription + score + descriptionHash),
                     },
                     ExpressionAttributeNames = new Dictionary<string, string>()
@@ -2482,17 +2557,13 @@ namespace ScoreHistoryApi.Logics
         public async Task<(DynamoDbScore dynamoDbScore, Dictionary<string, string> hashSet)>
             CreateSnapshotAsync(Guid ownerId, Guid scoreId, Guid snapshotId, string snapshotName)
         {
-            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
-            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
-            var snapshot = ScoreDatabaseUtils.ConvertToBase64(snapshotId);
+            var dynamoDbScore = await GetAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId);
 
-            var dynamoDbScore = await GetAsync(_dynamoDbClient, ScoreTableName, owner, score);
-
-            var hashSet = await GetAnnotationsAsync(_dynamoDbClient, ScoreDataTableName, owner, score, snapshot);
+            var hashSet = await GetAnnotationsAsync(_dynamoDbClient, ScoreDataTableName, ownerId, scoreId);
 
             var descriptionHash = dynamoDbScore.Data.GetDescriptionHash();
             var (success, description) =
-                await TryGetDescriptionAsync(_dynamoDbClient, ScoreDataTableName, owner, score, descriptionHash);
+                await TryGetDescriptionAsync(_dynamoDbClient, ScoreDataTableName, ownerId, scoreId, descriptionHash);
 
             var itemRelationIds = dynamoDbScore.Data.GetPages().Select(x => x.ItemId).ToArray();
 
@@ -2505,10 +2576,10 @@ namespace ScoreHistoryApi.Logics
 
             var maxSnapshotCount = _quota.SnapshotCountMax;
             await UpdateAsync(
-                _dynamoDbClient, ScoreTableName, owner, score, snapshot
+                _dynamoDbClient, ScoreTableName, ownerId, scoreId, snapshotId
                 , snapshotName, now, maxSnapshotCount);
 
-            await PutItemRelations(_dynamoDbClient, ScoreItemRelationTableName, owner, snapshot, itemRelationIds);
+            await PutItemRelations(_dynamoDbClient, ScoreItemRelationTableName, ownerId, snapshotId, itemRelationIds);
 
 
             return (dynamoDbScore, hashSet);
@@ -2516,15 +2587,18 @@ namespace ScoreHistoryApi.Logics
             static async Task<DynamoDbScore> GetAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
-                string score)
+                Guid ownerId,
+                Guid scoreId)
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var request = new GetItemRequest()
                 {
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                 };
@@ -2536,8 +2610,11 @@ namespace ScoreHistoryApi.Logics
             }
 
             static async Task<Dictionary<string, string>> GetAnnotationsAsync(
-                IAmazonDynamoDB client, string tableName, string owner, string score, string snapshot)
+                IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId)
             {
+                var partitionKey = DynamoDbScoreDataUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var request = new QueryRequest()
                 {
                     TableName = tableName,
@@ -2549,7 +2626,7 @@ namespace ScoreHistoryApi.Logics
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
-                        [":owner"] = new AttributeValue(owner),
+                        [":owner"] = new AttributeValue(partitionKey),
                         [":annScore"] = new AttributeValue(DynamoDbScoreDataConstant.PrefixAnnotation + score),
                     },
                     KeyConditionExpression = "#owner = :owner and begins_with(#data, :annScore)",
@@ -2581,14 +2658,17 @@ namespace ScoreHistoryApi.Logics
             }
 
             static async Task<(bool success,string description)> TryGetDescriptionAsync(
-                IAmazonDynamoDB client, string tableName, string owner, string score, string descriptionHash)
+                IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId, string descriptionHash)
             {
+                var partitionKey = DynamoDbScoreDataUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var request = new GetItemRequest()
                 {
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScoreDataPropertyNames.DataId] = new AttributeValue(DynamoDbScoreDataConstant.PrefixDescription + score + descriptionHash),
                     },
                     ExpressionAttributeNames = new Dictionary<string, string>()
@@ -2622,14 +2702,18 @@ namespace ScoreHistoryApi.Logics
             static async Task UpdateAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
-                string score,
-                string snapshot,
+                Guid ownerId,
+                Guid scoreId,
+                Guid snapshotId,
                 string snapshotName,
                 DateTimeOffset now,
                 int maxSnapshotCount
                 )
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+                var snapshot = ScoreDatabaseUtils.ConvertToBase64(snapshotId);
+
                 var at = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
 
                 var actions = new List<TransactWriteItem>()
@@ -2641,7 +2725,7 @@ namespace ScoreHistoryApi.Logics
                             TableName = tableName,
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                 [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                             },
                             ExpressionAttributeNames = new Dictionary<string, string>()
@@ -2667,7 +2751,7 @@ namespace ScoreHistoryApi.Logics
                             TableName = tableName,
                             Item = new Dictionary<string, AttributeValue>()
                             {
-                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                 [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + snapshot),
                                 [DynamoDbScorePropertyNames.CreateAt] = new AttributeValue(at),
                                 [DynamoDbScorePropertyNames.UpdateAt] = new AttributeValue(at),
@@ -2709,9 +2793,12 @@ namespace ScoreHistoryApi.Logics
             }
 
 
-            static async Task PutItemRelations(IAmazonDynamoDB client, string tableName, string owner, string snapshot, string[] items)
+            static async Task PutItemRelations(IAmazonDynamoDB client, string tableName, Guid ownerId, Guid snapshotId, string[] items)
             {
                 const int chunkSize = 25;
+
+                var partitionKey = DynamoDbScoreItemRelationUtils.ConvertToPartitionKey(ownerId);
+                var snapshot = ScoreDatabaseUtils.ConvertToBase64(snapshotId);
 
                 var chunkList = items.Select((x, index) => (x, index))
                     .GroupBy(x => x.index / chunkSize)
@@ -2720,10 +2807,10 @@ namespace ScoreHistoryApi.Logics
 
                 foreach (var ids in chunkList)
                 {
-                    await PutItemRelations25Async(client, tableName, owner, snapshot, ids);
+                    await PutItemRelations25Async(client, tableName, partitionKey, snapshot, ids);
                 }
 
-                static async Task PutItemRelations25Async(IAmazonDynamoDB client, string tableName, string owner, string snapshot, string[] ids)
+                static async Task PutItemRelations25Async(IAmazonDynamoDB client, string tableName, string partitionKey, string snapshot, string[] ids)
                 {
                     var request = new Dictionary<string, List<WriteRequest>>()
                     {
@@ -2733,7 +2820,7 @@ namespace ScoreHistoryApi.Logics
                             {
                                 Item = new Dictionary<string, AttributeValue>()
                                 {
-                                    [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(owner),
+                                    [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                     [DynamoDbScoreItemRelationPropertyNames.ItemRelation] = new AttributeValue(id + snapshot),
                                 }
                             }
@@ -2757,20 +2844,21 @@ namespace ScoreHistoryApi.Logics
 
         public async Task DeleteSnapshotAsync(Guid ownerId, Guid scoreId, Guid snapshotId)
         {
-            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
-            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
-            var snapshot = ScoreDatabaseUtils.ConvertToBase64(snapshotId);
 
-            await DeleteItemAsync(_dynamoDbClient, ScoreTableName, owner, score, snapshot);
+            await DeleteItemAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId, snapshotId);
 
             static async Task DeleteItemAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
-                string score,
-                string snapshot
+                Guid ownerId,
+                Guid scoreId,
+                Guid snapshotId
                 )
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+                var snapshot = ScoreDatabaseUtils.ConvertToBase64(snapshotId);
+
                 var actions = new List<TransactWriteItem>()
                 {
                     new TransactWriteItem()
@@ -2780,7 +2868,7 @@ namespace ScoreHistoryApi.Logics
                             TableName = tableName,
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                 [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + snapshot),
                             },
                             ExpressionAttributeNames = new Dictionary<string, string>()
@@ -2797,7 +2885,7 @@ namespace ScoreHistoryApi.Logics
                             TableName = tableName,
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                 [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                             },
                             ExpressionAttributeNames = new Dictionary<string, string>()
@@ -2848,7 +2936,7 @@ namespace ScoreHistoryApi.Logics
 
             static async Task<ScoreSnapshotSummary[]> GetAsync(IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId)
             {
-                var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
                 var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
 
                 var request = new QueryRequest()
@@ -2863,7 +2951,7 @@ namespace ScoreHistoryApi.Logics
                     },
                     ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                     {
-                        [":owner"] = new AttributeValue(owner),
+                        [":owner"] = new AttributeValue(partitionKey),
                         [":snapPrefix"] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score),
                     },
                     KeyConditionExpression = "#owner = :owner and begins_with(#score, :snapPrefix)",
@@ -2921,49 +3009,22 @@ namespace ScoreHistoryApi.Logics
 
         public async Task SetAccessAsync(Guid ownerId, Guid scoreId, ScoreAccesses access)
         {
-            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
-            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
-
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
-            await UpdateAsync(_dynamoDbClient, ScoreTableName, owner, score, access, now);
-
-            static async Task<(DynamoDbScoreDataV1 data,string hash)> GetAsync(
-                IAmazonDynamoDB client,
-                string tableName,
-                string owner,
-                string score)
-            {
-                var request = new GetItemRequest()
-                {
-                    TableName = tableName,
-                    Key = new Dictionary<string, AttributeValue>()
-                    {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
-                        [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
-                    },
-                };
-                var response = await client.GetItemAsync(request);
-                var data = response.Item[DynamoDbScorePropertyNames.Data];
-
-                if (data is null)
-                    throw new InvalidOperationException("not found.");
-
-
-                DynamoDbScoreDataV1.TryMapFromAttributeValue(data, out var result);
-                var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
-                return (result,hash);
-            }
+            await UpdateAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId, access, now);
 
             static async Task UpdateAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
-                string score,
+                Guid ownerId,
+                Guid scoreId,
                 ScoreAccesses access,
                 DateTimeOffset now
                 )
             {
+                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+
                 var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
                 var accessText = ScoreDatabaseUtils.ConvertFromScoreAccess(access);
 
@@ -2971,7 +3032,7 @@ namespace ScoreHistoryApi.Logics
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                         [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                     ExpressionAttributeNames = new Dictionary<string, string>()

@@ -30,5 +30,14 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
         /// アノテーションのハッシュ値を計算する際に元データの先頭に付加するプレフィックス
         /// </summary>
         public const string AnnotationPrefix = "ann:";
+
+
+        /// <summary>
+        /// 楽譜のアイテムデータのパーティションキー
+        /// </summary>
+        /// <param name="ownerId"></param>
+        /// <returns></returns>
+        public static string ConvertToPartitionKey(Guid ownerId) => DynamoDbScoreDataConstant.PartitionKeyPrefix +
+                                                                    ScoreDatabaseUtils.ConvertToBase64(ownerId);
     }
 }

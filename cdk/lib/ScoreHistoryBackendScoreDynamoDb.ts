@@ -6,14 +6,16 @@ export class ScoreHistoryBackendScoreDynamoDb extends Table {
     super(scope, id, {
       tableName: tableName,
       partitionKey: {
-        name: 'owner',
+        name: 'o',
         type: AttributeType.STRING,
       },
       sortKey: {
-        name: 'score',
+        name: 's',
         type: AttributeType.STRING,
       },
-      billingMode: BillingMode.PAY_PER_REQUEST,
+      //billingMode: BillingMode.PAY_PER_REQUEST,
+      readCapacity: 10,
+      writeCapacity: 10,
     });
   }
 }

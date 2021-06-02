@@ -38,12 +38,6 @@ new ScoreHistoryApiStack(
   },
   {
     scoreDynamoDbTableArn: scoreHistoryBackendStack.scoreDynamoDbTableArn,
-    scoreItemDynamoDbTableArn:
-      scoreHistoryBackendStack.scoreItemDynamoDbTableArn,
-    scoreItemRelationDynamoDbTableArn:
-      scoreHistoryBackendStack.scoreItemRelationDynamoDbTableArn,
-    scoreLargeDataDynamoDbTableArn:
-      scoreHistoryBackendStack.scoreLargeDataDynamoDbTableArn,
     scoreHistoryBackendScoreDataBucketArn:
       scoreHistoryBackendStack.scoreHistoryBackendScoreDataBucketArn,
   }

@@ -8,5 +8,7 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
         public const string ScoreDataVersion1 = "1";
         public const string ScoreAccessPrivate = "private";
         public const string ScoreAccessPublic = "public";
+
+        public const string PartitionKeyPrefix = "sc:";
     }
 }

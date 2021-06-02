@@ -13,18 +13,17 @@ namespace ScoreHistoryApi.Logics.ScoreItemDatabases
         /// <param name="itemData"></param>
         /// <param name="now"></param>
         /// <returns></returns>
-        public static (Dictionary<string, AttributeValue> items,
-            string owner, string score, string item, long totalSize)
+        public static (Dictionary<string, AttributeValue> items, string partitionKey, string score, string item, long totalSize)
             CreateDynamoDbValue(ScoreItemDatabaseItemDataBase itemData, DateTimeOffset now)
         {
             var items = new Dictionary<string, AttributeValue>();
 
-            var owner = ScoreDatabaseUtils.ConvertToBase64(itemData.OwnerId);
+            var partitionKey = ScoreItemDatabaseUtils.ConvertToPartitionKey(itemData.OwnerId);
             var score = ScoreDatabaseUtils.ConvertToBase64(itemData.ScoreId);
             var item = ScoreDatabaseUtils.ConvertToBase64(itemData.ItemId);
             var at = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
 
-            items[ScoreItemDatabasePropertyNames.OwnerId] = new AttributeValue(owner);
+            items[ScoreItemDatabasePropertyNames.OwnerId] = new AttributeValue(partitionKey);
             items[ScoreItemDatabasePropertyNames.ItemId] = new AttributeValue(score + item);
             items[ScoreItemDatabasePropertyNames.ObjName] = new AttributeValue(itemData.ObjName);
             items[ScoreItemDatabasePropertyNames.Size] = new AttributeValue {N = itemData.Size.ToString()};
@@ -54,7 +53,7 @@ namespace ScoreHistoryApi.Logics.ScoreItemDatabases
 
             items[ScoreItemDatabasePropertyNames.TotalSize] = new AttributeValue {N = totalSize.ToString()};
 
-            return (items, owner, score, item, totalSize);
+            return (items, partitionKey, score, item, totalSize);
         }
 
         /// <summary>
@@ -106,7 +105,7 @@ namespace ScoreHistoryApi.Logics.ScoreItemDatabases
 
             result.Size = long.Parse(sizeValue.N);
             result.TotalSize = long.Parse(totalSizeValue.N);
-            result.OwnerId = ScoreDatabaseUtils.ConvertToGuid(ownerIdValue.S);
+            result.OwnerId = ScoreItemDatabaseUtils.ConvertFromPartitionKey(ownerIdValue.S);
 
             var scoreBase64 = itemIdValue.S.Substring(0, ScoreItemDatabaseConstant.ScoreIdLength);
             var itemBase64 = itemIdValue.S.Substring(ScoreItemDatabaseConstant.ScoreIdLength);
@@ -117,5 +116,23 @@ namespace ScoreHistoryApi.Logics.ScoreItemDatabases
 
             return result;
         }
+
+        /// <summary>
+        /// 楽譜のアイテムデータのパーティションキーから UUID に変換する
+        /// </summary>
+        /// <param name="partitionKey"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public static Guid ConvertFromPartitionKey(string partitionKey) =>
+            ScoreDatabaseUtils.ConvertToGuid(
+                partitionKey.Substring(ScoreItemDatabaseConstant.PartitionKeyPrefix.Length));
+
+        /// <summary>
+        /// 楽譜のアイテムデータのパーティションキー
+        /// </summary>
+        /// <param name="ownerId"></param>
+        /// <returns></returns>
+        public static string ConvertToPartitionKey(Guid ownerId) => ScoreItemDatabaseConstant.PartitionKeyPrefix +
+                                                                    ScoreDatabaseUtils.ConvertToBase64(ownerId);
     }
 }

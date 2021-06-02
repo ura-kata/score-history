@@ -14,8 +14,8 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
     public class ScoreDatabaseTests
     {
         public const string ScoreTableName = "ura-kata-score-history";
-        public const string ScoreDataTableName = "ura-kata-score-history-data";
-        public const string ScoreItemRelationDynamoDbTableName = "ura-kata-score-history-item-relation";
+        public const string ScoreDataTableName = "ura-kata-score-history";
+        public const string ScoreItemRelationDynamoDbTableName = "ura-kata-score-history";
 
         [Fact]
         public async Task CreateAsyncTest()
@@ -24,7 +24,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName,
                 ScoreItemRelationDynamoDbTableName);
 
-            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var ownerId = Guid.Parse("eb184d71-3b6e-4619-a1f6-1ddb41de72f0");
             var scoreId = Guid.Parse("0d9fb491-43ae-44a1-9056-55bb25b21187");
             try
             {
@@ -66,7 +66,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName,
                 ScoreItemRelationDynamoDbTableName);
 
-            var ownerId = Guid.Parse("22d49b0e-08ca-4154-9b4d-19d7b965c067");
+            var ownerId = Guid.Parse("27f30e40-bf83-427f-b53d-39b5d0f01ac7");
             var scoreId = Guid.Parse("4afded99-4070-4ba7-85ed-6c3776602895");
 
             var title = "test score";
@@ -100,7 +100,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName,
                 ScoreItemRelationDynamoDbTableName);
 
-            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var ownerId = Guid.Parse("4984ad41-4b7c-474d-953a-ac7c11081fbd");
             var scoreId = Guid.Parse("0d9fb491-43ae-44a1-9056-55bb25b21187");
 
             var title = "test score";
@@ -151,7 +151,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName,
                 ScoreItemRelationDynamoDbTableName);
 
-            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var ownerId = Guid.Parse("13eff3dd-beb9-4471-adc4-dc4540ee3445");
             var scoreId = Guid.Parse("0d9fb491-43ae-44a1-9056-55bb25b21187");
 
             var title = "test score";
@@ -199,7 +199,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName,
                 ScoreItemRelationDynamoDbTableName);
 
-            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var ownerId = Guid.Parse("806dcb04-eaba-4233-9069-0beead6cb075");
             var scoreId = Guid.Parse("727679a2-c1eb-4089-9817-9a9bfb7a23b1");
 
             var title = "test score";
@@ -276,7 +276,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName,
                 ScoreItemRelationDynamoDbTableName);
 
-            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var ownerId = Guid.Parse("f9aa6c43-aab0-485e-a5a7-f6dbf592b0a4");
             var scoreId = Guid.Parse("9db807b1-42fe-4e1a-b85c-61905b176616");
 
             var title = "test score";
@@ -363,7 +363,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName,
                 ScoreItemRelationDynamoDbTableName);
 
-            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var ownerId = Guid.Parse("3c9e2b24-2ba0-4b22-8f1d-60dc5c60b555");
             var scoreId = Guid.Parse("90fcc364-2a67-42b8-8b93-15a84370b1e4");
 
             var title = "test score";
@@ -403,7 +403,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName,
                 ScoreItemRelationDynamoDbTableName);
 
-            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var ownerId = Guid.Parse("9e88f09f-eed7-441e-a0e2-224aea4a3fc0");
             var scoreId = Guid.Parse("27badfc9-372f-4423-aa41-cfa397c9b01d");
 
             var title = "test score";
@@ -460,7 +460,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName,
                 ScoreItemRelationDynamoDbTableName);
 
-            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var ownerId = Guid.Parse("5f2dc1b1-bc2c-4ba5-a188-05e1c37307ad");
             var scoreId = Guid.Parse("9fc3f5e5-66b6-4443-be68-1cc96155550f");
 
             var title = "test score";
@@ -517,7 +517,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName,
                 ScoreItemRelationDynamoDbTableName);
 
-            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var ownerId = Guid.Parse("a5373d09-08f4-4dbd-be92-03bd4732b124");
             var scoreId = Guid.Parse("8127bf3d-0d80-4635-bdb7-9c544ccea46f");
 
             var title = "test score";
@@ -608,7 +608,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName,
                 ScoreItemRelationDynamoDbTableName);
 
-            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var ownerId = Guid.Parse("4f0d25c8-0b33-4c00-92dc-2e85c3ac58a5");
             var scoreId = Guid.Parse("fd32d482-477d-4cb4-ab78-88e86a073a31");
             var snapshotId = Guid.Parse("6d1d0a52-8371-4f78-b61b-785522d2577d");
 
@@ -702,7 +702,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName,
                 ScoreItemRelationDynamoDbTableName);
 
-            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var ownerId = Guid.Parse("3656f0fe-0068-4019-acc3-db042f6684b3");
             var scoreId = Guid.Parse("aa917a9b-453e-4bc2-8381-b61404725d6a");
             var snapshotId = Guid.Parse("7a82b4e0-02aa-4b5e-b323-7f13f61302c7");
 
@@ -806,7 +806,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName,
                 ScoreItemRelationDynamoDbTableName);
 
-            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var ownerId = Guid.Parse("afd15615-99b6-46c1-92fe-3da242d57e9d");
             var scoreId = Guid.Parse("89405e01-67f1-42e6-8673-e932a4b20d26");
 
             var title = "test score";
@@ -922,7 +922,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName,
                 ScoreItemRelationDynamoDbTableName);
 
-            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var ownerId = Guid.Parse("36a2264f-9843-4c51-96d4-92c4626571ef");
             var scoreId = Guid.Parse("ce815421-4538-4b2e-bcb5-4a43f8c01320");
 
             var title = "test score";
@@ -1032,7 +1032,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
             var target = new ScoreDatabase(new ScoreQuota(), factory.Create(), ScoreTableName, ScoreDataTableName,
                 ScoreItemRelationDynamoDbTableName);
 
-            var ownerId = Guid.Parse("f2240c15-0f2d-41ce-941d-6b173bae94c0");
+            var ownerId = Guid.Parse("721be298-bf3f-40f1-9f75-0679c4d06147");
             var scoreId = Guid.Parse("6884c1c3-55ab-4c62-b515-a039d18b14e9");
 
             var title = "test score";

@@ -2,8 +2,8 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
 {
     public static class DynamoDbScorePropertyNames
     {
-        public const string OwnerId = "owner";
-        public const string ScoreId = "score";
+        public const string OwnerId = "o";
+        public const string ScoreId = "s";
 
 
         public const string ScoreCount = "score_count";
