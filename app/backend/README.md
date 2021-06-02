@@ -79,14 +79,14 @@ UUID の Base64 エンコードは 24 byte
 ```json
 [
   {
-    "owner": "68yjpWHe5EOEnN6vv3UL1w==",
-    "score": "summary",
+    "o": "sc:68yjpWHe5EOEnN6vv3UL1w==",
+    "s": "summary",
     "score_count": 1,
     "socres":["a62Xnv7FbkqPJQsmW1kBeg=="]
   },
   {
-    "owner": "68yjpWHe5EOEnN6vv3UL1w==",
-    "score": "main:a62Xnv7FbkqPJQsmW1kBeg==",
+    "o": "sc:68yjpWHe5EOEnN6vv3UL1w==",
+    "s": "main:a62Xnv7FbkqPJQsmW1kBeg==",
     "d_hash": "", // data 部分を JSON にした際のハッシュ値
     "create_at": "",
     "update_at": "",
@@ -131,15 +131,15 @@ UUID の Base64 エンコードは 24 byte
     }
   },
   {
-    "owner": "68yjpWHe5EOEnN6vv3UL1w==",
-    "score": "snap:a62Xnv7FbkqPJQsmW1kBeg==G83UGGM9UUS4Ky8gsKmxRg==",
+    "o": "sc:68yjpWHe5EOEnN6vv3UL1w==",
+    "s": "snap:a62Xnv7FbkqPJQsmW1kBeg==G83UGGM9UUS4Ky8gsKmxRg==",
     "create_at": "",
     "update_at": "",
     "snapname": "スナップショット1"
   },
   {
-    "owner": "68yjpWHe5EOEnN6vv3UL1w==",
-    "score": "snap:a62Xnv7FbkqPJQsmW1kBeg==HdVwA45SOUacxgvNTADESA==",
+    "o": "sc:68yjpWHe5EOEnN6vv3UL1w==",
+    "s": "snap:a62Xnv7FbkqPJQsmW1kBeg==HdVwA45SOUacxgvNTADESA==",
     "create_at": "",
     "update_at": "",
     "snapname": "スナップショット2"
@@ -151,13 +151,13 @@ Large Data Table
 
 ```json
 {
-  "o": "68yjpWHe5EOEnN6vv3UL1w==", // owner id
-  "d": "anno:a62Xnv7FbkqPJQsmW1kBeg==ouWfeVUe4keu21CyOIZ0jg==", // prefix + score id + アノテーションの内容にプレフィックスを付けハッシュ値を計算し base64 にしたもの
+  "o": "ld:68yjpWHe5EOEnN6vv3UL1w==", // owner id
+  "s": "anno:a62Xnv7FbkqPJQsmW1kBeg==ouWfeVUe4keu21CyOIZ0jg==", // prefix + score id + アノテーションの内容にプレフィックスを付けハッシュ値を計算し base64 にしたもの
   "c": "アノテーションの内容", // content
 },
 {
-  "o": "68yjpWHe5EOEnN6vv3UL1w==", // owner id
-  "d": "desc:a62Xnv7FbkqPJQsmW1kBeg==s2hRmHZaGkOC7PDFrXzypw==", // prefix + score id + アノテーションの内容にプレフィックスを付けハッシュ値を計算し base64 にしたもの
+  "o": "ld:68yjpWHe5EOEnN6vv3UL1w==", // owner id
+  "s": "desc:a62Xnv7FbkqPJQsmW1kBeg==s2hRmHZaGkOC7PDFrXzypw==", // prefix + score id + アノテーションの内容にプレフィックスを付けハッシュ値を計算し base64 にしたもの
   "c": "説明内容", // content
 }
 ```
@@ -201,13 +201,13 @@ prefix は 5 文字とする
 ```json
 [
   {
-    "owner": "68yjpWHe5EOEnN6vv3UL1w==",
-    "item": "summary",
+    "o": "it:68yjpWHe5EOEnN6vv3UL1w==",
+    "s": "summary",
     "size": 123456789 // owner に紐づくアイテムの総量
   },
   {
-    "owner": "68yjpWHe5EOEnN6vv3UL1w==",
-    "item": "a62Xnv7FbkqPJQsmW1kBeg==JO1kjyJx1kKuucbt3JOziQ==", // score id + item id
+    "o": "it:68yjpWHe5EOEnN6vv3UL1w==",
+    "s": "a62Xnv7FbkqPJQsmW1kBeg==JO1kjyJx1kKuucbt3JOziQ==", // score id + item id
     "obj_name": "", // S3 のオブジェクトの名前
     "size": 12345, // アイテムのバイトサイズ
     "t_size": 24690, // トータルサイズ
@@ -230,12 +230,12 @@ Item を削除するときはこのテーブルにアイテムが存在しない
 ```json
 [
   {
-    "o": "68yjpWHe5EOEnN6vv3UL1w==", // owner id
-    "i": "JO1kjyJx1kKuucbt3JOziQ==a62Xnv7FbkqPJQsmW1kBeg==" // item relation メインとの関係  item id + score id
+    "o": "si:68yjpWHe5EOEnN6vv3UL1w==", // owner id
+    "s": "JO1kjyJx1kKuucbt3JOziQ==a62Xnv7FbkqPJQsmW1kBeg==" // item relation メインとの関係  item id + score id
   },
   {
-    "o": "68yjpWHe5EOEnN6vv3UL1w==", // owner id
-    "i": "JO1kjyJx1kKuucbt3JOziQ==G83UGGM9UUS4Ky8gsKmxRg==" // item relation スナップショットとの関連  item id + snapshot id
+    "o": "si:68yjpWHe5EOEnN6vv3UL1w==", // owner id
+    "s": "JO1kjyJx1kKuucbt3JOziQ==G83UGGM9UUS4Ky8gsKmxRg==" // item relation スナップショットとの関連  item id + snapshot id
   }
 ]
 

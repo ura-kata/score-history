@@ -97,7 +97,7 @@ namespace ScoreHistoryApi.Logics.Scores
         {
             const int chunkSize = 25;
 
-            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var partitionKey = DynamoDbScoreItemRelationUtils.ConvertToPartitionKey(ownerId);
             var snapshot = ScoreDatabaseUtils.ConvertToBase64(snapshotId);
 
             var chunkList = itemIds
@@ -108,10 +108,10 @@ namespace ScoreHistoryApi.Logics.Scores
 
             foreach (var ids in chunkList)
             {
-                await DeleteData25Async(_dynamoDbClient, ScoreItemRelationTableName, owner, ids);
+                await DeleteData25Async(_dynamoDbClient, ScoreItemRelationTableName, partitionKey, ids);
             }
 
-            static async Task DeleteData25Async(IAmazonDynamoDB client, string tableName, string owner, string[] ids)
+            static async Task DeleteData25Async(IAmazonDynamoDB client, string tableName, string partitionKey, string[] ids)
             {
                 var request = new Dictionary<string, List<WriteRequest>>()
                 {
@@ -121,7 +121,7 @@ namespace ScoreHistoryApi.Logics.Scores
                         {
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScoreItemRelationPropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                 [DynamoDbScoreItemRelationPropertyNames.ItemRelation] = new AttributeValue(id),
                             }
                         }
@@ -155,16 +155,16 @@ namespace ScoreHistoryApi.Logics.Scores
 
         public async Task DeleteSnapshotAsync(Guid ownerId, Guid scoreId, Guid snapshotId)
         {
-            var owner = ScoreDatabaseUtils.ConvertToBase64(ownerId);
+            var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
             var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
             var snapshot = ScoreDatabaseUtils.ConvertToBase64(snapshotId);
 
-            await DeleteItemAsync(_dynamoDbClient, ScoreTableName, owner, score, snapshot);
+            await DeleteItemAsync(_dynamoDbClient, ScoreTableName, partitionKey, score, snapshot);
 
             static async Task DeleteItemAsync(
                 IAmazonDynamoDB client,
                 string tableName,
-                string owner,
+                string partitionKey,
                 string score,
                 string snapshot
                 )
@@ -178,7 +178,7 @@ namespace ScoreHistoryApi.Logics.Scores
                             TableName = tableName,
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                 [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + snapshot),
                             },
                             ExpressionAttributeNames = new Dictionary<string, string>()
@@ -195,7 +195,7 @@ namespace ScoreHistoryApi.Logics.Scores
                             TableName = tableName,
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(owner),
+                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
                                 [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                             },
                             ExpressionAttributeNames = new Dictionary<string, string>()

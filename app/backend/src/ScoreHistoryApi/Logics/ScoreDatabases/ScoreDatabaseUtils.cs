@@ -73,5 +73,21 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
             ScoreDatabaseConstant.ScoreAccessPublic => ScoreAccesses.Public,
             _ => throw new InvalidOperationException()
         };
+
+        /// <summary>
+        /// 楽譜データのパーティションキー
+        /// </summary>
+        /// <param name="ownerId"></param>
+        /// <returns></returns>
+        public static string ConvertToPartitionKey(Guid ownerId) => ScoreDatabaseConstant.PartitionKeyPrefix +
+                                                                    ScoreDatabaseUtils.ConvertToBase64(ownerId);
+
+        /// <summary>
+        /// パーティションキーから UUID に変換する
+        /// </summary>
+        /// <param name="partitionKey"></param>
+        /// <returns></returns>
+        public static Guid ConvertFromPartitionKey(string partitionKey) =>
+            ScoreDatabaseUtils.ConvertToGuid(partitionKey.Substring(ScoreDatabaseConstant.PartitionKeyPrefix.Length));
     }
 }

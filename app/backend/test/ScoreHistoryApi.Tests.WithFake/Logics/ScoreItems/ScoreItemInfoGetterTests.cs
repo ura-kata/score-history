@@ -98,8 +98,8 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.ScoreItems
         public async Task GetOwnerItemsInfoAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history-item";
-            var scoreItemRelationTableName = "ura-kata-score-history-item-relation";
+            var tableName = "ura-kata-score-history";
+            var scoreItemRelationTableName = "ura-kata-score-history";
             var scoreItemDatabase = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName,
                 scoreItemRelationTableName);
 
@@ -149,8 +149,8 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.ScoreItems
         public async Task GetUserItemsInfoAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history-item";
-            var scoreItemRelationTableName = "ura-kata-score-history-item-relation";
+            var tableName = "ura-kata-score-history";
+            var scoreItemRelationTableName = "ura-kata-score-history";
             var scoreItemDatabase = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName,
                 scoreItemRelationTableName);
 
