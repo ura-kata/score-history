@@ -6,9 +6,9 @@ import * as path from 'path';
 export interface ScoreHistoryApiFunctionProps {
   scoreDynamoDbTableArn: string;
   scoreItemDynamoDbTableArn: string;
+  scoreItemRelationDynamoDbTableArn: string;
   scoreLargeDataDynamoDbTableArn: string;
   scoreHistoryBackendScoreDataBucketArn: string;
-  scoreHistoryBackendScoreDataSnapshotBucketArn: string;
 }
 
 export class ScoreHistoryApiFunction extends Function {
@@ -36,6 +36,7 @@ export class ScoreHistoryApiFunction extends Function {
         resources: [
           props.scoreDynamoDbTableArn,
           props.scoreItemDynamoDbTableArn,
+          props.scoreItemRelationDynamoDbTableArn,
           props.scoreLargeDataDynamoDbTableArn,
         ],
         actions: ['dynamodb:*'],
@@ -48,8 +49,6 @@ export class ScoreHistoryApiFunction extends Function {
         resources: [
           props.scoreHistoryBackendScoreDataBucketArn,
           props.scoreHistoryBackendScoreDataBucketArn + '/*',
-          props.scoreHistoryBackendScoreDataSnapshotBucketArn,
-          props.scoreHistoryBackendScoreDataSnapshotBucketArn + '/*',
         ],
         actions: ['s3:*'],
       })

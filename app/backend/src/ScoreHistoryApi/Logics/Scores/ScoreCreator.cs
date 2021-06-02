@@ -15,9 +15,9 @@ namespace ScoreHistoryApi.Logics.Scores
             _scoreDatabase = scoreDatabase;
         }
 
-        public async Task CreateAsync(Guid ownerId, NewScore newScore)
+        public async Task<NewlyScore> CreateAsync(Guid ownerId, NewScore newScore)
         {
-            await _scoreDatabase.CreateAsync(ownerId, newScore.Title, newScore.Description);
+            return await _scoreDatabase.CreateAsync(ownerId, newScore.Title, newScore.Description);
         }
     }
 }

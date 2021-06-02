@@ -44,6 +44,7 @@ namespace ScoreHistoryApi.Models.Scores
                     Id = x.Id,
                     Page = x.Page,
                     ItemId = ScoreDatabaseUtils.ConvertToGuid(x.ItemId),
+                    ObjectName = x.ObjectName,
                 }).ToArray(),
                 Annotations = data.Annotations.Select(x => new ScoreAnnotation()
                 {

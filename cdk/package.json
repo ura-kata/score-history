@@ -9,6 +9,7 @@
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk",
+    "deploy-frontend": "cdk deploy ScoreHistoryFrontendStack",
     "deploy-api": "cdk deploy ScoreHistoryApiStack",
     "deploy-backend": "cdk deploy ScoreHistoryBackendStack",
     "build-api": "pwsh ../app/backend/build.ps1"

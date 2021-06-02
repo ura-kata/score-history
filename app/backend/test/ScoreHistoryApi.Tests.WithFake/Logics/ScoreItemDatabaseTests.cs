@@ -24,7 +24,9 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
             var tableName = "ura-kata-score-history-item";
-            var target = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var scoreItemRelationTableName = "ura-kata-score-history-item-relation";
+            var target = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName,
+                scoreItemRelationTableName);
 
             var ownerId = Guid.Parse("5a56be69-af15-41a1-a879-08b6efd40eef");
             var scoreId = Guid.Parse("79867694-f52d-406c-b519-9091153cf5d3");
@@ -77,7 +79,9 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
             var tableName = "ura-kata-score-history-item";
-            var target = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var scoreItemRelationTableName = "ura-kata-score-history-item-relation";
+            var target = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName,
+                scoreItemRelationTableName);
 
             var ownerId = Guid.Parse("a585178e-a477-4fb8-8e2a-c385a45c0d08");
             var scoreId = Guid.Parse("2533ffdd-9624-4c80-979f-95561edf5ed1");
@@ -134,7 +138,9 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
             var tableName = "ura-kata-score-history-item";
-            var target = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var scoreItemRelationTableName = "ura-kata-score-history-item-relation";
+            var target = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName,
+                scoreItemRelationTableName);
 
             var ownerId = Guid.Parse("39b6bf0e-8c39-47ce-bae5-49c557f8d2fa");
 
@@ -211,7 +217,9 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
             var tableName = "ura-kata-score-history-item";
-            var target = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var scoreItemRelationTableName = "ura-kata-score-history-item-relation";
+            var target = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName,
+                scoreItemRelationTableName);
 
             var ownerId = Guid.Parse("6f76e99b-6835-4067-b4ff-22d3eb1d1c33");
 

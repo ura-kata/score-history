@@ -77,7 +77,7 @@ namespace ScoreHistoryApi.Controllers
         /// <exception cref="NotImplementedException"></exception>
         [HttpPost]
         [Route("user")]
-        public async Task<IActionResult> CreateUserScoreAsync([FromBody] NewScore newScore)
+        public async Task<ActionResult<NewlyScore>> CreateUserScoreAsync([FromBody] NewScore newScore)
         {
             var authorizerData = this.GetAuthorizerData();
             var ownerId = authorizerData.Sub;
@@ -86,15 +86,13 @@ namespace ScoreHistoryApi.Controllers
 
             try
             {
-                await creator.CreateAsync(ownerId, newScore);
+                return await creator.CreateAsync(ownerId, newScore);
             }
             catch (UninitializedScoreException)
             {
                 return StatusCode(ExtensionHttpStatusCodes.NotInitializedScore,
                     new {message = "楽譜を作成するための初期化処理がされていない"});
             }
-
-            return Ok();
         }
 
         /// <summary>
@@ -117,10 +115,22 @@ namespace ScoreHistoryApi.Controllers
 
             var detailGetter = _scoreLogics.DetailGetter;
 
-            // TODO 楽譜がないときにエラーコードを返す
-            var detail = await detailGetter.GetScoreSummaries(ownerId, id);
+            try
+            {var detail = await detailGetter.GetScoreSummaries(ownerId, id);
 
-            return detail;
+                return detail;
+            }
+            catch (NotFoundScoreException ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return StatusCode(ExtensionHttpStatusCodes.NotFoundScore);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                throw;
+            }
+
 
             // this.Response.Headers[HttpHeaderNames.ETag] = "";
         }
@@ -429,6 +439,26 @@ namespace ScoreHistoryApi.Controllers
             try
             {
                 return await snapshotDetailGetter.GetScoreSummaries(ownerId, id, snapshotId);
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+        }
+
+        [HttpDelete]
+        [Route("user/{scoreId:guid}/snapshots/{snapshotId:guid}")]
+        public async Task<IActionResult> DeleteSnapshotAsync([FromRoute(Name = "scoreId")] Guid scoreId,[FromRoute(Name = "snapshotId")]  Guid snapshotId)
+        {
+            var authorizerData = this.GetAuthorizerData();
+            var ownerId = authorizerData.Sub;
+
+            var snapshotRemover = _scoreLogics.SnapshotRemover;
+
+            try
+            {
+                await snapshotRemover.RemoveAsync(ownerId, scoreId, snapshotId);
+                return Ok();
             }
             catch (Exception)
             {

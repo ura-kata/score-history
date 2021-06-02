@@ -33,11 +33,18 @@ namespace ScoreHistoryApi.Logics.Scores
                     throw new ArgumentException($"{nameof(pages)}[{i}].Page is null.");
                 }
 
+                var trimmedObjectName = page.ObjectName?.Trim();
+                if (string.IsNullOrWhiteSpace(trimmedObjectName))
+                {
+                    throw new ArgumentException($"{nameof(pages)}[{i}].ObjectName is empty.");
+                }
+
                 trimmedPages.Add(new PatchScorePage()
                 {
                     TargetPageId = page.TargetPageId,
                     Page = trimmedPage,
                     ItemId = page.ItemId,
+                    ObjectName = trimmedObjectName,
                 });
             }
 

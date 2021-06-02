@@ -20,6 +20,8 @@ namespace ScoreHistoryApi
 {
     public class LocalStartup
     {
+        private static readonly string CorsPolicyName = "UraKataCorsPolicy";
+
         public LocalStartup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -57,6 +59,48 @@ namespace ScoreHistoryApi
                     Version = "dev"
                 });
             });
+            services.AddCors(options =>
+            {
+                options.AddPolicy(CorsPolicyName, builder =>
+                {
+                    var corsOrigins = Configuration[EnvironmentNames.CorsOrigins];
+                    if (string.IsNullOrWhiteSpace(corsOrigins))
+                    {
+                        builder.AllowAnyOrigin();
+                    }
+                    else
+                    {
+                        builder.WithOrigins(corsOrigins.Split(','));
+                    }
+
+                    var corsHeaders = Configuration[EnvironmentNames.CorsHeaders];
+                    if (string.IsNullOrWhiteSpace(corsHeaders))
+                    {
+                        builder.AllowAnyHeader();
+                    }
+                    else
+                    {
+                        builder.WithHeaders(corsHeaders.Split(','));
+                    }
+
+                    var corsMethods = Configuration[EnvironmentNames.CorsMethods];
+                    if (string.IsNullOrWhiteSpace(corsHeaders))
+                    {
+                        builder.AllowAnyMethod();
+                    }
+                    else
+                    {
+                        builder.WithMethods(corsMethods.Split(','));
+                    }
+
+                    var corsCredentials = Configuration[EnvironmentNames.CorsCredentials];
+                    if (bool.TryParse(corsCredentials, out var allowCredentials) && allowCredentials)
+                    {
+                        builder.AllowCredentials();
+                    }
+                });
+            });
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -66,6 +110,8 @@ namespace ScoreHistoryApi
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseCors(CorsPolicyName);
 
             app.Use(async (context, next) =>
             {

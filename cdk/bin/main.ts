@@ -18,6 +18,9 @@ const scoreHistoryBackendStack = new ScoreHistoryBackendStack(
   'ScoreHistoryBackendStack',
   {
     stackName: 'ura-kata-score-history-backend-stack',
+    tags: {
+      Project: 'ura-kata',
+    },
     env: {
       region: 'ap-northeast-1',
     },
@@ -37,11 +40,11 @@ new ScoreHistoryApiStack(
     scoreDynamoDbTableArn: scoreHistoryBackendStack.scoreDynamoDbTableArn,
     scoreItemDynamoDbTableArn:
       scoreHistoryBackendStack.scoreItemDynamoDbTableArn,
+    scoreItemRelationDynamoDbTableArn:
+      scoreHistoryBackendStack.scoreItemRelationDynamoDbTableArn,
     scoreLargeDataDynamoDbTableArn:
       scoreHistoryBackendStack.scoreLargeDataDynamoDbTableArn,
     scoreHistoryBackendScoreDataBucketArn:
       scoreHistoryBackendStack.scoreHistoryBackendScoreDataBucketArn,
-    scoreHistoryBackendScoreDataSnapshotBucketArn:
-      scoreHistoryBackendStack.scoreHistoryBackendScoreDataSnapshotBucketArn,
   }
 );

@@ -9,6 +9,7 @@ namespace ScoreHistoryApi
         public const string ApiVersion = "ApiVersion";
 
         public const string ScoreItemDynamoDbTableName = "ScoreItemDynamoDbTableName";
+        public const string ScoreItemRelationDynamoDbTableName = "ScoreItemRelationDynamoDbTableName";
         public const string ScoreDynamoDbTableName  = "ScoreDynamoDbTableName";
         public const string ScoreLargeDataDynamoDbTableName = "ScoreLargeDataDynamoDbTableName";
 

@@ -126,6 +126,11 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                                             p.Page = pageItemValue.S;
                                             break;
                                         }
+                                        case DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.ObjectName:
+                                        {
+                                            p.ObjectName = pageItemValue.S;
+                                            break;
+                                        }
                                     }
                                 }
 
@@ -209,6 +214,10 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                     if (value.ItemId != null)
                     {
                         page[DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.ItemId] = new AttributeValue(value.ItemId);
+                    }
+                    if (value.ObjectName != null)
+                    {
+                        page[DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.ObjectName] = new AttributeValue(value.ObjectName);
                     }
 
                     if(page.Count == 0)

@@ -19,7 +19,7 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
 
 
         public const string SnapshotName = "snapname";
-        
+
 
         public static class DataPropertyNames
         {
@@ -36,6 +36,7 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
                 public const string Id = "i";
                 public const string ItemId = "it";
                 public const string Page = "p";
+                public const string ObjectName = "o";
             }
 
             public static class AnnotationsPropertyNames

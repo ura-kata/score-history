@@ -101,16 +101,19 @@ UUID の Base64 エンコードは 24 byte
         {
           "i": 0,
           "it": "JO1kjyJx1kKuucbt3JOziQ==",
+          "o": "image.jpg", // object name
           "p": "1"
         },
         {
           "i": 1,
           "it": "JO1kjyJx1kKuucbt3JOziQ==",
+          "o": "image.jpg",
           "p": "2"
         },
         {
           "i": 2,
           "it": "JO1kjyJx1kKuucbt3JOziQ==",
+          "o": "image.jpg",
           "p": "3"
         }
       ],
@@ -220,3 +223,21 @@ prefix は 5 文字とする
 ```
 
 - [DynamoDB Item Sizes and Formats - Amazon DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/CapacityUnitCalculations.html)
+
+Snapshot と Item の関連を表すテーブル
+Item を削除するときはこのテーブルにアイテムが存在しないことを確認する
+
+```json
+[
+  {
+    "o": "68yjpWHe5EOEnN6vv3UL1w==", // owner id
+    "i": "JO1kjyJx1kKuucbt3JOziQ==a62Xnv7FbkqPJQsmW1kBeg==" // item relation メインとの関係  item id + score id
+  },
+  {
+    "o": "68yjpWHe5EOEnN6vv3UL1w==", // owner id
+    "i": "JO1kjyJx1kKuucbt3JOziQ==G83UGGM9UUS4Ky8gsKmxRg==" // item relation スナップショットとの関連  item id + snapshot id
+  }
+]
+
+
+```

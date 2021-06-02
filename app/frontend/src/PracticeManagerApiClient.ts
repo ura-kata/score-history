@@ -59,7 +59,7 @@ export interface NewScore {
 }
 
 export interface UserMe {
-  name: string;
+  username: string;
   email: string;
   id: string;
 }
@@ -221,7 +221,7 @@ export default class PracticeManagerApiClient {
   constructor(private baseUrl: string) {}
 
   async getUserMe(): Promise<UserMe> {
-    const url = new URL("api/v1/user/me", this.baseUrl);
+    const url = new URL("user", this.baseUrl);
 
     try {
       const response = await fetch(url.href, {
@@ -241,7 +241,7 @@ export default class PracticeManagerApiClient {
   }
 
   async getVersion(): Promise<string> {
-    const url = new URL("api/version", this.baseUrl);
+    const url = new URL("version", this.baseUrl);
 
     try {
       const response = await fetch(url.href, {

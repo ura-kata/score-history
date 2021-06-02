@@ -10,5 +10,8 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
         public string ItemId { get; set; }
         [JsonPropertyName(DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.Page)]
         public string Page { get; set; }
+
+        [JsonPropertyName(DynamoDbScorePropertyNames.DataPropertyNames.PagesPropertyNames.ObjectName)]
+        public string ObjectName { get; set; }
     }
 }

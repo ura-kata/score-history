@@ -18,6 +18,7 @@ namespace ScoreHistoryApi.Logics
         public const string ThumbnailFileName = "thumbnail.jpg";
         public const string PngFileName = "image.png";
         public const string JpegFileName = "image.jpg";
+        public const string FolderName = "item";
     }
 
     public static class ScoreItemStorageUtils
@@ -123,7 +124,7 @@ namespace ScoreHistoryApi.Logics
             if (itemType == ItemTypes.None)
                 throw new ArgumentException(nameof(data));
 
-            var keyDir = $"{ownerId:D}/{scoreId:D}/{itemId:D}/";
+            var keyDir = $"{ownerId:D}/{scoreId:D}/{ScoreItemStorageConstant.FolderName}/{itemId:D}/";
 
 
             await using var srcStream = new MemoryStream(data);
@@ -192,13 +193,13 @@ namespace ScoreHistoryApi.Logics
 
         public async Task DeleteObjectAsync(Guid ownerId, Guid scoreId, Guid itemId)
         {
-            var prefix = $"{ownerId:D}/{scoreId:D}/{itemId:D}";
+            var prefix = $"{ownerId:D}/{scoreId:D}/{ScoreItemStorageConstant.FolderName}/{itemId:D}";
             await DeleteObjectsAsync(prefix);
         }
 
         public async Task DeleteAllScoreObjectAsync(Guid ownerId, Guid scoreId)
         {
-            var prefix = $"{ownerId:D}/{scoreId:D}";
+            var prefix = $"{ownerId:D}/{scoreId:D}/{ScoreItemStorageConstant.FolderName}";
             await DeleteObjectsAsync(prefix);
         }
 
@@ -243,7 +244,7 @@ namespace ScoreHistoryApi.Logics
         public async Task SetAccessControlPolicyAsync(Guid ownerId, Guid scoreId,
             ScoreObjectAccessControls accessControl)
         {
-            var prefix = $"{ownerId:D}/{scoreId:D}";
+            var prefix = $"{ownerId:D}/{scoreId:D}/{ScoreItemStorageConstant.FolderName}";
 
             var objectKeyList = new List<string>();
             string continuationToken = default;

@@ -99,7 +99,9 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.ScoreItems
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
             var tableName = "ura-kata-score-history-item";
-            var scoreItemDatabase = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var scoreItemRelationTableName = "ura-kata-score-history-item-relation";
+            var scoreItemDatabase = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName,
+                scoreItemRelationTableName);
 
             var target = new ScoreItemInfoGetter(scoreItemDatabase);
 
@@ -148,7 +150,9 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.ScoreItems
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
             var tableName = "ura-kata-score-history-item";
-            var scoreItemDatabase = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName);
+            var scoreItemRelationTableName = "ura-kata-score-history-item-relation";
+            var scoreItemDatabase = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName,
+                scoreItemRelationTableName);
 
             var target = new ScoreItemInfoGetter(scoreItemDatabase);
 

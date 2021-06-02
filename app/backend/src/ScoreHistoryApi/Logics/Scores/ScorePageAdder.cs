@@ -29,13 +29,20 @@ namespace ScoreHistoryApi.Logics.Scores
                 var trimmedPage = page.Page?.Trim();
                 if (trimmedPage is null)
                 {
-                    throw new ArgumentException($"{nameof(pages)}[{i}] is null.");
+                    throw new ArgumentException($"{nameof(pages)}[{i}].page is null.");
+                }
+
+                var trimmedObjectName = page.ObjectName?.Trim();
+                if (string.IsNullOrWhiteSpace(trimmedObjectName))
+                {
+                    throw new ArgumentException($"{nameof(pages)}[{i}].objectName is empty.");
                 }
 
                 trimmedPages.Add(new NewScorePage()
                 {
                     Page = trimmedPage,
                     ItemId = page.ItemId,
+                    ObjectName = trimmedObjectName,
                 });
             }
 

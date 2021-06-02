@@ -5,7 +5,12 @@ import { ScoreHistoryBackendScoreDynamoDb } from './ScoreHistoryBackendScoreDyna
 import { ScoreHistoryBackendScoreItemDynamoDb } from './ScoreHistoryBackendScoreItemDynamoDb';
 import { ScoreHistoryBackendScoreLargeDataDynamoDb } from './ScoreHistoryBackendScoreLargeDataDynamoDb';
 import { ScoreHistoryBackendScoreDataBucket } from './ScoreHistoryBackendScoreDataBucket';
-import { ScoreHistoryBackendScoreDataSnapshotBucket } from './ScoreHistoryBackendScoreDataSnapshotBucket';
+import { ScoreHistoryBackendScoreItemRelationDynamoDb } from './ScoreHistoryBackendScoreItemRelationDynamoDb';
+import { OriginAccessIdentity } from '@aws-cdk/aws-cloudfront';
+import { ScoreHistoryBackendPrivateItemLambdaEdgeFunction } from './ScoreHistoryBackendPrivateItemLambdaEdgeFunction';
+import { ScoreHistoryBackendPrivateItemDistribution } from './ScoreHistoryBackendPrivateItemDistribution';
+import { HostedZone } from '@aws-cdk/aws-route53';
+import { ScoreHistoryBackendPrivateItemARecord } from './ScoreHistoryBackendPrivateItemARecord';
 
 dotenv.config();
 
@@ -22,37 +27,62 @@ if (!SCORE_DYNAMODB_TABLE_NAME) {
 const SCORE_ITEM_DYNAMODB_TABLE_NAME = process.env
   .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_DYNAMODB_TABLE_NAME as string;
 
-if (!SCORE_DYNAMODB_TABLE_NAME) {
+if (!SCORE_ITEM_DYNAMODB_TABLE_NAME) {
   throw new Error(
     "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_DYNAMODB_TABLE_NAME' is not found."
+  );
+}
+/** 楽譜のアイテムの関係を保存する DynamoDB のテーブル */
+const SCORE_ITEM_RELATION_DYNAMODB_TABLE_NAME = process.env
+  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_RELATION_DYNAMODB_TABLE_NAME as string;
+
+if (!SCORE_ITEM_RELATION_DYNAMODB_TABLE_NAME) {
+  throw new Error(
+    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_RELATION_DYNAMODB_TABLE_NAME' is not found."
   );
 }
 /** 楽譜データの大きいデータを格納する DynamoDB のテーブル */
 const SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME = process.env
   .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME as string;
 
-if (!SCORE_DYNAMODB_TABLE_NAME) {
+if (!SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME) {
   throw new Error(
     "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME' is not found."
   );
 }
-/** 楽譜のアイテムデータを格納する S3 バケット */
-const SCORE_ITEM_S3_BUCKET = process.env
-  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_S3_BUCKET as string;
+/** 楽譜のデータを格納する S3 バケット */
+const SCORE_DATA_S3_BUCKET = process.env
+  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_DATA_S3_BUCKET as string;
 
-if (!SCORE_DYNAMODB_TABLE_NAME) {
+if (!SCORE_DATA_S3_BUCKET) {
   throw new Error(
-    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_S3_BUCKET' is not found."
+    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_DATA_S3_BUCKET' is not found."
   );
 }
-/** 楽譜のスナップショットデータを格納する S3 バケット */
-const SCORE_SNAPSHOT_S3_BUCKET = process.env
-  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_SNAPSHOT_S3_BUCKET as string;
+/** ドメイン名 */
+const DOMAIN_NAME = process.env.URA_KATA_APP_DOMAIN_NAME as string;
+if (!DOMAIN_NAME) {
+  throw new Error("'URA_KATA_APP_DOMAIN_NAME' is not found.");
+}
+/** 楽譜のアイテムのプライベート CDN のホスト名 */
+const HISTORY_BACKEND_PRIVATE_ITEM_HOST_NAME = process.env
+  .URA_KATA_SCORE_HISTORY_BACKEND_PRIVATE_ITEM_HOST_NAME as string;
 
-if (!SCORE_DYNAMODB_TABLE_NAME) {
+if (!HISTORY_BACKEND_PRIVATE_ITEM_HOST_NAME) {
   throw new Error(
-    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_SNAPSHOT_S3_BUCKET' is not found."
+    "'URA_KATA_SCORE_HISTORY_BACKEND_PRIVATE_ITEM_HOST_NAME' is not found."
   );
+}
+/** Certificate Arn */
+const URA_KATA_CERTIFICATE_ARN = process.env.URA_KATA_CERTIFICATE_ARN as string;
+if (!URA_KATA_CERTIFICATE_ARN) {
+  throw new Error("'URA_KATA_CERTIFICATE_ARN' is not found.");
+}
+/** HOST Zone の ID */
+const URA_KATA_PUBLIC_HOSTED_ZONE_ID = process.env
+  .URA_KATA_PUBLIC_HOSTED_ZONE_ID as string;
+if (!URA_KATA_PUBLIC_HOSTED_ZONE_ID) {
+  throw new Error("'URA_KATA_PUBLIC_HOSTED_ZONE_ID' is not found.");
 }
 
 export class ScoreHistoryBackendStack extends cdk.Stack {
@@ -60,7 +90,8 @@ export class ScoreHistoryBackendStack extends cdk.Stack {
   scoreItemDynamoDbTableArn: string;
   scoreLargeDataDynamoDbTableArn: string;
   scoreHistoryBackendScoreDataBucketArn: string;
-  scoreHistoryBackendScoreDataSnapshotBucketArn: string;
+  scoreItemRelationDynamoDbTableArn: string;
+
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
@@ -89,24 +120,66 @@ export class ScoreHistoryBackendStack extends cdk.Stack {
 
     this.scoreLargeDataDynamoDbTableArn = scoreLargeDataDynamoDbTable.tableArn;
 
+    const identity = new OriginAccessIdentity(
+      this,
+      'ScoreHistoryBackendScoreDataBucketOriginAccessIdentity'
+    );
+
     const scoreHistoryBackendScoreDataBucket =
       new ScoreHistoryBackendScoreDataBucket(
         this,
         'ScoreHistoryBackendScoreDataBucket',
-        SCORE_ITEM_S3_BUCKET
+        SCORE_DATA_S3_BUCKET,
+        identity
       );
 
     this.scoreHistoryBackendScoreDataBucketArn =
       scoreHistoryBackendScoreDataBucket.bucketArn;
 
-    const scoreHistoryBackendScoreDataSnapshotBucket =
-      new ScoreHistoryBackendScoreDataSnapshotBucket(
+    const scoreHistoryBackendScoreItemRelationDynamoDb =
+      new ScoreHistoryBackendScoreItemRelationDynamoDb(
         this,
-        'ScoreHistoryBackendScoreDataSnapshotBucket',
-        SCORE_SNAPSHOT_S3_BUCKET
+        'ScoreHistoryBackendScoreItemRelationDynamoDb',
+        SCORE_ITEM_RELATION_DYNAMODB_TABLE_NAME
       );
 
-    this.scoreHistoryBackendScoreDataSnapshotBucketArn =
-      scoreHistoryBackendScoreDataSnapshotBucket.bucketArn;
+    this.scoreItemRelationDynamoDbTableArn =
+      scoreHistoryBackendScoreItemRelationDynamoDb.tableArn;
+
+    const edgeFunction = new ScoreHistoryBackendPrivateItemLambdaEdgeFunction(
+      this,
+      'ScoreHistoryBackendPrivateItemLambdaEdgeFunction',
+      'ura-kata-backend-private-item-verify-token-filter',
+      path.join(__dirname, '../../verify-token-filter/build'),
+      'ScoreHistoryBackendPrivateItemLambdaEdgeFunctionStack'
+    );
+
+    const privateItemCdnFqdn = `${HISTORY_BACKEND_PRIVATE_ITEM_HOST_NAME}.${DOMAIN_NAME}`;
+
+    const distribution = new ScoreHistoryBackendPrivateItemDistribution(
+      this,
+      'ScoreHistoryBackendPrivateItemDistribution',
+      scoreHistoryBackendScoreDataBucket,
+      identity,
+      privateItemCdnFqdn,
+      URA_KATA_CERTIFICATE_ARN,
+      edgeFunction
+    );
+
+    const hostZone = HostedZone.fromHostedZoneAttributes(
+      this,
+      'UraKataPublicHostedZone',
+      {
+        hostedZoneId: URA_KATA_PUBLIC_HOSTED_ZONE_ID,
+        zoneName: DOMAIN_NAME,
+      }
+    );
+    new ScoreHistoryBackendPrivateItemARecord(
+      this,
+      'ScoreHistoryBackendPrivateItemARecord',
+      distribution,
+      hostZone,
+      privateItemCdnFqdn
+    );
   }
 }
