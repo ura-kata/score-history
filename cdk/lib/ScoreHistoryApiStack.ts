@@ -35,49 +35,13 @@ if (!SCORE_DYNAMODB_TABLE_NAME) {
     "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_DYNAMODB_TABLE_NAME' is not found."
   );
 }
-/** 楽譜アイテムデータのメタ情報を格納する DynamoDB のテーブル */
-const SCORE_ITEM_DYNAMODB_TABLE_NAME = process.env
-  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_DYNAMODB_TABLE_NAME as string;
-
-if (!SCORE_DYNAMODB_TABLE_NAME) {
-  throw new Error(
-    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_DYNAMODB_TABLE_NAME' is not found."
-  );
-}
-/** 楽譜アイテムデータの関連を格納する DynamoDB のテーブル */
-const SCORE_ITEM_RELATION_DYNAMODB_TABLE_NAME = process.env
-  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_RELATION_DYNAMODB_TABLE_NAME as string;
-
-if (!SCORE_DYNAMODB_TABLE_NAME) {
-  throw new Error(
-    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_RELATION_DYNAMODB_TABLE_NAME' is not found."
-  );
-}
-/** 楽譜データの大きいデータを格納する DynamoDB のテーブル */
-const SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME = process.env
-  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME as string;
-
-if (!SCORE_DYNAMODB_TABLE_NAME) {
-  throw new Error(
-    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME' is not found."
-  );
-}
 /** 楽譜のアイテムデータを格納する S3 バケット */
-const SCORE_ITEM_S3_BUCKET = process.env
-  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_S3_BUCKET as string;
+const SCORE_DATA_S3_BUCKET = process.env
+  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_DATA_S3_BUCKET as string;
 
-if (!SCORE_ITEM_S3_BUCKET) {
+if (!SCORE_DATA_S3_BUCKET) {
   throw new Error(
-    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_ITEM_S3_BUCKET' is not found."
-  );
-}
-/** 楽譜のスナップショットデータを格納する S3 バケット */
-const SCORE_SNAPSHOT_S3_BUCKET = process.env
-  .URA_KATA_SCORE_HISTORY_BACKEND_SCORE_SNAPSHOT_S3_BUCKET as string;
-
-if (!SCORE_SNAPSHOT_S3_BUCKET) {
-  throw new Error(
-    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_SNAPSHOT_S3_BUCKET' is not found."
+    "'URA_KATA_SCORE_HISTORY_BACKEND_SCORE_DATA_S3_BUCKET' is not found."
   );
 }
 /** DynamoDB のリージョン */
@@ -101,9 +65,6 @@ if (!SCORE_S3_REGION_SYSTEM_NAME) {
 
 export interface ScoreHistoryApiStackProps {
   scoreDynamoDbTableArn: string;
-  scoreItemDynamoDbTableArn: string;
-  scoreLargeDataDynamoDbTableArn: string;
-  scoreItemRelationDynamoDbTableArn: string;
   scoreHistoryBackendScoreDataBucketArn: string;
 }
 
@@ -163,13 +124,11 @@ export class ScoreHistoryApiStack extends cdk.Stack {
         URA_KATA_CorsCredentials: 'true',
         URA_KATA_ApiVersion: '1.0.0',
         URA_KATA_ScoreDynamoDbTableName: SCORE_DYNAMODB_TABLE_NAME,
-        URA_KATA_ScoreItemDynamoDbTableName: SCORE_ITEM_DYNAMODB_TABLE_NAME,
-        URA_KATA_ScoreItemRelationDynamoDbTableName:
-          SCORE_ITEM_RELATION_DYNAMODB_TABLE_NAME,
-        URA_KATA_ScoreLargeDataDynamoDbTableName:
-          SCORE_LARGE_DATA_DYNAMODB_TABLE_NAME,
-        URA_KATA_ScoreItemS3Bucket: SCORE_ITEM_S3_BUCKET,
-        URA_KATA_ScoreDataSnapshotS3Bucket: SCORE_SNAPSHOT_S3_BUCKET,
+        URA_KATA_ScoreItemDynamoDbTableName: SCORE_DYNAMODB_TABLE_NAME,
+        URA_KATA_ScoreItemRelationDynamoDbTableName: SCORE_DYNAMODB_TABLE_NAME,
+        URA_KATA_ScoreLargeDataDynamoDbTableName: SCORE_DYNAMODB_TABLE_NAME,
+        URA_KATA_ScoreItemS3Bucket: SCORE_DATA_S3_BUCKET,
+        URA_KATA_ScoreDataSnapshotS3Bucket: SCORE_DATA_S3_BUCKET,
         URA_KATA_ScoreDynamoDbRegionSystemName:
           SCORE_DYNAMODB_REGION_SYSTEM_NAME,
         URA_KATA_ScoreS3RegionSystemName: SCORE_S3_REGION_SYSTEM_NAME,
