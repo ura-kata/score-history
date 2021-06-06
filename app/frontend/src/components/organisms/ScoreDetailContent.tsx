@@ -2,9 +2,11 @@ import { Button, createStyles, makeStyles, Theme } from "@material-ui/core";
 import { ArrowBack } from "@material-ui/icons";
 import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router";
+import { AppContext } from "../../AppContext";
 import useMeyScoreDetail from "../../hooks/scores/useMeyScoreDetail";
 import DetailEditableDescription from "../atoms/DetailEditableDescription";
 import DetailEditableTitle from "../atoms/DetailEditableTitle";
+import { ThumbnailListContent } from "../atoms/ThumbnailListContent";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -50,6 +52,10 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
 
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
+
+  const appContext = React.useContext(AppContext);
+
+  const _userData = appContext.userData;
 
   useEffect(() => {
     setTitle(detail?.data.title ?? "");
@@ -102,7 +108,13 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
             />
           </div>
         </div>
-        <div className={classes.thumbnailContainer}></div>
+        <div className={classes.thumbnailContainer}>
+          <ThumbnailListContent
+            ownerId={_userData?.id}
+            scoreId={scoreId}
+            pages={detail?.data.pages}
+          />
+        </div>
       </div>
     </div>
   );

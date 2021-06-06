@@ -3,7 +3,7 @@ import { useContext, useEffect } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import { AppContextDispatch } from "../../AppContext";
 import { UserData } from "../../UserClient";
-import ScoreDetail from "../organisms/ScoreDetailContent";
+import ScoreDetailContent from "../organisms/ScoreDetailContent";
 import ScoreListContent from "../organisms/ScoreListContent";
 import ScoreNew from "../organisms/ScoreNew";
 import MainTemplate from "../templates/MainTemplate";
@@ -45,7 +45,11 @@ export default function MainPage(props: MainPageProps) {
         <Router>
           <Switch>
             <Route path="/scores/new" component={ScoreNew} />
-            <Route path="/scores/:scoreId" component={ScoreDetail} />
+            <Route
+              path="/scores/:scoreId/page/:pageId"
+              component={ScoreDetailContent}
+            />
+            <Route path="/scores/:scoreId" component={ScoreDetailContent} />
             <Route path="/scores" component={ScoreListContent} />
             <Route path="/" component={ScoreListContent} />
           </Switch>
