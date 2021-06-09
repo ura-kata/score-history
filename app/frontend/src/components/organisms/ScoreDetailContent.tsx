@@ -6,6 +6,7 @@ import { AppContext } from "../../AppContext";
 import useMeyScoreDetail from "../../hooks/scores/useMeyScoreDetail";
 import DetailEditableDescription from "../atoms/DetailEditableDescription";
 import DetailEditableTitle from "../atoms/DetailEditableTitle";
+import PageContent from "../atoms/PageContent";
 import { ThumbnailListContent } from "../atoms/ThumbnailListContent";
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -45,7 +46,8 @@ export interface ScoreDetailContentProps {}
 export default function ScoreDetailContent(props: ScoreDetailContentProps) {
   const classes = useStyles();
 
-  const { scoreId } = useParams<{ scoreId: string }>();
+  const { scoreId, pageId } =
+    useParams<{ scoreId?: string; pageId?: string }>();
   const history = useHistory();
 
   const detail = useMeyScoreDetail({ scoreId, retryCount: 3 });
@@ -116,6 +118,8 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
           />
         </div>
       </div>
+
+      {scoreId && pageId ? <PageContent scoreId={scoreId} /> : <></>}
     </div>
   );
 }
