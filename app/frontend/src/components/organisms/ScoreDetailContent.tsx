@@ -111,15 +111,21 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
           </div>
         </div>
         <div className={classes.thumbnailContainer}>
-          <ThumbnailListContent
+          {/* <ThumbnailListContent
             ownerId={_userData?.id}
             scoreId={scoreId}
             pages={detail?.data.pages}
+          /> */}
+          <PageContent
+            ownerId={_userData?.id}
+            scoreId={scoreId}
+            pages={detail?.data.pages}
+            pageId={pageId}
           />
         </div>
       </div>
 
-      {scoreId && pageId ? <PageContent scoreId={scoreId} /> : <></>}
+      {/* {scoreId && pageId ? <PageContent scoreId={scoreId} /> : <></>} */}
     </div>
   );
 }
