@@ -19,7 +19,8 @@ export default class ScoreItemUrlGen {
   /** ページ画像の URL を取得する */
   getImageUrl(ownerId: string, scoreId: string, page: ScorePage): string {
     var url =
-      this.baseUrl + `/${ownerId}/${scoreId}/${page.id}/${page.objectName}`;
+      this.baseUrl +
+      `/${ownerId}/${scoreId}/item/${page.itemId}/${page.objectName}`;
     return url;
   }
 
