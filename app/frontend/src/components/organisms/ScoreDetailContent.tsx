@@ -1,4 +1,10 @@
-import { Button, createStyles, makeStyles, Theme } from "@material-ui/core";
+import {
+  Button,
+  createStyles,
+  IconButton,
+  makeStyles,
+  Theme,
+} from "@material-ui/core";
 import { ArrowBack } from "@material-ui/icons";
 import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router";
@@ -8,6 +14,7 @@ import DetailEditableDescription from "../atoms/DetailEditableDescription";
 import DetailEditableTitle from "../atoms/DetailEditableTitle";
 import PageContent from "../atoms/PageContent";
 import { ThumbnailListContent } from "../atoms/ThumbnailListContent";
+import EditIcon from "@material-ui/icons/Edit";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -34,6 +41,17 @@ const useStyles = makeStyles((theme: Theme) =>
       width: "100%",
     },
     descP: {},
+    thumbnailRoot: {
+      width: "100%",
+      display: "flex",
+      flexFlow: "column",
+    },
+    thumbnailControlBar: {
+      width: "100%",
+      height: "50px",
+      display: "flex",
+      justifyContent: "flex-end",
+    },
     thumbnailContainer: {
       width: "100%",
     },
@@ -79,6 +97,9 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
   const handleOnChangeDescription = (newDescription: string) => {
     setDescription(newDescription);
   };
+  const handleOnPageEditClick = () => {
+    history.push(`/scores/${scoreId}/edit-page`);
+  };
   return (
     <div className={classes.root}>
       <div className={classes.controlBar}>
@@ -110,18 +131,25 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
             />
           </div>
         </div>
-        <div className={classes.thumbnailContainer}>
-          {/* <ThumbnailListContent
+        <div className={classes.thumbnailRoot}>
+          <div className={classes.thumbnailControlBar}>
+            <IconButton onClick={handleOnPageEditClick}>
+              <EditIcon />
+            </IconButton>
+          </div>
+          <div className={classes.thumbnailContainer}>
+            {/* <ThumbnailListContent
             ownerId={_userData?.id}
             scoreId={scoreId}
             pages={detail?.data.pages}
           /> */}
-          <PageContent
-            ownerId={_userData?.id}
-            scoreId={scoreId}
-            pages={detail?.data.pages}
-            pageId={pageId}
-          />
+            <PageContent
+              ownerId={_userData?.id}
+              scoreId={scoreId}
+              pages={detail?.data.pages}
+              pageId={pageId}
+            />
+          </div>
         </div>
       </div>
 
