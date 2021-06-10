@@ -2,25 +2,19 @@ import {
   Button,
   createStyles,
   Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   IconButton,
   makeStyles,
   Paper,
   styled,
   Theme,
 } from "@material-ui/core";
-import React, { useEffect, useLayoutEffect, useRef } from "react";
-import ArrowBackIcon from "@material-ui/icons/ArrowBack";
+import { useMemo } from "react";
 import { useHistory } from "react-router";
 import { privateScoreItemUrlGen } from "../../global";
 import { ScorePage } from "../../ScoreClientV2";
-import Viewer from "viewerjs";
 import "viewerjs/dist/viewer.min.css";
-import ReactDOM from "react-dom";
-import { sleep } from "../../util";
+import { ViewContent } from "./ViewContent";
+import CloseIcon from "@material-ui/icons/Close";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -35,11 +29,48 @@ const useStyles = makeStyles((theme: Theme) =>
       height: "100px",
       backgroundColor: "#FFFFFF",
     },
+    dialogContent: {
+      width: "100%",
+      height: "100%",
+      display: "flex",
+    },
+    viewerContainer: {
+      width: "calc(100% - 300px)",
+      minWidth: "200px",
+      height: "100%",
+    },
+    rightContainer: {
+      width: "300px",
+      height: "100%",
+      backgroundColor: "#FFFFFF",
+      display: "flex",
+      flexFlow: "column",
+    },
+    controlBar: {
+      width: "100%",
+      height: "50px",
+      display: "flex",
+      justifyContent: "flex-end",
+    },
+    annotationContainer: {
+      width: "100%",
+      height: "calc(100% - 50px)",
+    },
+    thumbnailContainer: {
+      display: "flex",
+    },
+    thumbnailItem: {
+      height: "auto",
+    },
+    thumbnailImg: {
+      height: "200px",
+      width: "auto",
+    },
   })
 );
 
 const CustomPaper = styled(Paper)({
-  backgroundColor: "#AAAAAAAA",
+  backgroundColor: "#00000000",
 });
 
 export interface PageContentProps {
@@ -56,71 +87,79 @@ export default function PageContent(props: PageContentProps) {
   const _pageId = props.pageId;
   const classes = useStyles();
   const history = useHistory();
-  const handleOnClickBack = () => {
-    history.push(`/scores/${_scoreId}`);
-  };
+
+  /** key : page id , value : index */
+  const pageIndexSet = useMemo(() => {
+    const indexSet: { [id: string]: number } = {};
+
+    if (_pages)
+      _pages.forEach((p, index) => {
+        indexSet[p.id] = index;
+      });
+    return indexSet;
+  }, [_pages]);
+
+  const pageIndex = _pageId !== undefined ? pageIndexSet[_pageId] : undefined;
 
   const handleOnCloseClick = () => {
     console.log("close");
+    history.push(`/scores/${_scoreId}`);
   };
 
-  const ulRef = useRef<HTMLUListElement>(null);
-
-  const viewerRef = useRef<Viewer>();
-
-  useEffect(() => {
-    console.log(ulRef.current);
-    if (!ulRef.current) return;
-
-    const viewer = new Viewer(ulRef.current, {
-      url: "data-original",
-    });
-    viewerRef.current = viewer;
-    console.log("new Viewer");
-    console.log(viewer);
-
-    return () => {
-      console.log("destroy Viewer");
-      viewer.destroy();
-      viewerRef.current = undefined;
-    };
-  });
-  console.log("root2");
-
-  const handleOnClick = () => {
-    if (!viewerRef.current) return;
-    viewerRef.current.view(0);
-  };
   return (
     <div>
-      <Button onClick={handleOnClick}>view</Button>
-      <ul ref={ulRef}>
+      <div className={classes.thumbnailContainer}>
         {_ownerId && _scoreId ? (
           _pages.map((p) => {
-            const customAttr = {
-              "data-original": privateScoreItemUrlGen.getImageUrl(
-                _ownerId,
-                _scoreId,
-                p
-              ),
+            const thumbnailImgSrc = privateScoreItemUrlGen.getThumbnailImageUrl(
+              _ownerId,
+              _scoreId,
+              p
+            );
+            const handleOnThumbnailClick = () => {
+              history.push(`/scores/${_scoreId}/page/${p.id}`);
             };
             return (
-              <li key={p.id}>
-                <img
-                  src={privateScoreItemUrlGen.getThumbnailImageUrl(
-                    _ownerId,
-                    _scoreId,
-                    p
-                  )}
-                  {...customAttr}
-                />
-              </li>
+              <div key={p.id} className={classes.thumbnailItem}>
+                <Button onClick={handleOnThumbnailClick}>
+                  <Paper>
+                    <img
+                      className={classes.thumbnailImg}
+                      src={thumbnailImgSrc}
+                    />
+                  </Paper>
+                </Button>
+              </div>
             );
           })
         ) : (
           <></>
         )}
-      </ul>
+      </div>
+      <Dialog
+        open={_pageId ? true : false}
+        PaperComponent={CustomPaper}
+        fullScreen={true}
+      >
+        <div className={classes.dialogContent}>
+          <div className={classes.viewerContainer}>
+            <ViewContent
+              ownerId={_ownerId}
+              scoreId={_scoreId}
+              pageIndex={pageIndex}
+              pages={_pages}
+            />
+          </div>
+          <div className={classes.rightContainer}>
+            <div className={classes.controlBar}>
+              <IconButton onClick={handleOnCloseClick} size="medium">
+                <CloseIcon />
+              </IconButton>
+            </div>
+            <div className={classes.annotationContainer}></div>
+          </div>
+        </div>
+      </Dialog>
     </div>
   );
 }
