@@ -18,11 +18,10 @@ export default class ScoreItemUrlGen {
 
   /** ページ画像の URL を取得する */
   getImageUrl(ownerId: string, scoreId: string, page: ScorePage): string {
-    var url = new URL(
-      `${ownerId}/${scoreId}/${page.id}/${page.objectName}`,
-      this.baseUrl
-    );
-    return url.href;
+    var url =
+      this.baseUrl +
+      `/${ownerId}/${scoreId}/item/${page.itemId}/${page.objectName}`;
+    return url;
   }
 
   /** サムネイルの URL を取得する */
@@ -31,10 +30,9 @@ export default class ScoreItemUrlGen {
     scoreId: string,
     page: ScorePage
   ): string {
-    var url = new URL(
-      `${ownerId}/${scoreId}/${page.id}/thumbnail.jpg`,
-      this.baseUrl
-    );
-    return url.href;
+    var url =
+      this.baseUrl + `/${ownerId}/${scoreId}/item/${page.itemId}/thumbnail.jpg`;
+
+    return url;
   }
 }

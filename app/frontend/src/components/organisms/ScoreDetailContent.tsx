@@ -2,9 +2,12 @@ import { Button, createStyles, makeStyles, Theme } from "@material-ui/core";
 import { ArrowBack } from "@material-ui/icons";
 import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router";
+import { AppContext } from "../../AppContext";
 import useMeyScoreDetail from "../../hooks/scores/useMeyScoreDetail";
 import DetailEditableDescription from "../atoms/DetailEditableDescription";
 import DetailEditableTitle from "../atoms/DetailEditableTitle";
+import PageContent from "../atoms/PageContent";
+import { ThumbnailListContent } from "../atoms/ThumbnailListContent";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -43,13 +46,18 @@ export interface ScoreDetailContentProps {}
 export default function ScoreDetailContent(props: ScoreDetailContentProps) {
   const classes = useStyles();
 
-  const { scoreId } = useParams<{ scoreId: string }>();
+  const { scoreId, pageId } =
+    useParams<{ scoreId?: string; pageId?: string }>();
   const history = useHistory();
 
   const detail = useMeyScoreDetail({ scoreId, retryCount: 3 });
 
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
+
+  const appContext = React.useContext(AppContext);
+
+  const _userData = appContext.userData;
 
   useEffect(() => {
     setTitle(detail?.data.title ?? "");
@@ -102,8 +110,22 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
             />
           </div>
         </div>
-        <div className={classes.thumbnailContainer}></div>
+        <div className={classes.thumbnailContainer}>
+          {/* <ThumbnailListContent
+            ownerId={_userData?.id}
+            scoreId={scoreId}
+            pages={detail?.data.pages}
+          /> */}
+          <PageContent
+            ownerId={_userData?.id}
+            scoreId={scoreId}
+            pages={detail?.data.pages}
+            pageId={pageId}
+          />
+        </div>
       </div>
+
+      {/* {scoreId && pageId ? <PageContent scoreId={scoreId} /> : <></>} */}
     </div>
   );
 }
