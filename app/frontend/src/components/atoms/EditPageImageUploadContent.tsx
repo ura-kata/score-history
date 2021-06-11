@@ -5,6 +5,7 @@ import {
   Button,
   Drawer,
   IconButton,
+  colors,
 } from "@material-ui/core";
 import AddIcon from "@material-ui/icons/Add";
 import React, { useCallback, useMemo, useRef, useState } from "react";
@@ -33,6 +34,9 @@ const useStyles = makeStyles((theme: Theme) =>
     itemContainer: {
       width: "200px",
       height: "200px",
+    },
+    newItemContainer: {
+      backgroundColor: colors.lightGreen[100],
     },
     itemDivider: { height: "200px", width: "20px" },
     itemButton: {
@@ -81,6 +85,7 @@ interface AfterOpeItem {
   id: string;
   thumbnailSrc?: string;
   orginSrc?: string;
+  isNew?: boolean;
 }
 
 export interface EditPageImageUploadContentProps {
@@ -197,6 +202,7 @@ export default function EditPageImageUploadContent(
             id: id,
             thumbnailSrc: fileUrl,
             orginSrc: fileUrl,
+            isNew: true,
           });
           break;
         }
@@ -215,6 +221,7 @@ export default function EditPageImageUploadContent(
               id: id,
               thumbnailSrc: fileUrl,
               orginSrc: fileUrl,
+              isNew: true,
             });
           }
           break;
@@ -244,6 +251,7 @@ export default function EditPageImageUploadContent(
               id: id,
               thumbnailSrc: fileUrl,
               orginSrc: fileUrl,
+              isNew: true,
             });
           }
           break;
@@ -307,7 +315,12 @@ export default function EditPageImageUploadContent(
                   </Button>
                 </div>
               </div>
-              <div className={classes.itemContainer}>
+              <div
+                className={
+                  classes.itemContainer +
+                  (x.isNew ? " " + classes.newItemContainer : "")
+                }
+              >
                 <div
                   {...uploadDrop.getRootProps()}
                   style={{
@@ -328,7 +341,7 @@ export default function EditPageImageUploadContent(
                     {x.thumbnailSrc ? (
                       <img src={x.thumbnailSrc} className={classes.itemImg} />
                     ) : (
-                      <Skeleton variant="rect" className={classes.itemImg} />
+                      <Skeleton variant="rect" width={150} height={200} />
                     )}
                   </Button>
 
