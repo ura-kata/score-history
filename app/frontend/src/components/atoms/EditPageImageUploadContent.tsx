@@ -9,7 +9,7 @@ import {
 } from "@material-ui/core";
 import AddIcon from "@material-ui/icons/Add";
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { privateScoreItemUrlGen } from "../../global";
+import { privateScoreItemUrlGen, scoreClientV2 } from "../../global";
 import { ScorePage } from "../../ScoreClientV2";
 import AddCircleOutlineIcon from "@material-ui/icons/AddCircleOutline";
 import CloseIcon from "@material-ui/icons/Close";
@@ -86,6 +86,8 @@ interface AfterOpeItem {
   thumbnailSrc?: string;
   orginSrc?: string;
   isNew?: boolean;
+  file?: File;
+  dropFileIndex?: number;
 }
 
 export interface EditPageImageUploadContentProps {
@@ -198,11 +200,17 @@ export default function EditPageImageUploadContent(
             dropFileIndex !== undefined
               ? loadedFileUrlSet.current[dropFileIndex]
               : undefined;
+          const file =
+            dropFileIndex !== undefined
+              ? dropFileList[dropFileIndex]
+              : undefined;
           result.push({
             id: id,
             thumbnailSrc: fileUrl,
             orginSrc: fileUrl,
             isNew: true,
+            file: file,
+            dropFileIndex: dropFileIndex,
           });
           break;
         }
@@ -217,11 +225,17 @@ export default function EditPageImageUploadContent(
               dropFileIndex !== undefined
                 ? loadedFileUrlSet.current[dropFileIndex]
                 : undefined;
+            const file =
+              dropFileIndex !== undefined
+                ? dropFileList[dropFileIndex]
+                : undefined;
             result.splice(ope.index, 0, {
               id: id,
               thumbnailSrc: fileUrl,
               orginSrc: fileUrl,
               isNew: true,
+              file: file,
+              dropFileIndex: dropFileIndex,
             });
           }
           break;
@@ -247,11 +261,17 @@ export default function EditPageImageUploadContent(
               dropFileIndex !== undefined
                 ? loadedFileUrlSet.current[dropFileIndex]
                 : undefined;
+            const file =
+              dropFileIndex !== undefined
+                ? dropFileList[dropFileIndex]
+                : undefined;
             result.splice(ope.index, 1, {
               id: id,
               thumbnailSrc: fileUrl,
               orginSrc: fileUrl,
               isNew: true,
+              file: file,
+              dropFileIndex: dropFileIndex,
             });
           }
           break;
@@ -266,9 +286,39 @@ export default function EditPageImageUploadContent(
     setOpenDrawer(false);
   };
 
-  const handleOnApplyClick = () => {
+  const successUploadedDropFileIndexSet = useRef<{ [index: number]: File }>({});
+  const handleOnApplyClick = async () => {
     // TODO アップロード処理を行う
+
+    if (!_scoreId) return;
+    try {
+      for (let i = 0; i < afterOpeItemList.length; ++i) {
+        const aoi = afterOpeItemList[i];
+
+        if (!aoi.file) continue;
+        if (aoi.dropFileIndex === undefined) continue;
+        // すでにアップロードしたものはスキップする
+        if (successUploadedDropFileIndexSet.current[aoi.dropFileIndex])
+          continue;
+        try {
+          await scoreClientV2.uploadItem(_scoreId, aoi.file);
+
+          successUploadedDropFileIndexSet.current[aoi.dropFileIndex] = aoi.file;
+        } catch (err) {
+          // TODO とりあえずアラート
+          alert(err);
+          console.log(err);
+          return;
+        }
+      }
+    } catch (err) {}
     // TODO ページの更新処理を行う
+
+    // データを初期化する
+    setOpeList([]);
+    setDropFileList([]);
+    loadedFileUrlSet.current = {};
+    successUploadedDropFileIndexSet.current = {};
     if (_onCompleted) {
       _onCompleted();
     }
@@ -278,6 +328,7 @@ export default function EditPageImageUploadContent(
     setOpeList([]);
     setDropFileList([]);
     loadedFileUrlSet.current = {};
+    successUploadedDropFileIndexSet.current = {};
     if (_onCancel) {
       _onCancel();
     }
