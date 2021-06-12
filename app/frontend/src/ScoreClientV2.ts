@@ -86,14 +86,26 @@ const NotFoundScore = 521;
 
 /** 楽譜に関するリクエストを実行するクライアント */
 export default class ScoreClientV2 {
-  constructor(private baseUrl: string) {}
+  constructor(private baseUrl: string) {
+    let i = baseUrl.length;
+    for (; 1 <= i; --i) {
+      if (baseUrl[i - 1] === "/") {
+        continue;
+      }
+      break;
+    }
+
+    if (baseUrl.length !== i) {
+      this.baseUrl = baseUrl.substr(0, i);
+    }
+  }
 
   /** 自分の楽譜のサマリーを一覧で取得する */
   async getMyScoreSummaries(): Promise<ScoreSummary[]> {
-    const requestUrl = new URL("scores/user", this.baseUrl);
+    const requestUrl = this.baseUrl + "/scores/user";
 
     try {
-      const response = await fetch(requestUrl.href, {
+      const response = await fetch(requestUrl, {
         method: "GET",
         headers: GET_HEADERS,
         credentials: "include",
@@ -108,10 +120,10 @@ export default class ScoreClientV2 {
 
   /** 楽譜を作成する */
   async create(newScore: NewScore): Promise<NewlyScore> {
-    const requestUrl = new URL("scores/user", this.baseUrl);
+    const requestUrl = this.baseUrl + "/scores/user";
 
     try {
-      const response = await fetch(requestUrl.href, {
+      const response = await fetch(requestUrl, {
         method: "POST",
         headers: POST_HEADERS,
         credentials: "include",
@@ -121,15 +133,15 @@ export default class ScoreClientV2 {
       if (response.ok) {
         return (await response.json()) as NewlyScore;
       } else if (response.status === NotInitializedScore) {
-        const initRequestUrl = new URL("scores/new", this.baseUrl);
-        const initResponse = await fetch(initRequestUrl.href, {
+        const initRequestUrl = this.baseUrl + "/scores/new";
+        const initResponse = await fetch(initRequestUrl, {
           method: "POST",
           headers: POST_HEADERS,
           credentials: "include",
         });
 
         if (initResponse.ok) {
-          const response2 = await fetch(requestUrl.href, {
+          const response2 = await fetch(requestUrl, {
             method: "POST",
             headers: POST_HEADERS,
             credentials: "include",
@@ -148,10 +160,10 @@ export default class ScoreClientV2 {
   }
 
   async getDetail(scoreId: string): Promise<ScoreDetail | undefined> {
-    const requestUrl = new URL(`scores/user/${scoreId}`, this.baseUrl);
+    const requestUrl = this.baseUrl + `/scores/user/${scoreId}`;
 
     try {
-      const response = await fetch(requestUrl.href, {
+      const response = await fetch(requestUrl, {
         method: "GET",
         headers: GET_HEADERS,
         credentials: "include",
@@ -173,10 +185,10 @@ export default class ScoreClientV2 {
   }
 
   async updateTitle(scoreId: string, newTitle: NewScoreTitle): Promise<void> {
-    const requestUrl = new URL(`scores/user/${scoreId}/title`, this.baseUrl);
+    const requestUrl = this.baseUrl + `/scores/user/${scoreId}/title`;
 
     try {
-      const response = await fetch(requestUrl.href, {
+      const response = await fetch(requestUrl, {
         method: "PATCH",
         headers: PATCH_HEADERS,
         credentials: "include",
@@ -196,13 +208,10 @@ export default class ScoreClientV2 {
     scoreId: string,
     newDescription: NewScoreDescription
   ): Promise<void> {
-    const requestUrl = new URL(
-      `scores/user/${scoreId}/description`,
-      this.baseUrl
-    );
+    const requestUrl = this.baseUrl + `/scores/user/${scoreId}/description`;
 
     try {
-      const response = await fetch(requestUrl.href, {
+      const response = await fetch(requestUrl, {
         method: "PATCH",
         headers: PATCH_HEADERS,
         credentials: "include",
