@@ -19,7 +19,7 @@ export interface NewlyScore {
 
 /** 楽譜のページ */
 export interface ScorePage {
-  id: string;
+  id: number;
   itemId: string;
   page: string;
   objectName: string;
