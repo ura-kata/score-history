@@ -115,14 +115,24 @@ export default function EditPageImageUploadContent(
   const _onCancel = props.onCancel;
 
   const [openDrawer, setOpenDrawer] = useState(false);
+  /** オペレーションのリスト */
   const [opeList, setOpeList] = useState<Ope[]>([]);
+  /** 最後にロードが完了したファイルのインデックス */
+  const [latestLoadFileIndex, setLatestLoadFileIndex] = useState<number>();
+  /** ドロップしたファイルのリスト */
+  const [dropFileList, setDropFileList] = useState<File[]>([]);
 
+  /** 読み込んだ画像の blob の URL */
+  const loadedFileUrlSet = useRef<{ [index: number]: string }>({});
+  /** アップロードが完了したデータ */
+  const successUploadedDropFileIndexSet = useRef<{
+    [index: number]: NewlyScoreItem;
+  }>({});
+
+  /** アップロードしたときのオペレーションを保存する Ref */
   const fileDropOpeCurrent =
     useRef<{ kind: "add" | "insert" | "remove" | "replace"; index?: number }>();
 
-  const [latestLoadFileIndex, setLatestLoadFileIndex] = useState<number>();
-  const [dropFileList, setDropFileList] = useState<File[]>([]);
-  const loadedFileUrlSet = useRef<{ [index: number]: string }>({});
   const onDrop = (acceptedFiles: File[]) => {
     const sortedFiles = [...acceptedFiles].sort((x, y) => {
       if (x.name > y.name) {
@@ -174,6 +184,7 @@ export default function EditPageImageUploadContent(
   };
   const uploadDrop = useDropzone({ onDrop: onDrop });
 
+  /** オペレーションを適用した後のアイテムリスト */
   const afterOpeItemList = useMemo(() => {
     if (!_ownerId) return [];
     if (!_scoreId) return [];
@@ -281,9 +292,6 @@ export default function EditPageImageUploadContent(
     setOpenDrawer(false);
   };
 
-  const successUploadedDropFileIndexSet = useRef<{
-    [index: number]: NewlyScoreItem;
-  }>({});
   const handleOnApplyClick = async () => {
     // アップロード処理を行う
 
