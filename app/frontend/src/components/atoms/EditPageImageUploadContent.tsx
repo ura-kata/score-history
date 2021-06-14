@@ -10,7 +10,12 @@ import {
 import AddIcon from "@material-ui/icons/Add";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { privateScoreItemUrlGen, scoreClientV2 } from "../../global";
-import { ScorePage } from "../../ScoreClientV2";
+import {
+  NewlyScoreItem,
+  NewScorePage,
+  PatchScorePage,
+  ScorePage,
+} from "../../ScoreClientV2";
 import AddCircleOutlineIcon from "@material-ui/icons/AddCircleOutline";
 import CloseIcon from "@material-ui/icons/Close";
 import { useDropzone } from "react-dropzone";
@@ -85,8 +90,8 @@ interface AfterOpeItem {
   id: string;
   thumbnailSrc?: string;
   orginSrc?: string;
+  page?: ScorePage;
   isNew?: boolean;
-  file?: File;
   dropFileIndex?: number;
 }
 
@@ -188,6 +193,7 @@ export default function EditPageImageUploadContent(
         id: "org_" + p.id,
         thumbnailSrc: thumbnailSrc,
         orginSrc: originSrc,
+        page: p,
       };
     });
 
@@ -200,16 +206,12 @@ export default function EditPageImageUploadContent(
             dropFileIndex !== undefined
               ? loadedFileUrlSet.current[dropFileIndex]
               : undefined;
-          const file =
-            dropFileIndex !== undefined
-              ? dropFileList[dropFileIndex]
-              : undefined;
+
           result.push({
             id: id,
             thumbnailSrc: fileUrl,
             orginSrc: fileUrl,
             isNew: true,
-            file: file,
             dropFileIndex: dropFileIndex,
           });
           break;
@@ -225,16 +227,12 @@ export default function EditPageImageUploadContent(
               dropFileIndex !== undefined
                 ? loadedFileUrlSet.current[dropFileIndex]
                 : undefined;
-            const file =
-              dropFileIndex !== undefined
-                ? dropFileList[dropFileIndex]
-                : undefined;
+
             result.splice(ope.index, 0, {
               id: id,
               thumbnailSrc: fileUrl,
               orginSrc: fileUrl,
               isNew: true,
-              file: file,
               dropFileIndex: dropFileIndex,
             });
           }
@@ -261,16 +259,13 @@ export default function EditPageImageUploadContent(
               dropFileIndex !== undefined
                 ? loadedFileUrlSet.current[dropFileIndex]
                 : undefined;
-            const file =
-              dropFileIndex !== undefined
-                ? dropFileList[dropFileIndex]
-                : undefined;
+
             result.splice(ope.index, 1, {
+              ...result[ope.index],
               id: id,
               thumbnailSrc: fileUrl,
               orginSrc: fileUrl,
               isNew: true,
-              file: file,
               dropFileIndex: dropFileIndex,
             });
           }
@@ -286,33 +281,80 @@ export default function EditPageImageUploadContent(
     setOpenDrawer(false);
   };
 
-  const successUploadedDropFileIndexSet = useRef<{ [index: number]: File }>({});
+  const successUploadedDropFileIndexSet = useRef<{
+    [index: number]: NewlyScoreItem;
+  }>({});
   const handleOnApplyClick = async () => {
-    // TODO アップロード処理を行う
+    // アップロード処理を行う
 
     if (!_scoreId) return;
-    try {
-      for (let i = 0; i < afterOpeItemList.length; ++i) {
-        const aoi = afterOpeItemList[i];
+    const newPages: NewScorePage[] = [];
+    const patchPages: PatchScorePage[] = [];
+    for (let i = 0; i < afterOpeItemList.length; ++i) {
+      const aoi = afterOpeItemList[i];
 
-        if (!aoi.file) continue;
-        if (aoi.dropFileIndex === undefined) continue;
-        // すでにアップロードしたものはスキップする
-        if (successUploadedDropFileIndexSet.current[aoi.dropFileIndex])
-          continue;
-        try {
-          await scoreClientV2.uploadItem(_scoreId, aoi.file);
+      /** ページの更新情報 */
+      let item: { itemId: string; objectName: string } | undefined = undefined;
 
-          successUploadedDropFileIndexSet.current[aoi.dropFileIndex] = aoi.file;
-        } catch (err) {
-          // TODO とりあえずアラート
-          alert(err);
-          console.log(err);
-          return;
+      if (aoi.dropFileIndex !== undefined) {
+        const uploadedDropFile =
+          successUploadedDropFileIndexSet.current[aoi.dropFileIndex];
+
+        if (uploadedDropFile) {
+          // すでにアップロードしている
+          item = {
+            itemId: uploadedDropFile.itemInfo.itemId,
+            objectName: uploadedDropFile.itemInfo.objectName,
+          };
+        } else {
+          // 画像をアップロードする
+          const file = dropFileList[aoi.dropFileIndex];
+
+          if (file) {
+            try {
+              const newlyItem = await scoreClientV2.uploadItem(_scoreId, file);
+
+              successUploadedDropFileIndexSet.current[aoi.dropFileIndex] =
+                newlyItem;
+              item = {
+                itemId: newlyItem.itemInfo.itemId,
+                objectName: newlyItem.itemInfo.objectName,
+              };
+            } catch (err) {
+              // TODO とりあえずアラート
+              alert(err);
+              console.log(err);
+              return;
+            }
+          }
         }
       }
-    } catch (err) {}
-    // TODO ページの更新処理を行う
+
+      if (item) {
+        newPages.push({
+          itemId: item.itemId,
+          objectName: item.objectName,
+          page: i.toString(),
+        });
+      } else if (aoi.page && aoi.page.page !== i.toString()) {
+        const page = aoi.page;
+        patchPages.push({
+          itemId: page.itemId,
+          targetPageId: page.id,
+          objectName: page.objectName,
+          page: i.toString(),
+        });
+      }
+    }
+    // ページの更新処理を行う
+    try {
+      await scoreClientV2.addPages(_scoreId, newPages);
+      await scoreClientV2.updatePages(_scoreId, patchPages);
+    } catch (err) {
+      alert(err);
+      console.log(err);
+      return;
+    }
 
     // データを初期化する
     setOpeList([]);
