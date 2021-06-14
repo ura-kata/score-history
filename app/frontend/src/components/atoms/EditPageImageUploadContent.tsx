@@ -348,8 +348,12 @@ export default function EditPageImageUploadContent(
     }
     // ページの更新処理を行う
     try {
-      await scoreClientV2.addPages(_scoreId, newPages);
-      await scoreClientV2.updatePages(_scoreId, patchPages);
+      if (0 < newPages.length) {
+        await scoreClientV2.addPages(_scoreId, newPages);
+      }
+      if (0 < patchPages.length) {
+        await scoreClientV2.updatePages(_scoreId, patchPages);
+      }
     } catch (err) {
       alert(err);
       console.log(err);
