@@ -68,7 +68,7 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
     useParams<{ scoreId?: string; pageId?: string }>();
   const history = useHistory();
 
-  const detail = useMeyScoreDetail({ scoreId, retryCount: 3 });
+  const [detail, updateDetail] = useMeyScoreDetail({ scoreId, retryCount: 3 });
 
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");

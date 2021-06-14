@@ -36,7 +36,7 @@ export default function ScorePageEditContent(props: ScorePageEditContentProps) {
   const { scoreId, pageId } =
     useParams<{ scoreId?: string; pageId?: string }>();
   const history = useHistory();
-  const detail = useMeyScoreDetail({ scoreId, retryCount: 3 });
+  const [detail, updateDetail] = useMeyScoreDetail({ scoreId, retryCount: 3 });
 
   const appContext = React.useContext(AppContext);
 
@@ -52,6 +52,7 @@ export default function ScorePageEditContent(props: ScorePageEditContentProps) {
   };
 
   const handleOnImageUploadCompleted = () => {
+    updateDetail();
     setEditState("sort");
   };
   const handleOnImageUploadCancel = () => {
