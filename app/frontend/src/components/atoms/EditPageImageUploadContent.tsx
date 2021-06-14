@@ -363,6 +363,7 @@ export default function EditPageImageUploadContent(
     // データを初期化する
     setOpeList([]);
     setDropFileList([]);
+    setLatestLoadFileIndex(undefined);
     loadedFileUrlSet.current = {};
     successUploadedDropFileIndexSet.current = {};
     if (_onCompleted) {
@@ -373,8 +374,10 @@ export default function EditPageImageUploadContent(
     // データを初期化する
     setOpeList([]);
     setDropFileList([]);
+    setLatestLoadFileIndex(undefined);
     loadedFileUrlSet.current = {};
     successUploadedDropFileIndexSet.current = {};
+
     if (_onCancel) {
       _onCancel();
     }
