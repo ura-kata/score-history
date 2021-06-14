@@ -38,7 +38,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     itemContainer: {
       width: "200px",
-      height: "200px",
+      height: "230px",
     },
     newItemContainer: {
       backgroundColor: colors.lightGreen[100],
@@ -52,6 +52,26 @@ const useStyles = makeStyles((theme: Theme) =>
         height: "100%",
         width: "100%",
       },
+    },
+    itemButtonContainer: {
+      height: "100%",
+      display: "flex",
+      alignItems: "inherit",
+      justifyContent: "flex-start",
+      textAlign: "center",
+      flexFlow: "column",
+      "& div": {
+        height: "200px",
+        width: "100%",
+        "& img": {
+          height: "100%",
+        },
+        "& span": {
+          height: "100%",
+          width: "150px",
+        },
+      },
+      "& p": { margin: "0" },
     },
     itemDividerButton: {
       height: "100%",
@@ -446,11 +466,19 @@ export default function EditPageImageUploadContent(
                       };
                     }}
                   >
-                    {x.thumbnailSrc ? (
-                      <img src={x.thumbnailSrc} className={classes.itemImg} />
-                    ) : (
-                      <Skeleton variant="rect" width={150} height={200} />
-                    )}
+                    <div className={classes.itemButtonContainer}>
+                      <div>
+                        {x.thumbnailSrc ? (
+                          <img
+                            src={x.thumbnailSrc}
+                            className={classes.itemImg}
+                          />
+                        ) : (
+                          <Skeleton variant="rect" />
+                        )}
+                      </div>
+                      <p>{x.isNew ? "new" : x.page?.page || "none"}</p>
+                    </div>
                   </Button>
 
                   <IconButton

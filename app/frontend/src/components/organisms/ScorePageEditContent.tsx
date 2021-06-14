@@ -45,7 +45,13 @@ export default function ScorePageEditContent(props: ScorePageEditContentProps) {
   const _userData = appContext.userData;
   const _ownerId = _userData?.id;
 
-  const pages = detail?.data.pages ?? [];
+  const pages = [...(detail?.data.pages ?? [])].sort((x, y) => {
+    const xn = parseInt("0" + x.page);
+    const yn = parseInt("0" + y.page);
+    if (xn < yn) return -1;
+    if (yn < xn) return 1;
+    return 0;
+  });
 
   const handleOnBackClick = () => {
     history.goBack();

@@ -22,11 +22,20 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     itemContainer: {
       width: "200px",
-      height: "200px",
+      height: "230px",
       display: "flex",
       alignItems: "inherit",
-      justifyContent: "center",
+      justifyContent: "flex-start",
       textAlign: "center",
+      flexFlow: "column",
+      "& div": {
+        height: "200px",
+        width: "100%",
+        "& img": {
+          height: "100%",
+        },
+      },
+      "& p": { margin: "0" },
     },
     itemDivider: { height: "200px", width: "20px" },
     itemButton: {
@@ -47,9 +56,6 @@ const useStyles = makeStyles((theme: Theme) =>
         height: "100%",
         width: "100%",
       },
-    },
-    itemImg: {
-      height: "100%",
     },
   })
 );
@@ -86,6 +92,7 @@ export default function EditPageSortContent(props: EditPageSortContentProps) {
       return {
         id: p.id,
         thumbnailSrc: thumbnailSrc,
+        page: p,
       };
     });
   }, [_ownerId, _scoreId, _pages]);
@@ -124,7 +131,10 @@ export default function EditPageSortContent(props: EditPageSortContentProps) {
           return (
             <div key={x.id} style={{ display: "flex" }}>
               <div className={classes.itemContainer}>
-                <img src={x.thumbnailSrc} className={classes.itemImg} />
+                <div>
+                  <img src={x.thumbnailSrc} />
+                </div>
+                <p>{x.page.page}</p>
               </div>
             </div>
           );
