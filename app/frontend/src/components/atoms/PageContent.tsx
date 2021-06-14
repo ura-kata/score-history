@@ -59,13 +59,19 @@ const useStyles = makeStyles((theme: Theme) =>
     thumbnailContainer: {
       display: "flex",
       width: "100%",
+      flexWrap: "wrap",
     },
-    thumbnailItem: {
-      height: "auto",
-    },
-    thumbnailImg: {
-      height: "200px",
-      width: "auto",
+    pageContainer: {
+      display: "flex",
+      flexFlow: "column",
+      justifyContent: "flex-start",
+      "& img": {
+        height: "200px",
+        width: "auto",
+      },
+      "& p": {
+        margin: 0,
+      },
     },
   })
 );
@@ -121,13 +127,13 @@ export default function PageContent(props: PageContentProps) {
               history.push(`/scores/${_scoreId}/page/${p.id}`);
             };
             return (
-              <div key={p.id} className={classes.thumbnailItem}>
+              <div key={p.id}>
                 <Button onClick={handleOnThumbnailClick}>
                   <Paper>
-                    <img
-                      className={classes.thumbnailImg}
-                      src={thumbnailImgSrc}
-                    />
+                    <div className={classes.pageContainer}>
+                      <img src={thumbnailImgSrc} />
+                      <p>{p.page}</p>
+                    </div>
                   </Paper>
                 </Button>
               </div>

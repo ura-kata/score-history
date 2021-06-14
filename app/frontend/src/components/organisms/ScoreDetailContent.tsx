@@ -6,7 +6,7 @@ import {
   Theme,
 } from "@material-ui/core";
 import { ArrowBack } from "@material-ui/icons";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useHistory, useParams } from "react-router";
 import { AppContext } from "../../AppContext";
 import useMeyScoreDetail from "../../hooks/scores/useMeyScoreDetail";
@@ -86,6 +86,16 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
     setDescription(desc);
   }, [detail]);
 
+  const pages = useMemo(() => {
+    return [...(detail?.data.pages ?? [])].sort((x, y) => {
+      const xn = parseInt("0" + x.page);
+      const yn = parseInt("0" + y.page);
+      if (xn < yn) return -1;
+      if (yn < xn) return 1;
+      return 0;
+    });
+  }, [detail]);
+
   const handleBack = () => {
     history.push("/");
   };
@@ -146,7 +156,7 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
             <PageContent
               ownerId={_userData?.id}
               scoreId={scoreId}
-              pages={detail?.data.pages}
+              pages={pages}
               pageId={pageId}
             />
           </div>
