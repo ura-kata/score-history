@@ -6,9 +6,17 @@ import {
   Drawer,
   IconButton,
   colors,
+  Paper,
+  styled,
 } from "@material-ui/core";
 import AddIcon from "@material-ui/icons/Add";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { privateScoreItemUrlGen, scoreClientV2 } from "../../global";
 import {
   NewlyScoreItem,
@@ -38,14 +46,20 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       flexWrap: "wrap",
     },
+    itemRoot: {
+      height: "280px",
+      width: "220px",
+      display: "flex",
+      margin: "5px",
+    },
     itemContainer: {
       width: "200px",
-      height: "280px",
+      height: "100%",
     },
     newItemContainer: {
       backgroundColor: colors.lightGreen[100],
     },
-    itemDivider: { height: "280px", width: "20px" },
+    itemDivider: { height: "100%", width: "20px" },
     itemToolBar: {
       width: "100%",
       display: "flex",
@@ -107,6 +121,10 @@ const useStyles = makeStyles((theme: Theme) =>
     imageDropZone: { width: "100%" },
     imageListContainer: { width: "100%", display: "flex", flexWrap: "wrap" },
     uploadImg: { height: "200px" },
+    sortLayerRoot: {
+      width: "100%",
+      height: "100%",
+    },
   })
 );
 
@@ -127,11 +145,7 @@ function CreateOnDropHandle(
     fileRejections: FileRejection[],
     event: DropEvent
   ) => {
-    console.log(event);
     const elm = event.target as HTMLElement;
-    console.log("elm");
-    console.log(elm.getAttribute("data-index"));
-    console.log(elm.dataset.index);
 
     const sortedFiles = [...acceptedFiles].sort((x, y) => {
       if (x.name > y.name) {
@@ -142,8 +156,6 @@ function CreateOnDropHandle(
       }
       return 0;
     });
-
-    console.log("onDrop");
 
     const callbacks = sortedFiles.map((_) => (url: string) => {});
     const dropFiles = sortedFiles.map((f, index) => {
@@ -160,7 +172,6 @@ function CreateOnDropHandle(
     onDropFiles(dropFiles);
 
     sortedFiles.forEach((f, index) => {
-      console.log(f);
       const reader = new FileReader();
 
       reader.onabort = () => console.log("ファイルの読み込み中断");
@@ -183,11 +194,17 @@ interface OpeItemProps {
   item: AfterOpeItem;
   onDropFiles: (files: OnDropFile[]) => void;
   onRemoveClick: () => void;
+  onClick: () => void;
+  onMouseDown: () => void;
+  onMouseUp: () => void;
 }
 function OpeItem(props: OpeItemProps) {
   const _item = props.item;
   const _onDropFiles = props.onDropFiles;
   const _onRemoveClick = props.onRemoveClick;
+  const _onClick = props.onClick;
+  const _onMouseDown = props.onMouseDown;
+  const _onMouseUp = props.onMouseUp;
   const classes = useStyles();
 
   const insertDropzone = useDropzone({
@@ -203,16 +220,13 @@ function OpeItem(props: OpeItemProps) {
   });
 
   return (
-    <div style={{ display: "flex" }}>
+    <div className={classes.itemRoot}>
       <div className={classes.itemDivider}>
         <div
           {...insertDropzone.getRootProps()}
           style={{ width: "100%", height: "100%" }}
         >
-          <Button
-            className={classes.itemDividerButton}
-            onClick={() => console.log("click")}
-          >
+          <Button className={classes.itemDividerButton}>
             <AddIcon />
           </Button>
         </div>
@@ -248,7 +262,13 @@ function OpeItem(props: OpeItemProps) {
             className={classes.itemButtonContainer}
             {...replaceDropDropzone.getRootProps()}
           >
-            <div>
+            <div
+              onClick={() => {
+                _onClick();
+              }}
+              onMouseDown={() => _onMouseDown()}
+              onMouseUp={() => _onMouseUp()}
+            >
               {_item.thumbnailSrc ? (
                 <img src={_item.thumbnailSrc} className={classes.itemImg} />
               ) : (
@@ -302,11 +322,18 @@ function AddOpeItem(props: AddOpeItemProps) {
 
 //-----------------------------------------------------------------------
 
-type OpeKinds = "add" | "insert" | "remove" | "replace";
+const CustomPaper = styled(Paper)({
+  backgroundColor: "#00000000",
+});
+
+//-----------------------------------------------------------------------
+
+type OpeKinds = "add" | "insert" | "remove" | "replace" | "sort";
 interface Ope {
   kind?: OpeKinds;
   index?: number;
   dropFileIndex?: number;
+  oldIndex?: number;
 }
 
 interface AfterOpeItem {
@@ -351,6 +378,9 @@ export default function EditPageImageUploadContent(
   const successUploadedDropFileIndexSet = useRef<{
     [index: number]: NewlyScoreItem;
   }>({});
+
+  const [oldSortTargetIndex, setOldSortTargetIndex] =
+    useState<number | undefined>();
 
   /** オペレーションを適用した後のアイテムリスト */
   const afterOpeItemList = useMemo(() => {
@@ -449,6 +479,20 @@ export default function EditPageImageUploadContent(
             });
           }
           break;
+        }
+        case "sort": {
+          if (ope.index === undefined || ope.oldIndex === undefined) return;
+          if (ope.index < 0 || result.length <= ope.index) return;
+          if (ope.oldIndex < 0 || result.length <= ope.oldIndex) return;
+
+          const old = result[ope.oldIndex];
+          if (ope.index < ope.oldIndex) {
+            result.splice(ope.oldIndex, 1);
+            result.splice(ope.index, 0, old);
+          } else {
+            result.splice(ope.index, 0, old);
+            result.splice(ope.oldIndex, 1);
+          }
         }
       }
     });
@@ -578,8 +622,19 @@ export default function EditPageImageUploadContent(
     setOpeList(newOpeList);
   };
 
+  const [sortLayerOpenStart, setsortLayerOpenStart] = useState(false);
+  const [sortLayerOpen, setSortLayerOpen] = useState(false);
+  useEffect(() => {
+    if (!sortLayerOpenStart) return;
+    const timeoutId = setTimeout(() => {
+      setsortLayerOpenStart(false);
+      setSortLayerOpen(true);
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [sortLayerOpenStart]);
+
   return (
-    <div style={{ width: "100%" }}>
+    <div style={{ width: "100%", position: "relative" }}>
       <div className={classes.toolBar}>
         <Button variant="contained" onClick={handleOnApplyClick}>
           完了
@@ -619,20 +674,31 @@ export default function EditPageImageUploadContent(
 
             setOpeList(newOpeList);
           };
+          const handleOnClick = () => {
+            setOpenDrawer(true);
+          };
+          const handleOnMouseUp = () => {
+            setsortLayerOpenStart(false);
+          };
+          const handleOnMoouseDown = () => {
+            setsortLayerOpenStart(true);
+            setOldSortTargetIndex(index);
+          };
           return (
-            <div key={x.id}>
-              <OpeItem
-                key={x.id}
-                item={x}
-                onDropFiles={handleOnDropFiles}
-                onRemoveClick={handleOnRemoveClick}
-              />
-            </div>
+            <OpeItem
+              key={x.id}
+              item={x}
+              onDropFiles={handleOnDropFiles}
+              onRemoveClick={handleOnRemoveClick}
+              onClick={handleOnClick}
+              onMouseUp={handleOnMouseUp}
+              onMouseDown={handleOnMoouseDown}
+            />
           );
         })}
         <AddOpeItem onDropFiles={handleOnAddDropFiles} />
 
-        <Drawer anchor="right" open={openDrawer} onClose={handleOnDrawerClose}>
+        <Drawer anchor="right" open={false} onClose={handleOnDrawerClose}>
           <div className={classes.drawerContainer}>
             <div className={classes.drawerToolBar}>
               <IconButton onClick={handleOnDrawerClose}>
@@ -652,6 +718,64 @@ export default function EditPageImageUploadContent(
             </div>
           </div>
         </Drawer>
+      </div>
+      <div
+        id="test"
+        style={{
+          position: "absolute",
+          display: sortLayerOpen ? undefined : "none",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          backgroundColor: "#00000055",
+        }}
+        onClick={() => setSortLayerOpen(false)}
+      >
+        <div className={classes.toolBar} />
+        <div
+          style={{
+            display: "flex",
+            width: "100%",
+            flexWrap: "wrap",
+          }}
+        >
+          {afterOpeItemList.map((item, index) => {
+            const handleOnClick = () => {
+              if (oldSortTargetIndex === index) return;
+
+              const newOpeList = [...opeList];
+
+              newOpeList.push({
+                index: index,
+                oldIndex: oldSortTargetIndex,
+                kind: "sort",
+              });
+
+              setOpeList(newOpeList);
+            };
+
+            return (
+              <div key={item.id} className={classes.itemRoot}>
+                <div className={classes.itemDivider}></div>
+                <div className={classes.itemContainer}>
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      border: "dashed",
+                      borderWidth: "2px",
+                      borderColor: "#000000",
+                      visibility:
+                        oldSortTargetIndex === index ? "hidden" : undefined,
+                    }}
+                    onClick={handleOnClick}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
