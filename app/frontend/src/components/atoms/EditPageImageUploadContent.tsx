@@ -20,6 +20,8 @@ import AddCircleOutlineIcon from "@material-ui/icons/AddCircleOutline";
 import CloseIcon from "@material-ui/icons/Close";
 import { useDropzone } from "react-dropzone";
 import { Skeleton } from "@material-ui/lab";
+import { FileRejection, DropEvent } from "react-dropzone";
+import BackupIcon from "@material-ui/icons/Backup";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -38,12 +40,20 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     itemContainer: {
       width: "200px",
-      height: "230px",
+      height: "280px",
     },
     newItemContainer: {
       backgroundColor: colors.lightGreen[100],
     },
-    itemDivider: { height: "200px", width: "20px" },
+    itemDivider: { height: "280px", width: "20px" },
+    itemToolBar: {
+      width: "100%",
+      display: "flex",
+      justifyContent: "flex-end",
+      justifyItems: "center",
+      textAlign: "center",
+      height: "50px",
+    },
     itemButton: {
       height: "100%",
       width: "100%",
@@ -71,7 +81,7 @@ const useStyles = makeStyles((theme: Theme) =>
           width: "150px",
         },
       },
-      "& p": { margin: "0" },
+      "& p": { margin: "0", height: "30px" },
     },
     itemDividerButton: {
       height: "100%",
@@ -100,8 +110,201 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
+//------------------------------------------------------------------------------
+
+interface OnDropFile {
+  file: File;
+  ope: "insert" | "replace" | "add";
+  setLoadedCallback: (callback: (url: string) => void) => void;
+}
+
+function CreateOnDropHandle(
+  ope: "insert" | "replace" | "add",
+  onDropFiles: (files: OnDropFile[]) => void
+) {
+  return (
+    acceptedFiles: File[],
+    fileRejections: FileRejection[],
+    event: DropEvent
+  ) => {
+    console.log(event);
+    const elm = event.target as HTMLElement;
+    console.log("elm");
+    console.log(elm.getAttribute("data-index"));
+    console.log(elm.dataset.index);
+
+    const sortedFiles = [...acceptedFiles].sort((x, y) => {
+      if (x.name > y.name) {
+        return 1;
+      }
+      if (x.name < y.name) {
+        return -1;
+      }
+      return 0;
+    });
+
+    console.log("onDrop");
+
+    const callbacks = sortedFiles.map((_) => (url: string) => {});
+    const dropFiles = sortedFiles.map((f, index) => {
+      const result: OnDropFile = {
+        file: f,
+        setLoadedCallback: (callback: (url: string) => void) => {
+          callbacks[index] = callback;
+        },
+        ope: ope === "add" ? "add" : index === 0 ? ope : "insert",
+      };
+      return result;
+    });
+
+    onDropFiles(dropFiles);
+
+    sortedFiles.forEach((f, index) => {
+      console.log(f);
+      const reader = new FileReader();
+
+      reader.onabort = () => console.log("ファイルの読み込み中断");
+      reader.onerror = () => console.log("ファイルの読み込みエラー");
+      reader.onload = (e) => {
+        // 正常に読み込みが完了した
+        console.log("ファイルの読み込み完了");
+
+        const callback = callbacks[index];
+        if (callback) callback(e.target?.result as string);
+      };
+
+      reader.readAsDataURL(f);
+    });
+  };
+}
+//------------------------------------------------------------------------------
+
+interface OpeItemProps {
+  item: AfterOpeItem;
+  onDropFiles: (files: OnDropFile[]) => void;
+  onRemoveClick: () => void;
+}
+function OpeItem(props: OpeItemProps) {
+  const _item = props.item;
+  const _onDropFiles = props.onDropFiles;
+  const _onRemoveClick = props.onRemoveClick;
+  const classes = useStyles();
+
+  const insertDropzone = useDropzone({
+    onDrop: CreateOnDropHandle("insert", _onDropFiles),
+  });
+  const replaceDropzone = useDropzone({
+    onDrop: CreateOnDropHandle("replace", _onDropFiles),
+  });
+  const replaceDropDropzone = useDropzone({
+    onDrop: CreateOnDropHandle("replace", _onDropFiles),
+    noClick: true,
+    noKeyboard: true,
+  });
+
+  return (
+    <div style={{ display: "flex" }}>
+      <div className={classes.itemDivider}>
+        <div
+          {...insertDropzone.getRootProps()}
+          style={{ width: "100%", height: "100%" }}
+        >
+          <Button
+            className={classes.itemDividerButton}
+            onClick={() => console.log("click")}
+          >
+            <AddIcon />
+          </Button>
+        </div>
+      </div>
+      <div
+        className={
+          classes.itemContainer +
+          (_item.isNew ? " " + classes.newItemContainer : "")
+        }
+      >
+        <div className={classes.itemToolBar}>
+          <IconButton
+            onClick={(event) => {
+              if (_onRemoveClick) _onRemoveClick();
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+
+          <div {...replaceDropzone.getRootProps()}>
+            <IconButton>
+              <BackupIcon />
+            </IconButton>
+          </div>
+        </div>
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+          }}
+        >
+          <div
+            className={classes.itemButtonContainer}
+            {...replaceDropDropzone.getRootProps()}
+          >
+            <div>
+              {_item.thumbnailSrc ? (
+                <img src={_item.thumbnailSrc} className={classes.itemImg} />
+              ) : (
+                <Skeleton variant="rect" />
+              )}
+            </div>
+            <p>{_item.isNew ? "new" : _item.page?.page || "none"}</p>
+          </div>
+        </div>
+      </div>
+      <input style={{ display: "none" }} {...insertDropzone.getInputProps()} />
+      <input style={{ display: "none" }} {...replaceDropzone.getInputProps()} />
+      <input
+        style={{ display: "none" }}
+        {...replaceDropDropzone.getInputProps()}
+      />
+    </div>
+  );
+}
+
+//-----------------------------------------------------------------------
+
+interface AddOpeItemProps {
+  onDropFiles: (files: OnDropFile[]) => void;
+}
+function AddOpeItem(props: AddOpeItemProps) {
+  const classes = useStyles();
+
+  const _onDropFiles = props.onDropFiles;
+
+  const addDropzone = useDropzone({
+    onDrop: CreateOnDropHandle("add", _onDropFiles),
+    noClick: false,
+    noKeyboard: true,
+  });
+
+  return (
+    <div className={classes.itemContainer}>
+      <div
+        {...addDropzone.getRootProps()}
+        style={{ width: "100%", height: "100%" }}
+      >
+        <Button className={classes.itemButton}>
+          <AddCircleOutlineIcon />
+        </Button>
+      </div>
+      <input style={{ display: "none" }} {...addDropzone.getInputProps()} />
+    </div>
+  );
+}
+
+//-----------------------------------------------------------------------
+
+type OpeKinds = "add" | "insert" | "remove" | "replace";
 interface Ope {
-  kind?: "add" | "insert" | "remove" | "replace";
+  kind?: OpeKinds;
   index?: number;
   dropFileIndex?: number;
 }
@@ -148,61 +351,6 @@ export default function EditPageImageUploadContent(
   const successUploadedDropFileIndexSet = useRef<{
     [index: number]: NewlyScoreItem;
   }>({});
-
-  /** アップロードしたときのオペレーションを保存する Ref */
-  const fileDropOpeCurrent =
-    useRef<{ kind: "add" | "insert" | "remove" | "replace"; index?: number }>();
-
-  const onDrop = (acceptedFiles: File[]) => {
-    const sortedFiles = [...acceptedFiles].sort((x, y) => {
-      if (x.name > y.name) {
-        return 1;
-      }
-      if (x.name < y.name) {
-        return -1;
-      }
-      return 0;
-    });
-
-    const ope = fileDropOpeCurrent.current;
-    const newDropFileList = [...dropFileList];
-    const newOpeList = [...opeList];
-
-    const startIndex = newDropFileList.length;
-
-    console.log("onDrop");
-
-    sortedFiles.forEach((f, index) => {
-      const dropFileListIndex = startIndex + index;
-
-      newDropFileList.push(f);
-      newOpeList.push({
-        kind: ope?.kind,
-        index: ope?.index !== undefined ? ope?.index + index : undefined,
-        dropFileIndex: dropFileListIndex,
-      });
-
-      console.log(f);
-      const reader = new FileReader();
-
-      reader.onabort = () => console.log("ファイルの読み込み中断");
-      reader.onerror = () => console.log("ファイルの読み込みエラー");
-      reader.onload = (e) => {
-        // 正常に読み込みが完了した
-        console.log("ファイルの読み込み完了");
-
-        loadedFileUrlSet.current[dropFileListIndex] = e.target
-          ?.result as string;
-        setLatestLoadFileIndex(dropFileListIndex);
-      };
-
-      reader.readAsDataURL(f);
-    });
-
-    setDropFileList(newDropFileList);
-    setOpeList(newOpeList);
-  };
-  const uploadDrop = useDropzone({ onDrop: onDrop });
 
   /** オペレーションを適用した後のアイテムリスト */
   const afterOpeItemList = useMemo(() => {
@@ -411,6 +559,25 @@ export default function EditPageImageUploadContent(
     }
   };
 
+  const handleOnAddDropFiles = (files: OnDropFile[]) => {
+    const newDropFileList = [...dropFileList];
+    const newOpeList = [...opeList];
+
+    files.forEach((f, index) => {
+      const dropFileIndex = newDropFileList.length;
+      newDropFileList.push(f.file);
+      newOpeList.push({ dropFileIndex, kind: "add" });
+
+      f.setLoadedCallback((url) => {
+        loadedFileUrlSet.current[dropFileIndex] = url;
+        setLatestLoadFileIndex(dropFileIndex);
+      });
+    });
+
+    setDropFileList(newDropFileList);
+    setOpeList(newOpeList);
+  };
+
   return (
     <div style={{ width: "100%" }}>
       <div className={classes.toolBar}>
@@ -423,98 +590,47 @@ export default function EditPageImageUploadContent(
       </div>
       <div className={classes.editPageContainer}>
         {afterOpeItemList.map((x, index) => {
-          return (
-            <div key={x.id} style={{ display: "flex" }}>
-              <div className={classes.itemDivider}>
-                <div
-                  {...uploadDrop.getRootProps()}
-                  style={{ width: "100%", height: "100%" }}
-                >
-                  <Button
-                    className={classes.itemDividerButton}
-                    onClick={() => {
-                      fileDropOpeCurrent.current = {
-                        kind: "insert",
-                        index: index,
-                      };
-                    }}
-                  >
-                    <AddIcon />
-                  </Button>
-                </div>
-              </div>
-              <div
-                className={
-                  classes.itemContainer +
-                  (x.isNew ? " " + classes.newItemContainer : "")
-                }
-              >
-                <div
-                  {...uploadDrop.getRootProps()}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    position: "relative",
-                  }}
-                >
-                  <Button
-                    className={classes.itemButton}
-                    onClick={() => {
-                      fileDropOpeCurrent.current = {
-                        kind: "replace",
-                        index: index,
-                      };
-                    }}
-                  >
-                    <div className={classes.itemButtonContainer}>
-                      <div>
-                        {x.thumbnailSrc ? (
-                          <img
-                            src={x.thumbnailSrc}
-                            className={classes.itemImg}
-                          />
-                        ) : (
-                          <Skeleton variant="rect" />
-                        )}
-                      </div>
-                      <p>{x.isNew ? "new" : x.page?.page || "none"}</p>
-                    </div>
-                  </Button>
+          const handleOnDropFiles = (files: OnDropFile[]) => {
+            const newDropFileList = [...dropFileList];
+            const newOpeList = [...opeList];
 
-                  <IconButton
-                    style={{ position: "absolute", top: 0, right: 0 }}
-                    onClick={(event) => {
-                      const newOpeList = [...opeList];
-                      newOpeList.push({ kind: "remove", index: index });
-                      setOpeList(newOpeList);
-                      event.stopPropagation();
-                    }}
-                  >
-                    <CloseIcon />
-                  </IconButton>
-                </div>
-              </div>
+            files.forEach((f, fileIndex) => {
+              const dropFileIndex = newDropFileList.length;
+              newDropFileList.push(f.file);
+              newOpeList.push({
+                dropFileIndex,
+                kind: f.ope,
+                index: index + fileIndex,
+              });
+
+              f.setLoadedCallback((url) => {
+                loadedFileUrlSet.current[dropFileIndex] = url;
+                setLatestLoadFileIndex(dropFileIndex);
+              });
+            });
+
+            setDropFileList(newDropFileList);
+            setOpeList(newOpeList);
+          };
+          const handleOnRemoveClick = () => {
+            const newOpeList = [...opeList];
+
+            newOpeList.push({ kind: "remove", index: index });
+
+            setOpeList(newOpeList);
+          };
+          return (
+            <div key={x.id}>
+              <OpeItem
+                key={x.id}
+                item={x}
+                onDropFiles={handleOnDropFiles}
+                onRemoveClick={handleOnRemoveClick}
+              />
             </div>
           );
         })}
-        <div className={classes.itemContainer}>
-          <div
-            {...uploadDrop.getRootProps()}
-            style={{ width: "100%", height: "100%" }}
-          >
-            <Button
-              className={classes.itemButton}
-              onClick={() => {
-                fileDropOpeCurrent.current = {
-                  kind: "add",
-                };
-              }}
-            >
-              <AddCircleOutlineIcon />
-            </Button>
-          </div>
-        </div>
-        <input {...uploadDrop.getInputProps()} />
+        <AddOpeItem onDropFiles={handleOnAddDropFiles} />
 
         <Drawer anchor="right" open={openDrawer} onClose={handleOnDrawerClose}>
           <div className={classes.drawerContainer}>
@@ -523,14 +639,7 @@ export default function EditPageImageUploadContent(
                 <CloseIcon />
               </IconButton>
             </div>
-            <div className={classes.drawerContent}>
-              <div {...uploadDrop.getRootProps()}>
-                <input {...uploadDrop.getInputProps()} />
-                <div className={classes.imageDropZone}>
-                  このエリアをクリックするするか画像ドロップしてアップロードしてください
-                </div>
-              </div>
-            </div>
+            <div className={classes.drawerContent}></div>
             <div className={classes.imageListContainer}>
               {/* {fileDataList.map((fd, index) => (
               <img
