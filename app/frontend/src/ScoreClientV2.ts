@@ -49,6 +49,23 @@ export interface NewScoreDescription {
   description: string;
 }
 
+export interface ScoreSnapshotSummary {
+  id: string;
+  name: string;
+  createAt: Date;
+}
+
+export interface NewScoreSnapshot {
+  name: string;
+}
+
+export interface ScoreSnapshotDetail {
+  id: string;
+  name: string;
+  data: ScoreData;
+  hashSet: { [hash: string]: string };
+}
+
 //--------------------------------------------------------------------
 
 /** アクセスのタイプ */
@@ -75,6 +92,10 @@ const POST_HEADERS = {
 };
 
 const PATCH_HEADERS = {
+  "Content-Type": "application/json",
+};
+
+const DELETE_HEADERS = {
   "Content-Type": "application/json",
 };
 
@@ -222,6 +243,107 @@ export default class ScoreClientV2 {
         return;
       }
       throw new Error("説明の更新に失敗");
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async getSnapshotSummaries(scoreId: string): Promise<ScoreSnapshotSummary[]> {
+    const requestUrl = this.baseUrl + `/scores/user/${scoreId}/snapshots`;
+
+    try {
+      const response = await fetch(requestUrl, {
+        method: "GET",
+        headers: GET_HEADERS,
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        var json = await response.json();
+
+        return json;
+      } else if (response.status === NotFoundScore) {
+        throw new Error();
+      } else if (response.status === 404) {
+        throw new Error();
+      }
+      throw new Error();
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async createSnapshot(
+    scoreId: string,
+    newSnapshot: NewScoreSnapshot
+  ): Promise<void> {
+    const requestUrl = this.baseUrl + `/scores/user/${scoreId}/snapshots`;
+
+    try {
+      const response = await fetch(requestUrl, {
+        method: "POST",
+        headers: POST_HEADERS,
+        credentials: "include",
+        body: JSON.stringify(newSnapshot),
+      });
+
+      if (response.ok) {
+        return;
+      }
+      throw new Error("スナップショットの作成に失敗しました");
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async getSnapshotDetail(
+    scoreId: string,
+    snapshotId: string
+  ): Promise<ScoreSnapshotDetail> {
+    const requestUrl =
+      this.baseUrl + `/scores/user/${scoreId}/snapshots/${snapshotId}`;
+
+    try {
+      const response = await fetch(requestUrl, {
+        method: "GET",
+        headers: GET_HEADERS,
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        var json = await response.json();
+
+        return json;
+      } else if (response.status === NotFoundScore) {
+        throw new Error();
+      } else if (response.status === 404) {
+        throw new Error();
+      }
+      throw new Error();
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async deleteSnapshot(scoreId: string, snapshotId: string): Promise<void> {
+    const requestUrl =
+      this.baseUrl + `/scores/user/${scoreId}/snapshots/${snapshotId}`;
+
+    try {
+      const response = await fetch(requestUrl, {
+        method: "DELETE",
+        headers: DELETE_HEADERS,
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        return;
+      } else if (response.status === NotFoundScore) {
+        throw new Error();
+      } else if (response.status === 404) {
+        throw new Error();
+      }
+      throw new Error();
     } catch (err) {
       throw err;
     }
