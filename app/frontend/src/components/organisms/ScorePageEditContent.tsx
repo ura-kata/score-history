@@ -11,7 +11,6 @@ import useMeyScoreDetail from "../../hooks/scores/useMeyScoreDetail";
 import ArrowBackIcon from "@material-ui/icons/ArrowBack";
 import { AppContext } from "../../AppContext";
 import EditPageImageUploadContent from "../atoms/EditPageImageUploadContent";
-import EditPageSortContent from "../atoms/EditPageSortContent";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -40,8 +39,6 @@ export default function ScorePageEditContent(props: ScorePageEditContentProps) {
 
   const appContext = React.useContext(AppContext);
 
-  const [editState, setEditState] = useState<"upload" | "sort">("sort");
-
   const _userData = appContext.userData;
   const _ownerId = _userData?.id;
 
@@ -59,43 +56,26 @@ export default function ScorePageEditContent(props: ScorePageEditContentProps) {
 
   const handleOnImageUploadCompleted = () => {
     updateDetail();
-    setEditState("sort");
   };
   const handleOnImageUploadCancel = () => {
-    setEditState("sort");
-  };
-  const handleOnUpload = () => {
-    setEditState("upload");
+    updateDetail();
   };
 
   return (
     <div style={{ width: "100%" }}>
-      <div
-        className={classes.toolBar}
-        style={{ visibility: editState === "sort" ? undefined : "hidden" }}
-      >
+      <div className={classes.toolBar}>
         <IconButton onClick={handleOnBackClick}>
           <ArrowBackIcon />
         </IconButton>
       </div>
       <div className={classes.editPageContainer}>
-        <div style={{ display: editState === "upload" ? undefined : "none" }}>
-          <EditPageImageUploadContent
-            ownerId={_ownerId}
-            scoreId={scoreId}
-            pages={pages}
-            onCompleted={handleOnImageUploadCompleted}
-            onCancel={handleOnImageUploadCancel}
-          />
-        </div>
-        <div style={{ display: editState === "sort" ? undefined : "none" }}>
-          <EditPageSortContent
-            ownerId={_ownerId}
-            scoreId={scoreId}
-            pages={pages}
-            onUpload={handleOnUpload}
-          />
-        </div>
+        <EditPageImageUploadContent
+          ownerId={_ownerId}
+          scoreId={scoreId}
+          pages={pages}
+          onCompleted={handleOnImageUploadCompleted}
+          onCancel={handleOnImageUploadCancel}
+        />
       </div>
     </div>
   );
