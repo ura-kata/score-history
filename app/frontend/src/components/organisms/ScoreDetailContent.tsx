@@ -1,6 +1,12 @@
-import { Button, createStyles, makeStyles, Theme } from "@material-ui/core";
+import {
+  Button,
+  createStyles,
+  IconButton,
+  makeStyles,
+  Theme,
+} from "@material-ui/core";
 import { ArrowBack } from "@material-ui/icons";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useHistory, useParams } from "react-router";
 import { AppContext } from "../../AppContext";
 import useMeyScoreDetail from "../../hooks/scores/useMeyScoreDetail";
@@ -8,6 +14,7 @@ import DetailEditableDescription from "../atoms/DetailEditableDescription";
 import DetailEditableTitle from "../atoms/DetailEditableTitle";
 import PageContent from "../atoms/PageContent";
 import { ThumbnailListContent } from "../atoms/ThumbnailListContent";
+import EditIcon from "@material-ui/icons/Edit";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -34,6 +41,17 @@ const useStyles = makeStyles((theme: Theme) =>
       width: "100%",
     },
     descP: {},
+    thumbnailRoot: {
+      width: "100%",
+      display: "flex",
+      flexFlow: "column",
+    },
+    thumbnailControlBar: {
+      width: "100%",
+      height: "50px",
+      display: "flex",
+      justifyContent: "flex-end",
+    },
     thumbnailContainer: {
       width: "100%",
     },
@@ -50,7 +68,7 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
     useParams<{ scoreId?: string; pageId?: string }>();
   const history = useHistory();
 
-  const detail = useMeyScoreDetail({ scoreId, retryCount: 3 });
+  const [detail, updateDetail] = useMeyScoreDetail({ scoreId, retryCount: 3 });
 
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -68,6 +86,16 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
     setDescription(desc);
   }, [detail]);
 
+  const pages = useMemo(() => {
+    return [...(detail?.data.pages ?? [])].sort((x, y) => {
+      const xn = parseInt("0" + x.page);
+      const yn = parseInt("0" + y.page);
+      if (xn < yn) return -1;
+      if (yn < xn) return 1;
+      return 0;
+    });
+  }, [detail]);
+
   const handleBack = () => {
     history.push("/");
   };
@@ -78,6 +106,9 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
 
   const handleOnChangeDescription = (newDescription: string) => {
     setDescription(newDescription);
+  };
+  const handleOnPageEditClick = () => {
+    history.push(`/scores/${scoreId}/edit-page`);
   };
   return (
     <div className={classes.root}>
@@ -110,18 +141,25 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
             />
           </div>
         </div>
-        <div className={classes.thumbnailContainer}>
-          {/* <ThumbnailListContent
+        <div className={classes.thumbnailRoot}>
+          <div className={classes.thumbnailControlBar}>
+            <IconButton onClick={handleOnPageEditClick}>
+              <EditIcon />
+            </IconButton>
+          </div>
+          <div className={classes.thumbnailContainer}>
+            {/* <ThumbnailListContent
             ownerId={_userData?.id}
             scoreId={scoreId}
             pages={detail?.data.pages}
           /> */}
-          <PageContent
-            ownerId={_userData?.id}
-            scoreId={scoreId}
-            pages={detail?.data.pages}
-            pageId={pageId}
-          />
+            <PageContent
+              ownerId={_userData?.id}
+              scoreId={scoreId}
+              pages={pages}
+              pageId={pageId}
+            />
+          </div>
         </div>
       </div>
 

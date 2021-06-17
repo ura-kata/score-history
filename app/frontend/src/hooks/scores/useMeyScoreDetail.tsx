@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { idText } from "typescript";
 import { scoreClientV2 } from "../../global";
 import { ScoreDetail } from "../../ScoreClientV2";
@@ -27,13 +27,18 @@ export interface useMeyScoreDetailProps {
 
 export default function useMeyScoreDetail(
   props: useMeyScoreDetailProps
-): ScoreDetail | undefined {
+): [ScoreDetail | undefined, () => void] {
   const _scoreId = props.scoreId;
   const _retryCount = props.retryCount;
   const _retryIntarval = Math.max(props.retryIntarval ?? 0, 1000);
   const [detail, setDetail] = useState<ScoreDetail | undefined>();
   const [count, setCount] = useState<number | undefined>();
   const [end, setEnd] = useState<boolean>(false);
+  const [reloadCount, setReloadCount] = useState<number>(0);
+
+  const update = useCallback(() => {
+    setReloadCount(reloadCount + 1);
+  }, [reloadCount]);
 
   useEffect(() => {
     const f = async () => {
@@ -48,7 +53,7 @@ export default function useMeyScoreDetail(
     setEnd(false);
 
     f();
-  }, [_scoreId]);
+  }, [_scoreId, reloadCount]);
 
   useEffect(() => {
     if (end) {
@@ -75,5 +80,5 @@ export default function useMeyScoreDetail(
     };
   }, [count, end]);
 
-  return detail;
+  return [detail, update];
 }

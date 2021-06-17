@@ -6,6 +6,7 @@ import { UserData } from "../../UserClient";
 import ScoreDetailContent from "../organisms/ScoreDetailContent";
 import ScoreListContent from "../organisms/ScoreListContent";
 import ScoreNew from "../organisms/ScoreNew";
+import ScorePageEditContent from "../organisms/ScorePageEditContent";
 import MainTemplate from "../templates/MainTemplate";
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -45,6 +46,10 @@ export default function MainPage(props: MainPageProps) {
         <Router>
           <Switch>
             <Route path="/scores/new" component={ScoreNew} />
+            <Route
+              path="/scores/:scoreId/edit-page"
+              component={ScorePageEditContent}
+            />
             <Route
               path="/scores/:scoreId/page/:pageId"
               component={ScoreDetailContent}
