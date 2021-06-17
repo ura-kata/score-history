@@ -87,6 +87,8 @@ const useStyles = makeStyles((theme: Theme) =>
       "& div": {
         height: "200px",
         width: "100%",
+        display: "flex",
+        justifyContent: "center",
         "& img": {
           height: "100%",
         },
@@ -270,7 +272,11 @@ function OpeItem(props: OpeItemProps) {
               onMouseUp={() => _onMouseUp()}
             >
               {_item.thumbnailSrc ? (
-                <img src={_item.thumbnailSrc} className={classes.itemImg} />
+                <img
+                  src={_item.thumbnailSrc}
+                  className={classes.itemImg}
+                  onDragStart={(e) => e.preventDefault()}
+                />
               ) : (
                 <Skeleton variant="rect" />
               )}
