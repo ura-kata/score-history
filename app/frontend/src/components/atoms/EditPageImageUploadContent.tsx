@@ -52,6 +52,12 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       margin: "5px",
     },
+    itemAddRoot: {
+      height: "280px",
+      width: "200px",
+      display: "flex",
+      margin: "5px",
+    },
     itemContainer: {
       width: "200px",
       height: "100%",
@@ -312,7 +318,7 @@ function AddOpeItem(props: AddOpeItemProps) {
   });
 
   return (
-    <div className={classes.itemContainer}>
+    <div className={classes.itemAddRoot}>
       <div
         {...addDropzone.getRootProps()}
         style={{ width: "100%", height: "100%" }}
