@@ -389,10 +389,15 @@ export default function EditPageImageUploadContent(
     useState<number | undefined>();
 
   /** オペレーションを適用した後のアイテムリスト */
-  const afterOpeItemList = useMemo(() => {
-    if (!_ownerId) return [];
-    if (!_scoreId) return [];
-    if (!_pages) return [];
+  const { afterOpeItemList, removePageIds } = useMemo<{
+    afterOpeItemList: AfterOpeItem[];
+    removePageIds: number[];
+  }>(() => {
+    if (!_ownerId) return { afterOpeItemList: [], removePageIds: [] };
+    if (!_scoreId) return { afterOpeItemList: [], removePageIds: [] };
+    if (!_pages) return { afterOpeItemList: [], removePageIds: [] };
+
+    const removePageIds: number[] = [];
     const result = _pages.map((p, index): AfterOpeItem => {
       const thumbnailSrc = privateScoreItemUrlGen.getThumbnailImageUrl(
         _ownerId,
@@ -454,13 +459,12 @@ export default function EditPageImageUploadContent(
           break;
         }
         case "remove": {
-          if (
-            ope.index !== undefined &&
-            0 <= ope.index &&
-            ope.index < result.length
-          ) {
-            result.splice(ope.index, 1);
-          }
+          if (ope.index === undefined) return;
+          if (ope.index < 0 || result.length <= ope.index) return;
+          const afi = result[ope.index];
+          result.splice(ope.index, 1);
+          if (afi.page?.id === undefined) return;
+          removePageIds.push(afi.page.id);
           break;
         }
         case "replace": {
@@ -503,7 +507,7 @@ export default function EditPageImageUploadContent(
       }
     });
 
-    return result;
+    return { afterOpeItemList: result, removePageIds: removePageIds };
   }, [_ownerId, _scoreId, _pages, opeList, latestLoadFileIndex]);
 
   const handleOnDrawerClose = () => {
@@ -579,6 +583,9 @@ export default function EditPageImageUploadContent(
       }
       if (0 < patchPages.length) {
         await scoreClientV2.updatePages(_scoreId, patchPages);
+      }
+      if (0 < removePageIds.length) {
+        await scoreClientV2.removePages(_scoreId, removePageIds);
       }
     } catch (err) {
       alert(err);
