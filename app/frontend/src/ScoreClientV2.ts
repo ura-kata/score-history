@@ -19,7 +19,7 @@ export interface NewlyScore {
 
 /** 楽譜のページ */
 export interface ScorePage {
-  id: string;
+  id: number;
   itemId: string;
   page: string;
   objectName: string;
@@ -65,6 +65,32 @@ export interface ScoreSnapshotDetail {
   data: ScoreData;
   hashSet: { [hash: string]: string };
 }
+/** 新しくアップロードされた楽譜のアイテム */
+export interface NewlyScoreItem {
+  itemInfo: {
+    originalName: string;
+    thumbnail: string;
+    thumbnailSize: number;
+    scoreId: string;
+    itemId: string;
+    objectName: string;
+    size: number;
+    totalSize: number;
+  };
+}
+
+export interface NewScorePage {
+  itemId: string;
+  objectName: string;
+  page: string;
+}
+
+export interface PatchScorePage {
+  targetPageId: number;
+  itemId: string;
+  page: string;
+  objectName: string;
+}
 
 //--------------------------------------------------------------------
 
@@ -98,7 +124,6 @@ const PATCH_HEADERS = {
 const DELETE_HEADERS = {
   "Content-Type": "application/json",
 };
-
 /** 初期化されていない */
 const NotInitializedScore = 520;
 
@@ -248,6 +273,70 @@ export default class ScoreClientV2 {
     }
   }
 
+  async addPages(scoreId: string, newPages: NewScorePage[]): Promise<void> {
+    const requestUrl = this.baseUrl + `/scores/user/${scoreId}/pages`;
+
+    try {
+      const response = await fetch(requestUrl, {
+        method: "POST",
+        headers: POST_HEADERS,
+        credentials: "include",
+        body: JSON.stringify(newPages),
+      });
+
+      if (response.ok) {
+        return;
+      }
+      throw new Error("ページの追加に失敗");
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async removePages(scoreId: string, ids: number[]): Promise<void> {
+    const requestUrl = this.baseUrl + `/scores/user/${scoreId}/pages`;
+
+    try {
+      const response = await fetch(requestUrl, {
+        method: "DELETE",
+        headers: DELETE_HEADERS,
+        credentials: "include",
+        body: JSON.stringify(ids),
+      });
+
+      if (response.ok) {
+        return;
+      }
+      throw new Error("ページの削除に失敗");
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async updatePages(scoreId: string, pages: PatchScorePage[]): Promise<void> {
+    const requestUrl = this.baseUrl + `/scores/user/${scoreId}/pages`;
+
+    try {
+      const response = await fetch(requestUrl, {
+        method: "PATCH",
+        headers: PATCH_HEADERS,
+        credentials: "include",
+        body: JSON.stringify(pages),
+      });
+
+      if (response.ok) {
+        return;
+      } else if (response.status === NotFoundScore) {
+        throw new Error();
+      } else if (response.status === 404) {
+        throw new Error();
+      }
+      throw new Error("ページの更新に失敗");
+    } catch (err) {
+      throw err;
+    }
+  }
+
   async getSnapshotSummaries(scoreId: string): Promise<ScoreSnapshotSummary[]> {
     const requestUrl = this.baseUrl + `/scores/user/${scoreId}/snapshots`;
 
@@ -278,7 +367,6 @@ export default class ScoreClientV2 {
     newSnapshot: NewScoreSnapshot
   ): Promise<void> {
     const requestUrl = this.baseUrl + `/scores/user/${scoreId}/snapshots`;
-
     try {
       const response = await fetch(requestUrl, {
         method: "POST",
@@ -347,5 +435,26 @@ export default class ScoreClientV2 {
     } catch (err) {
       throw err;
     }
+  }
+
+  async uploadItem(scoreId: string, item: File): Promise<NewlyScoreItem> {
+    const url = this.baseUrl + `/items/user`;
+    const formData = new FormData();
+    formData.append("scoreId", scoreId);
+    formData.append("item", item);
+    formData.append("originalName", item.name);
+
+    const response = await fetch(url, {
+      method: "POST",
+      body: formData,
+      credentials: "include",
+    });
+
+    if (response.ok) {
+      const json = await response.json();
+      return json;
+    }
+
+    throw new Error(`アップロード失敗`);
   }
 }
