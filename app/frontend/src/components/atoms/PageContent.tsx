@@ -58,6 +58,8 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     thumbnailContainer: {
       display: "flex",
+      width: "100%",
+      flexWrap: "wrap",
     },
     thumbnailItem: {
       height: "auto",
@@ -107,7 +109,7 @@ export default function PageContent(props: PageContentProps) {
   };
 
   return (
-    <div>
+    <div style={{ width: "100%" }}>
       <div className={classes.thumbnailContainer}>
         {_ownerId && _scoreId ? (
           _pages.map((p) => {

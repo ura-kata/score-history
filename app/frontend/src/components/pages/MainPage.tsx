@@ -49,6 +49,14 @@ export default function MainPage(props: MainPageProps) {
               path="/scores/:scoreId/page/:pageId"
               component={ScoreDetailContent}
             />
+            <Route
+              path="/scores/:scoreId/snapshot/:snapshotId"
+              component={ScoreDetailContent}
+            />
+            <Route
+              path="/scores/:scoreId/snapshot/:snapshotId/page/:pageId"
+              component={ScoreDetailContent}
+            />
             <Route path="/scores/:scoreId" component={ScoreDetailContent} />
             <Route path="/scores" component={ScoreListContent} />
             <Route path="/" component={ScoreListContent} />

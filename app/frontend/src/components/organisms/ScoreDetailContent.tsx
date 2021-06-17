@@ -7,6 +7,7 @@ import useMeyScoreDetail from "../../hooks/scores/useMeyScoreDetail";
 import DetailEditableDescription from "../atoms/DetailEditableDescription";
 import DetailEditableTitle from "../atoms/DetailEditableTitle";
 import PageContent from "../atoms/PageContent";
+import SnapshotNameList from "../atoms/SnapshotNameList";
 import { ThumbnailListContent } from "../atoms/ThumbnailListContent";
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -36,9 +37,22 @@ const useStyles = makeStyles((theme: Theme) =>
     descP: {},
     thumbnailContainer: {
       width: "100%",
+      display: "flex",
+    },
+    pageArea: {
+      width: "calc(100% - 200px)",
+    },
+    snapshotArea: {
+      width: "200px",
     },
   })
 );
+
+interface PathParameters {
+  scoreId?: string;
+  pageId?: string;
+  snapshotId?: string;
+}
 
 export interface ScoreDetailContentProps {}
 
@@ -46,8 +60,7 @@ export interface ScoreDetailContentProps {}
 export default function ScoreDetailContent(props: ScoreDetailContentProps) {
   const classes = useStyles();
 
-  const { scoreId, pageId } =
-    useParams<{ scoreId?: string; pageId?: string }>();
+  const { scoreId, pageId, snapshotId } = useParams<PathParameters>();
   const history = useHistory();
 
   const detail = useMeyScoreDetail({ scoreId, retryCount: 3 });
@@ -116,12 +129,17 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
             scoreId={scoreId}
             pages={detail?.data.pages}
           /> */}
-          <PageContent
-            ownerId={_userData?.id}
-            scoreId={scoreId}
-            pages={detail?.data.pages}
-            pageId={pageId}
-          />
+          <div className={classes.pageArea}>
+            <PageContent
+              ownerId={_userData?.id}
+              scoreId={scoreId}
+              pages={detail?.data.pages}
+              pageId={pageId}
+            />
+          </div>
+          <div className={classes.snapshotArea}>
+            <SnapshotNameList scoreId={scoreId} />
+          </div>
         </div>
       </div>
 
