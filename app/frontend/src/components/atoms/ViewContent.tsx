@@ -21,7 +21,6 @@ export function ViewContent(props: ViewContentProps) {
   const viewerContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    console.log(ulRef.current);
     if (!ulRef.current) return;
     if (!viewerContainerRef.current) return;
     const viewer = new Viewer(ulRef.current, {
