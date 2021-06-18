@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
-import { privateScoreItemUrlGen } from "../../../global";
+import { privateScoreItemUrlGen } from "../../../../../global";
 import Viewer from "viewerjs";
-import { ScorePage } from "../../../ScoreClientV2";
+import { ScorePage } from "../../../../../ScoreClientV2";
 import { useHistory } from "react-router-dom";
 
 export interface ViewContentProps {
