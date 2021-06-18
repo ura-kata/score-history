@@ -95,6 +95,10 @@ export default function SnapshotNameList(props: SnapshotNameListProps) {
       console.log(err);
     }
   };
+
+  const handleOnLatestClick = () => {
+    history.push(`/scores/${scoreId}`);
+  };
   return (
     <div style={{ width: "100%", height: "100%" }}>
       <div className={classes.toolbar}>
@@ -103,6 +107,13 @@ export default function SnapshotNameList(props: SnapshotNameListProps) {
         </IconButton>
       </div>
       <ul className={classes.list}>
+        <li>
+          <Button
+            variant={snapshotId ? undefined : "contained"}
+            onClick={handleOnLatestClick}
+            style={{ width: "100%" }}
+          >{`最新`}</Button>
+        </li>
         {(snapshotSummaries ?? []).map((snap) => {
           const handleOnClick = () => {
             history.push(`/scores/${scoreId}/snapshot/${snap.id}`);

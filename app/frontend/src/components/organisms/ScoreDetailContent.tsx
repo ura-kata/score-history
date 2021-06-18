@@ -63,10 +63,6 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
     history.push("/");
   };
 
-  const handleLatestOnClick = () => {
-    history.push(`/scores/${scoreId}`);
-  };
-
   return (
     <div className={classes.root}>
       <div className={classes.controlBar}>
@@ -80,7 +76,6 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
         >
           戻る
         </Button>
-        <Button onClick={handleLatestOnClick}>最新</Button>
       </div>
       <div className={classes.contentRoot}>
         <div
