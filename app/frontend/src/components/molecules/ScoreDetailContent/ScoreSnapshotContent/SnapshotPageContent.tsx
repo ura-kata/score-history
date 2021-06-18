@@ -10,11 +10,11 @@ import {
 } from "@material-ui/core";
 import { useMemo } from "react";
 import { useHistory } from "react-router";
-import { privateScoreItemUrlGen } from "../../../global";
-import { ScorePage } from "../../../ScoreClientV2";
+import { privateScoreItemUrlGen } from "../../../../global";
+import { ScorePage } from "../../../../ScoreClientV2";
 import "viewerjs/dist/viewer.min.css";
 import CloseIcon from "@material-ui/icons/Close";
-import { SnapshotViewContent } from "./SnapshotViewContent";
+import { SnapshotViewContent } from "./SnapshotPageContent/SnapshotViewContent";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
