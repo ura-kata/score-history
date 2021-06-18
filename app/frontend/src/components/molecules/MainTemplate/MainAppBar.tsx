@@ -8,10 +8,10 @@ import {
   Theme,
 } from "@material-ui/core";
 import React, { useState } from "react";
-import AppBarUserInfo from "../atoms/AppBarUserInfo";
+import AppBarUserInfo from "../../atoms/AppBarUserInfo";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
-import { accessClient } from "../../global";
-import { AppContext } from "../../AppContext";
+import { accessClient } from "../../../global";
+import { AppContext } from "../../../AppContext";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
