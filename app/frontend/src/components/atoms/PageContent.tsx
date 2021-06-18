@@ -109,7 +109,6 @@ export default function PageContent(props: PageContentProps) {
   const pageIndex = _pageId !== undefined ? pageIndexSet[_pageId] : undefined;
 
   const handleOnCloseClick = () => {
-    console.log("close");
     history.push(`/scores/${_scoreId}`);
   };
 
