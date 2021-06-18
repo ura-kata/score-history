@@ -14,6 +14,7 @@ import DetailEditableDescription from "../atoms/DetailEditableDescription";
 import DetailEditableTitle from "../atoms/DetailEditableTitle";
 import LatestScoreContent from "../atoms/LatestScoreContent";
 import PageContent from "../atoms/PageContent";
+import ScoreSnapshotContent from "../atoms/ScoreSnapshotContent";
 import SnapshotNameList from "../atoms/SnapshotNameList";
 import { ThumbnailListContent } from "../atoms/ThumbnailListContent";
 
@@ -82,8 +83,17 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
         <Button onClick={handleLatestOnClick}>最新</Button>
       </div>
       <div className={classes.contentRoot}>
-        <div className={classes.scoreDataArea}>
+        <div
+          className={classes.scoreDataArea}
+          style={{ display: snapshotId ? "none" : undefined }}
+        >
           <LatestScoreContent />
+        </div>
+        <div
+          className={classes.scoreDataArea}
+          style={{ display: snapshotId ? undefined : "none" }}
+        >
+          <ScoreSnapshotContent />
         </div>
         <div className={classes.snapshotArea}>
           <SnapshotNameList />
