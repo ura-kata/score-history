@@ -4,7 +4,7 @@ import { useHistory, useParams } from "react-router-dom";
 import useMeyScoreDetail from "../../hooks/scores/useMeyScoreDetail";
 import ArrowBackIcon from "@material-ui/icons/ArrowBack";
 import { AppContext } from "../../AppContext";
-import PageEditContent from "../molecules/edit/PageEditContent";
+import PageEditContent from "../molecules/ScorePageEditContent/PageEditContent";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
