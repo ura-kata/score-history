@@ -4,7 +4,7 @@ import { useHistory, useParams } from "react-router-dom";
 import useMeyScoreDetail from "../../hooks/scores/useMeyScoreDetail";
 import ArrowBackIcon from "@material-ui/icons/ArrowBack";
 import { AppContext } from "../../AppContext";
-import EditPageImageUploadContent from "../molecules/edit/EditPageImageUploadContent";
+import PageEditContent from "../molecules/edit/PageEditContent";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -63,7 +63,7 @@ export default function ScorePageEditContent(props: ScorePageEditContentProps) {
         </IconButton>
       </div>
       <div className={classes.editPageContainer}>
-        <EditPageImageUploadContent
+        <PageEditContent
           ownerId={_ownerId}
           scoreId={scoreId}
           pages={pages}

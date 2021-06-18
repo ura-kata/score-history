@@ -6,7 +6,7 @@ import { scoreClientV2 } from "../../global";
 import { ScoreSummary } from "../../ScoreClientV2";
 import ScoreSummaryCard from "../atoms/ScoreSummaryCard";
 
-export interface ScoreListContentProps {}
+export interface ScoreSummaryListContentProps {}
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -35,7 +35,9 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-export default function ScoreListContent(props: ScoreListContentProps) {
+export default function ScoreSummaryListContent(
+  props: ScoreSummaryListContentProps
+) {
   const classes = useStyles();
   const [scoreSummaries, setScoreSummaries] =
     useState<ScoreSummary[] | undefined>(undefined);

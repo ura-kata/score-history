@@ -351,7 +351,7 @@ interface AfterOpeItem {
   dropFileIndex?: number;
 }
 
-export interface EditPageImageUploadContentProps {
+export interface PageEditContentProps {
   ownerId?: string;
   scoreId?: string;
   pages?: ScorePage[];
@@ -359,9 +359,7 @@ export interface EditPageImageUploadContentProps {
   onCancel?: () => void;
 }
 
-export default function EditPageImageUploadContent(
-  props: EditPageImageUploadContentProps
-) {
+export default function PageEditContent(props: PageEditContentProps) {
   const classes = useStyles();
   const _ownerId = props.ownerId;
   const _scoreId = props.scoreId;

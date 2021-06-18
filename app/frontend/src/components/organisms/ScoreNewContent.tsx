@@ -33,10 +33,10 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-export interface ScoreNewProps {}
+export interface ScoreNewContentProps {}
 
 /** 楽譜を新しく作成するためのコンポーネント */
-export default function ScoreNew(props: ScoreNewProps) {
+export default function ScoreNewContent(props: ScoreNewContentProps) {
   const classes = useStyles();
 
   const [title, setTitle] = useState("");
