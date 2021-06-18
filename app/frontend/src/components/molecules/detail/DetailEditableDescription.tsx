@@ -9,7 +9,7 @@ import React, { useState } from "react";
 import EditIcon from "@material-ui/icons/Edit";
 import DoneIcon from "@material-ui/icons/Done";
 import CloseIcon from "@material-ui/icons/Close";
-import { scoreClientV2 } from "../../global";
+import { scoreClientV2 } from "../../../global";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

@@ -1,21 +1,19 @@
-import React, { useEffect, useMemo, useRef } from "react";
-import { privateScoreItemUrlGen } from "../../global";
+import { useEffect, useMemo, useRef } from "react";
+import { privateScoreItemUrlGen } from "../../../global";
 import Viewer from "viewerjs";
-import { ScorePage } from "../../ScoreClientV2";
+import { ScorePage } from "../../../ScoreClientV2";
 import { useHistory } from "react-router-dom";
 
-export interface SnapshotViewContentProps {
+export interface ViewContentProps {
   ownerId?: string;
   scoreId?: string;
-  snapshotId?: string;
   pages?: ScorePage[];
   pageIndex?: number;
 }
 
-export function SnapshotViewContent(props: SnapshotViewContentProps) {
+export function ViewContent(props: ViewContentProps) {
   const _ownerId = props.ownerId;
   const _scoreId = props.scoreId;
-  const _snapshotId = props.snapshotId;
   const _pages = props.pages ?? [];
   const _pageIndex = props.pageIndex;
   const ulRef = useRef<HTMLUListElement>(null);
@@ -28,6 +26,7 @@ export function SnapshotViewContent(props: SnapshotViewContentProps) {
   useEffect(() => {
     if (!ulRef.current) return;
     if (!viewerContainerRef.current) return;
+    console.log("init view");
     const viewer = new Viewer(ulRef.current, {
       url: "data-original",
       loop: false,
@@ -55,12 +54,9 @@ export function SnapshotViewContent(props: SnapshotViewContentProps) {
         if (index < 0 || _pages.length <= index) return;
         const page = _pages[index];
         // 画像を変更したときに URL も変更する
-        history.push(
-          `/scores/${_scoreId}/snapshot/${_snapshotId}/page/${page.id}`
-        );
+        history.push(`/scores/${_scoreId}/page/${page.id}`);
       },
     });
-    console.log(viewerContainerRef.current);
     viewerRef.current = viewer;
 
     return () => {

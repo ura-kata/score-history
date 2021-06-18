@@ -11,13 +11,13 @@ import {
 } from "@material-ui/core";
 import AddIcon from "@material-ui/icons/Add";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { privateScoreItemUrlGen, scoreClientV2 } from "../../global";
+import { privateScoreItemUrlGen, scoreClientV2 } from "../../../global";
 import {
   NewlyScoreItem,
   NewScorePage,
   PatchScorePage,
   ScorePage,
-} from "../../ScoreClientV2";
+} from "../../../ScoreClientV2";
 import AddCircleOutlineIcon from "@material-ui/icons/AddCircleOutline";
 import CloseIcon from "@material-ui/icons/Close";
 import { useDropzone } from "react-dropzone";

@@ -1,13 +1,12 @@
-import { createStyles, IconButton, makeStyles, Theme } from "@material-ui/core";
-import DetailEditableDescription from "./DetailEditableDescription";
-import DetailEditableTitle from "./DetailEditableTitle";
-import EditIcon from "@material-ui/icons/Edit";
-import PageContent from "./PageContent";
+import { createStyles, makeStyles, Theme } from "@material-ui/core";
 import { useEffect, useMemo, useState } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import React from "react";
-import { AppContext } from "../../AppContext";
-import useMeyScoreDetail from "../../hooks/scores/useMeyScoreDetail";
+import { AppContext } from "../../../AppContext";
+import useMeyScoreSnapshotDetail from "../../../hooks/scores/useMeyScoreSnapshotDetail";
+import DetailDescription from "./DetailDescription";
+import DetailTitle from "./DetailTitle";
+import SnapshotPageContent from "./SnapshotPageContent";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -40,22 +39,25 @@ const useStyles = makeStyles((theme: Theme) =>
 
 interface PathParameters {
   scoreId?: string;
-  pageId?: string;
+  snapshotId?: string;
+  snapshotPageId?: string;
 }
 
-export interface LatestScoreContentProps {}
+export interface ScoreSnapshotContentProps {}
 
-export default function LatestScoreContent(props: LatestScoreContentProps) {
-  const { scoreId, pageId } = useParams<PathParameters>();
+export default function ScoreSnapshotContent(props: ScoreSnapshotContentProps) {
+  const { scoreId, snapshotId, snapshotPageId } = useParams<PathParameters>();
 
   const classes = useStyles();
-
-  const history = useHistory();
 
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
 
-  const [detail, updateDetail] = useMeyScoreDetail({ scoreId, retryCount: 3 });
+  const [detail, updateDetail] = useMeyScoreSnapshotDetail({
+    scoreId,
+    snapshotId,
+    retryCount: 3,
+  });
 
   const appContext = React.useContext(AppContext);
 
@@ -70,21 +72,6 @@ export default function LatestScoreContent(props: LatestScoreContentProps) {
     setDescription(desc);
   }, [detail]);
 
-  useEffect(() => {
-    updateDetail();
-  }, [scoreId]);
-
-  const handleOnChangeTitle = (newTitle: string) => {
-    setTitle(newTitle);
-  };
-
-  const handleOnChangeDescription = (newDescription: string) => {
-    setDescription(newDescription);
-  };
-  const handleOnPageEditClick = () => {
-    history.push(`/scores/${scoreId}/edit-page`);
-  };
-
   const pages = useMemo(() => {
     return [...(detail?.data.pages ?? [])].sort((x, y) => {
       const xn = parseInt("0" + x.page);
@@ -95,41 +82,29 @@ export default function LatestScoreContent(props: LatestScoreContentProps) {
     });
   }, [detail]);
 
+  useEffect(() => {
+    updateDetail();
+  }, [snapshotId]);
+
   return (
     <div style={{ width: "100%", height: "100%" }}>
       <div className={classes.infoContainer}>
         <div className={classes.titleContainer}>
-          <DetailEditableTitle
-            id={scoreId}
-            title={title}
-            onChangeTitle={handleOnChangeTitle}
-          />
+          <DetailTitle title={title} />
         </div>
         <div className={classes.descContainer}>
-          <DetailEditableDescription
-            id={scoreId}
-            description={description}
-            onChangeDescription={handleOnChangeDescription}
-          />
+          <DetailDescription description={description} />
         </div>
       </div>
       <div className={classes.thumbnailRoot}>
-        <div className={classes.thumbnailControlBar}>
-          <IconButton onClick={handleOnPageEditClick}>
-            <EditIcon />
-          </IconButton>
-        </div>
+        <div className={classes.thumbnailControlBar}></div>
         <div className={classes.thumbnailContainer}>
-          {/* <ThumbnailListContent
+          <SnapshotPageContent
             ownerId={_userData?.id}
             scoreId={scoreId}
-            pages={detail?.data.pages}
-          /> */}
-          <PageContent
-            ownerId={_userData?.id}
-            scoreId={scoreId}
+            snapshotId={snapshotId}
             pages={pages}
-            pageId={pageId}
+            pageId={snapshotPageId}
           />
         </div>
       </div>

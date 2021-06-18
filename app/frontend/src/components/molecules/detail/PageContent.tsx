@@ -10,8 +10,8 @@ import {
 } from "@material-ui/core";
 import { useMemo } from "react";
 import { useHistory } from "react-router";
-import { privateScoreItemUrlGen } from "../../global";
-import { ScorePage } from "../../ScoreClientV2";
+import { privateScoreItemUrlGen } from "../../../global";
+import { ScorePage } from "../../../ScoreClientV2";
 import "viewerjs/dist/viewer.min.css";
 import { ViewContent } from "./ViewContent";
 import CloseIcon from "@material-ui/icons/Close";
