@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef } from "react";
 import { privateScoreItemUrlGen } from "../../global";
 import Viewer from "viewerjs";
 import { ScorePage } from "../../ScoreClientV2";
+import { useHistory } from "react-router-dom";
 
 export interface ViewContentProps {
   ownerId?: string;
@@ -20,9 +21,12 @@ export function ViewContent(props: ViewContentProps) {
   const viewerRef = useRef<Viewer>();
   const viewerContainerRef = useRef<HTMLDivElement>(null);
 
+  const history = useHistory();
+
   useEffect(() => {
     if (!ulRef.current) return;
     if (!viewerContainerRef.current) return;
+    console.log("init view");
     const viewer = new Viewer(ulRef.current, {
       url: "data-original",
       loop: false,
@@ -42,6 +46,15 @@ export function ViewContent(props: ViewContentProps) {
         rotateRight: false,
         flipHorizontal: false,
         flipVertical: false,
+      },
+      slideOnTouch: true,
+      viewed: (event) => {
+        const index = event.detail?.index as number | undefined;
+        if (index === undefined) return;
+        if (index < 0 || _pages.length <= index) return;
+        const page = _pages[index];
+        // 画像を変更したときに URL も変更する
+        history.push(`/scores/${_scoreId}/page/${page.id}`);
       },
     });
     viewerRef.current = viewer;
