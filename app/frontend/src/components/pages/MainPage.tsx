@@ -51,20 +51,15 @@ export default function MainPage(props: MainPageProps) {
               component={ScorePageEditContent}
             />
             <Route
-              path="/scores/:scoreId/page/:pageId"
+              path={[
+                "/scores/:scoreId/page/:pageId",
+                "/scores/:scoreId/snapshot/:snapshotId/page/:snapshotPageId",
+                "/scores/:scoreId/snapshot/:snapshotId",
+                "/scores/:scoreId",
+              ]}
               component={ScoreDetailContent}
             />
-            <Route
-              path="/scores/:scoreId/snapshot/:snapshotId/page/:snapshotPageId"
-              component={ScoreDetailContent}
-            />
-            <Route
-              path="/scores/:scoreId/snapshot/:snapshotId"
-              component={ScoreDetailContent}
-            />
-            <Route path="/scores/:scoreId" component={ScoreDetailContent} />
-            <Route path="/scores" component={ScoreListContent} />
-            <Route path="/" component={ScoreListContent} />
+            <Route path={["/scores", "/"]} component={ScoreListContent} />
           </Switch>
         </Router>
       </div>
