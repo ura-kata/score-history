@@ -19,7 +19,6 @@ import VersionDisplayDialog from "../molecules/VersionDisplayDialog";
 
 import ScoreTable, { ScoreTableData } from "../molecules/ScoreTable";
 import UpdateDialog from "../molecules/UpdateDialog";
-import { CloseIcon } from "@material-ui/data-grid";
 import AlertArea from "../molecules/AlertArea";
 
 const client = new PracticeManagerApiClient(

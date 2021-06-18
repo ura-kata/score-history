@@ -12,27 +12,27 @@ import {
   IconButton,
   makeStyles,
   Theme,
-  Typography
+  Typography,
 } from "@material-ui/core";
-import MuiDialogTitle from '@material-ui/core/DialogTitle';
-import { AddIcon, CloseIcon } from "@material-ui/data-grid";
+import MuiDialogTitle from "@material-ui/core/DialogTitle";
+import CloseIcon from "@material-ui/icons/Close";
 import React from "react";
 import { Score } from "../../PracticeManagerApiClient";
-import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
-import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+import ArrowForwardIcon from "@material-ui/icons/ArrowForward";
+import ArrowBackIcon from "@material-ui/icons/ArrowBack";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
-    dialogContent:{
+    dialogContent: {
       minWidth: "500px",
-      margin: theme.spacing(1)
+      margin: theme.spacing(1),
     },
     dialogTitleRoot: {
       margin: 0,
       padding: theme.spacing(2),
     },
     dialogCloseButton: {
-      position: 'absolute',
+      position: "absolute",
       right: theme.spacing(1),
       top: theme.spacing(1),
       color: theme.palette.grey[500],
@@ -40,18 +40,17 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-interface ScoreDialogProps{
+interface ScoreDialogProps {
   open: boolean;
   onClose?: () => void;
   score?: Score;
-  onPrev?: ()=> void;
-  onNext?: ()=> void;
+  onPrev?: () => void;
+  onNext?: () => void;
   prevDisabled?: boolean;
   nextDisabled?: boolean;
 }
 
 const ScoreDialog = (props: ScoreDialogProps) => {
-
   const classes = useStyles();
 
   const _open = props.open;
@@ -62,19 +61,19 @@ const ScoreDialog = (props: ScoreDialogProps) => {
   const _prevDisabled = props.prevDisabled;
   const _nextDisabled = props.nextDisabled;
 
-  const handleUpgrade = ()=>{
+  const handleUpgrade = () => {};
 
-  };
-
-  const handleDelete = ()=>{
-
-  };
+  const handleDelete = () => {};
 
   const CustomDialogTitle = (
     <MuiDialogTitle disableTypography className={classes.dialogTitleRoot}>
       <Typography variant="h6">{_score?.title}</Typography>
       {_onClose ? (
-        <IconButton aria-label="close" onClick={_onClose} className={classes.dialogCloseButton}>
+        <IconButton
+          aria-label="close"
+          onClick={_onClose}
+          className={classes.dialogCloseButton}
+        >
           <CloseIcon />
         </IconButton>
       ) : null}
@@ -85,9 +84,7 @@ const ScoreDialog = (props: ScoreDialogProps) => {
     <Dialog onClose={_onClose} open={_open}>
       {CustomDialogTitle}
       <DialogContent className={classes.dialogContent}>
-        <DialogContentText>
-          {_score?.description}
-        </DialogContentText>
+        <DialogContentText>{_score?.description}</DialogContentText>
       </DialogContent>
       <DialogActions>
         <Grid container>
@@ -100,7 +97,7 @@ const ScoreDialog = (props: ScoreDialogProps) => {
             </IconButton>
           </Grid>
           <Grid item xs>
-            <div style={{float: "right"}}>
+            <div style={{ float: "right" }}>
               <Button onClick={handleUpgrade} color="primary" autoFocus>
                 更新
               </Button>
@@ -109,11 +106,10 @@ const ScoreDialog = (props: ScoreDialogProps) => {
               </Button>
             </div>
           </Grid>
-
         </Grid>
       </DialogActions>
     </Dialog>
   );
-}
+};
 
 export default ScoreDialog;
