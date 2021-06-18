@@ -15,6 +15,7 @@ import { ScorePage } from "../../ScoreClientV2";
 import "viewerjs/dist/viewer.min.css";
 import { ViewContent } from "./ViewContent";
 import CloseIcon from "@material-ui/icons/Close";
+import { SnapshotViewContent } from "./SnapshotViewContent";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -153,9 +154,10 @@ export default function SnapshotPageContent(props: SnapshotPageContentProps) {
       >
         <div className={classes.dialogContent}>
           <div className={classes.viewerContainer}>
-            <ViewContent
+            <SnapshotViewContent
               ownerId={_ownerId}
               scoreId={_scoreId}
+              snapshotId={_snapshotId}
               pageIndex={pageIndex}
               pages={_pages}
             />
