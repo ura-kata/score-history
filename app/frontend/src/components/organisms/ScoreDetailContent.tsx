@@ -1,22 +1,9 @@
-import {
-  Button,
-  createStyles,
-  IconButton,
-  makeStyles,
-  Theme,
-} from "@material-ui/core";
+import { Button, createStyles, makeStyles, Theme } from "@material-ui/core";
 import { ArrowBack } from "@material-ui/icons";
-import React, { useEffect, useMemo, useState } from "react";
 import { useHistory, useParams } from "react-router";
-import { AppContext } from "../../AppContext";
-import useMeyScoreDetail from "../../hooks/scores/useMeyScoreDetail";
-import DetailEditableDescription from "../atoms/DetailEditableDescription";
-import DetailEditableTitle from "../atoms/DetailEditableTitle";
 import LatestScoreContent from "../atoms/LatestScoreContent";
-import PageContent from "../atoms/PageContent";
 import ScoreSnapshotContent from "../atoms/ScoreSnapshotContent";
 import SnapshotNameList from "../atoms/SnapshotNameList";
-import { ThumbnailListContent } from "../atoms/ThumbnailListContent";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

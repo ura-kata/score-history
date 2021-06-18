@@ -1,5 +1,4 @@
 import { createStyles, makeStyles, Theme } from "@material-ui/core";
-import React from "react";
 import { ScorePage } from "../../ScoreClientV2";
 import { ThumbnailItem } from "./ThumbnailItem";
 

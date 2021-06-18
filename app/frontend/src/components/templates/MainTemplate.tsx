@@ -1,4 +1,4 @@
-import { colors, createStyles, makeStyles, Theme } from "@material-ui/core";
+import { createStyles, makeStyles, Theme } from "@material-ui/core";
 import Copyright from "../atoms/Copyright";
 import React from "react";
 import MainAppBar from "../organisms/MainAppBar";

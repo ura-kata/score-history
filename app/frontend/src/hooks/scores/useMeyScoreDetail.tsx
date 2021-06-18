@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { idText } from "typescript";
 import { scoreClientV2 } from "../../global";
 import { ScoreDetail } from "../../ScoreClientV2";
 

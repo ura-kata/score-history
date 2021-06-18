@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { privateScoreItemUrlGen } from "../../global";
 import Viewer from "viewerjs";
 import { ScorePage } from "../../ScoreClientV2";

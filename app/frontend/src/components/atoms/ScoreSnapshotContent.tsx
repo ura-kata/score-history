@@ -1,13 +1,8 @@
-import { createStyles, IconButton, makeStyles, Theme } from "@material-ui/core";
-import DetailEditableDescription from "./DetailEditableDescription";
-import DetailEditableTitle from "./DetailEditableTitle";
-import EditIcon from "@material-ui/icons/Edit";
-import PageContent from "./PageContent";
+import { createStyles, makeStyles, Theme } from "@material-ui/core";
 import { useEffect, useMemo, useState } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import React from "react";
 import { AppContext } from "../../AppContext";
-import useMeyScoreDetail from "../../hooks/scores/useMeyScoreDetail";
 import useMeyScoreSnapshotDetail from "../../hooks/scores/useMeyScoreSnapshotDetail";
 import DetailDescription from "./DetailDescription";
 import DetailTitle from "./DetailTitle";

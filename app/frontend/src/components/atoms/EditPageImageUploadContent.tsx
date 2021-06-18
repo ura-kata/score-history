@@ -10,13 +10,7 @@ import {
   styled,
 } from "@material-ui/core";
 import AddIcon from "@material-ui/icons/Add";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { privateScoreItemUrlGen, scoreClientV2 } from "../../global";
 import {
   NewlyScoreItem,

@@ -1,12 +1,6 @@
-import {
-  Button,
-  colors,
-  createStyles,
-  makeStyles,
-  Theme,
-} from "@material-ui/core";
-import { Add, AddBox } from "@material-ui/icons";
-import React, { useEffect, useState } from "react";
+import { Button, createStyles, makeStyles, Theme } from "@material-ui/core";
+import { Add } from "@material-ui/icons";
+import { useEffect, useState } from "react";
 import { useHistory } from "react-router";
 import { scoreClientV2 } from "../../global";
 import { ScoreSummary } from "../../ScoreClientV2";

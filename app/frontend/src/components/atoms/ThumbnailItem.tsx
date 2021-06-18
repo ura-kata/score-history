@@ -1,5 +1,4 @@
 import { Button, createStyles, makeStyles, Theme } from "@material-ui/core";
-import React from "react";
 import { useHistory } from "react-router";
 import { privateScoreItemUrlGen } from "../../global";
 import { ScorePage } from "../../ScoreClientV2";

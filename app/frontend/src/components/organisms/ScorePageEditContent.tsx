@@ -1,11 +1,5 @@
-import {
-  Button,
-  createStyles,
-  IconButton,
-  makeStyles,
-  Theme,
-} from "@material-ui/core";
-import React, { useCallback, useMemo, useState } from "react";
+import { createStyles, IconButton, makeStyles, Theme } from "@material-ui/core";
+import React from "react";
 import { useHistory, useParams } from "react-router-dom";
 import useMeyScoreDetail from "../../hooks/scores/useMeyScoreDetail";
 import ArrowBackIcon from "@material-ui/icons/ArrowBack";
