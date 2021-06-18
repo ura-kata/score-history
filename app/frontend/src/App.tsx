@@ -42,29 +42,6 @@ const App = () => {
           <Suspense fallback={<div>Loading...</div>}>
             <Switch>
               <Route path="/" component={MainPage} />
-              {/* <Route path={["/", "/home/"]} component={ScoreListPage} exact />
-            <Route
-              path={`/home/:owner?/:scoreName?/${((): HomeActionType =>
-                "edit")()}/`}
-              component={EditScorePropertyPage}
-            />
-            <Route
-              path={`/home/:owner?/:scoreName?/${((): HomeActionType =>
-                "edit-page")()}/`}
-              component={UpdateScorePagePage}
-            />
-            <Route
-              path={[
-                "/home/:owner?/:scoreName?/",
-                `/home/:owner?/:scoreName?/${((): HomeActionType =>
-                  "page")()}/:pageIndex?/`,
-              ]}
-              component={ScoreDetailPage}
-            />
-            <Route path="/new" component={NewScorePage} />
-            <Route path="/upload" component={UploadScorePage} />
-            <Route path="/display" component={DisplayPage} />
-            <Route path="/api-test" component={ApiTestPage} /> */}
             </Switch>
           </Suspense>
         </Router>
