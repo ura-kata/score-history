@@ -1,9 +1,9 @@
 import { Button, createStyles, makeStyles, Theme } from "@material-ui/core";
 import { ArrowBack } from "@material-ui/icons";
 import { useHistory, useParams } from "react-router";
-import LatestScoreContent from "../molecules/detail/LatestScoreContent";
-import ScoreSnapshotContent from "../molecules/snapshot/ScoreSnapshotContent";
-import SnapshotNameList from "../atoms/SnapshotNameList";
+import LatestScoreContent from "../molecules/ScoreDetailContent/LatestScoreContent";
+import ScoreSnapshotContent from "../molecules/ScoreDetailContent/ScoreSnapshotContent";
+import SnapshotNameList from "../molecules/ScoreDetailContent/SnapshotNameList";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

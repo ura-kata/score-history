@@ -4,9 +4,9 @@ import { useParams } from "react-router-dom";
 import React from "react";
 import { AppContext } from "../../../AppContext";
 import useMeyScoreSnapshotDetail from "../../../hooks/scores/useMeyScoreSnapshotDetail";
-import DetailDescription from "./DetailDescription";
-import DetailTitle from "./DetailTitle";
-import SnapshotPageContent from "./SnapshotPageContent";
+import DetailDescription from "../snapshot/DetailDescription";
+import DetailTitle from "../snapshot/DetailTitle";
+import SnapshotPageContent from "../snapshot/SnapshotPageContent";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

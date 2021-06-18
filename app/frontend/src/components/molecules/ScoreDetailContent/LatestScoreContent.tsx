@@ -1,8 +1,8 @@
 import { createStyles, IconButton, makeStyles, Theme } from "@material-ui/core";
-import DetailEditableDescription from "./DetailEditableDescription";
-import DetailEditableTitle from "./DetailEditableTitle";
+import DetailEditableDescription from "../detail/DetailEditableDescription";
+import DetailEditableTitle from "../detail/DetailEditableTitle";
 import EditIcon from "@material-ui/icons/Edit";
-import PageContent from "./PageContent";
+import PageContent from "../detail/PageContent";
 import { useEffect, useMemo, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import React from "react";

@@ -12,8 +12,8 @@ import {
 } from "@material-ui/core";
 import { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
-import { scoreClientV2 } from "../../global";
-import { ScoreSnapshotSummary } from "../../ScoreClientV2";
+import { scoreClientV2 } from "../../../global";
+import { ScoreSnapshotSummary } from "../../../ScoreClientV2";
 import CameraAltIcon from "@material-ui/icons/CameraAlt";
 
 const useStyles = makeStyles((theme: Theme) =>
