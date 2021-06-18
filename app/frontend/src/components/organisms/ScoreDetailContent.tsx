@@ -31,6 +31,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     contentRoot: {
       width: "100%",
+      display: "flex",
     },
     infoContainer: {
       width: "100%",
@@ -57,11 +58,11 @@ const useStyles = makeStyles((theme: Theme) =>
       width: "100%",
       display: "flex",
     },
-    pageArea: {
-      width: "calc(100% - 200px)",
-    },
     snapshotArea: {
       width: "200px",
+    },
+    scoreArea: {
+      width: "calc(100% - 200px)",
     },
   })
 );
@@ -138,35 +139,35 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
         </Button>
       </div>
       <div className={classes.contentRoot}>
-        <div className={classes.infoContainer}>
-          <div className={classes.titleContainer}>
-            <DetailEditableTitle
-              id={scoreId}
-              title={title}
-              onChangeTitle={handleOnChangeTitle}
-            />
+        <div className={classes.scoreArea}>
+          <div className={classes.infoContainer}>
+            <div className={classes.titleContainer}>
+              <DetailEditableTitle
+                id={scoreId}
+                title={title}
+                onChangeTitle={handleOnChangeTitle}
+              />
+            </div>
+            <div className={classes.descContainer}>
+              <DetailEditableDescription
+                id={scoreId}
+                description={description}
+                onChangeDescription={handleOnChangeDescription}
+              />
+            </div>
           </div>
-          <div className={classes.descContainer}>
-            <DetailEditableDescription
-              id={scoreId}
-              description={description}
-              onChangeDescription={handleOnChangeDescription}
-            />
-          </div>
-        </div>
-        <div className={classes.thumbnailRoot}>
-          <div className={classes.thumbnailControlBar}>
-            <IconButton onClick={handleOnPageEditClick}>
-              <EditIcon />
-            </IconButton>
-          </div>
-          <div className={classes.thumbnailContainer}>
-            {/* <ThumbnailListContent
+          <div className={classes.thumbnailRoot}>
+            <div className={classes.thumbnailControlBar}>
+              <IconButton onClick={handleOnPageEditClick}>
+                <EditIcon />
+              </IconButton>
+            </div>
+            <div className={classes.thumbnailContainer}>
+              {/* <ThumbnailListContent
             ownerId={_userData?.id}
             scoreId={scoreId}
             pages={detail?.data.pages}
           /> */}
-            <div className={classes.pageArea}>
               <PageContent
                 ownerId={_userData?.id}
                 scoreId={scoreId}
@@ -174,10 +175,10 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
                 pageId={pageId}
               />
             </div>
-            <div className={classes.snapshotArea}>
-              <SnapshotNameList scoreId={scoreId} />
-            </div>
           </div>
+        </div>
+        <div className={classes.snapshotArea}>
+          <SnapshotNameList scoreId={scoreId} />
         </div>
       </div>
 
