@@ -12,7 +12,8 @@
     "deploy-frontend": "cdk deploy ScoreHistoryFrontendStack",
     "deploy-api": "cdk deploy ScoreHistoryApiStack",
     "deploy-backend": "cdk deploy ScoreHistoryBackendStack",
-    "build-api": "pwsh ../app/backend/build.ps1"
+    "build-api": "pwsh ../app/backend/build.ps1",
+    "build-frontend": "pwsh ../app/frontend/build.ps1"
   },
   "devDependencies": {
     "@aws-cdk/assert": "1.95.1",
