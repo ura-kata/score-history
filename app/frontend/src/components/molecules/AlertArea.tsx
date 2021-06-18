@@ -1,6 +1,6 @@
 import { Collapse, IconButton } from "@material-ui/core";
 import Alert from "@material-ui/lab/Alert";
-import { CloseIcon } from "@material-ui/data-grid";
+import CloseIcon from "@material-ui/icons/Close";
 import { useEffect } from "react";
 import React from "react";
 
