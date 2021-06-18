@@ -1,16 +1,10 @@
-import {
-  Button,
-  createStyles,
-  IconButton,
-  makeStyles,
-  Theme,
-} from "@material-ui/core";
-import React, { useCallback, useMemo, useState } from "react";
+import { createStyles, IconButton, makeStyles, Theme } from "@material-ui/core";
+import React from "react";
 import { useHistory, useParams } from "react-router-dom";
 import useMeyScoreDetail from "../../hooks/scores/useMeyScoreDetail";
 import ArrowBackIcon from "@material-ui/icons/ArrowBack";
 import { AppContext } from "../../AppContext";
-import EditPageImageUploadContent from "../atoms/EditPageImageUploadContent";
+import PageEditContent from "../molecules/ScorePageEditContent/PageEditContent";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -69,7 +63,7 @@ export default function ScorePageEditContent(props: ScorePageEditContentProps) {
         </IconButton>
       </div>
       <div className={classes.editPageContainer}>
-        <EditPageImageUploadContent
+        <PageEditContent
           ownerId={_ownerId}
           scoreId={scoreId}
           pages={pages}

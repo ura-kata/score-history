@@ -1,11 +1,11 @@
-import { colors, createStyles, makeStyles, Theme } from "@material-ui/core";
+import { createStyles, makeStyles, Theme } from "@material-ui/core";
 import { useContext, useEffect } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import { AppContextDispatch } from "../../AppContext";
 import { UserData } from "../../UserClient";
 import ScoreDetailContent from "../organisms/ScoreDetailContent";
-import ScoreListContent from "../organisms/ScoreListContent";
-import ScoreNew from "../organisms/ScoreNew";
+import ScoreSummaryListContent from "../organisms/ScoreSummaryListContent";
+import ScoreNewContent from "../organisms/ScoreNewContent";
 import ScorePageEditContent from "../organisms/ScorePageEditContent";
 import MainTemplate from "../templates/MainTemplate";
 
@@ -45,7 +45,7 @@ export default function MainPage(props: MainPageProps) {
       <div className={classes.root}>
         <Router>
           <Switch>
-            <Route path="/scores/new" component={ScoreNew} />
+            <Route path="/scores/new" component={ScoreNewContent} />
             <Route
               path="/scores/:scoreId/edit-page"
               component={ScorePageEditContent}
@@ -59,7 +59,10 @@ export default function MainPage(props: MainPageProps) {
               ]}
               component={ScoreDetailContent}
             />
-            <Route path={["/scores", "/"]} component={ScoreListContent} />
+            <Route
+              path={["/scores", "/"]}
+              component={ScoreSummaryListContent}
+            />
           </Switch>
         </Router>
       </div>

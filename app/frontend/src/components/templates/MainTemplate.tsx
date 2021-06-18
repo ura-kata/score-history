@@ -1,7 +1,7 @@
-import { colors, createStyles, makeStyles, Theme } from "@material-ui/core";
-import Copyright from "../atoms/Copyright";
+import { createStyles, makeStyles, Theme } from "@material-ui/core";
+import Copyright from "../molecules/MainTemplate/Copyright";
 import React from "react";
-import MainAppBar from "../organisms/MainAppBar";
+import MainAppBar from "../molecules/MainTemplate/MainAppBar";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
