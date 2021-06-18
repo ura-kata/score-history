@@ -15,6 +15,7 @@ import { ScorePage } from "../../ScoreClientV2";
 import "viewerjs/dist/viewer.min.css";
 import { ViewContent } from "./ViewContent";
 import CloseIcon from "@material-ui/icons/Close";
+import { SnapshotViewContent } from "./SnapshotViewContent";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -80,16 +81,18 @@ const CustomPaper = styled(Paper)({
   backgroundColor: "#00000000",
 });
 
-export interface PageContentProps {
+export interface SnapshotPageContentProps {
   ownerId?: string;
   scoreId?: string;
+  snapshotId?: string;
   pages?: ScorePage[];
   pageId?: string;
 }
 
-export default function PageContent(props: PageContentProps) {
+export default function SnapshotPageContent(props: SnapshotPageContentProps) {
   const _ownerId = props.ownerId;
   const _scoreId = props.scoreId;
+  const _snapshotId = props.snapshotId;
   const _pages = props.pages ?? [];
   const _pageId = props.pageId;
   const classes = useStyles();
@@ -109,7 +112,7 @@ export default function PageContent(props: PageContentProps) {
   const pageIndex = _pageId !== undefined ? pageIndexSet[_pageId] : undefined;
 
   const handleOnCloseClick = () => {
-    history.push(`/scores/${_scoreId}`);
+    history.push(`/scores/${_scoreId}/snapshot/${_snapshotId}`);
   };
 
   return (
@@ -123,7 +126,9 @@ export default function PageContent(props: PageContentProps) {
               p
             );
             const handleOnThumbnailClick = () => {
-              history.push(`/scores/${_scoreId}/page/${p.id}`);
+              history.push(
+                `/scores/${_scoreId}/snapshot/${_snapshotId}/page/${p.id}`
+              );
             };
             return (
               <div key={p.id}>
@@ -149,9 +154,10 @@ export default function PageContent(props: PageContentProps) {
       >
         <div className={classes.dialogContent}>
           <div className={classes.viewerContainer}>
-            <ViewContent
+            <SnapshotViewContent
               ownerId={_ownerId}
               scoreId={_scoreId}
+              snapshotId={_snapshotId}
               pageIndex={pageIndex}
               pages={_pages}
             />

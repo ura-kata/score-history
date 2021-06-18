@@ -11,7 +11,7 @@ import {
   Theme,
 } from "@material-ui/core";
 import { useEffect, useState } from "react";
-import { useHistory } from "react-router-dom";
+import { useHistory, useParams } from "react-router-dom";
 import { scoreClientV2 } from "../../global";
 import { ScoreSnapshotSummary } from "../../ScoreClientV2";
 import CameraAltIcon from "@material-ui/icons/CameraAlt";
@@ -34,14 +34,18 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-export interface SnapshotNameListProps {
+interface PathParameters {
   scoreId?: string;
+  snapshotId?: string;
 }
 
-export default function SnapshotNameList(props: SnapshotNameListProps) {
-  const _scoreId = props.scoreId;
+export interface SnapshotNameListProps {}
 
+export default function SnapshotNameList(props: SnapshotNameListProps) {
   const classes = useStyles();
+
+  const { scoreId, snapshotId } = useParams<PathParameters>();
+
   const [snapshotSummaries, setSnapshotSummaries] =
     useState<ScoreSnapshotSummary[]>();
   const [createSnapshotOpen, setCreateSnapshotOpen] = useState(false);
@@ -50,11 +54,11 @@ export default function SnapshotNameList(props: SnapshotNameListProps) {
 
   const history = useHistory();
   useEffect(() => {
-    if (_scoreId === undefined) return;
+    if (scoreId === undefined) return;
 
     const f = async () => {
       try {
-        const result = await scoreClientV2.getSnapshotSummaries(_scoreId);
+        const result = await scoreClientV2.getSnapshotSummaries(scoreId);
         setSnapshotSummaries(result);
       } catch (err) {
         console.log(err);
@@ -62,7 +66,7 @@ export default function SnapshotNameList(props: SnapshotNameListProps) {
     };
 
     f();
-  }, [_scoreId, reload]);
+  }, [scoreId, reload]);
 
   const handleOnCreateClick = () => {
     setNewSnapshotName("");
@@ -78,10 +82,10 @@ export default function SnapshotNameList(props: SnapshotNameListProps) {
   };
 
   const handleOnCreateSnapshotClick = async () => {
-    if (_scoreId === undefined) return;
+    if (scoreId === undefined) return;
     if (newSnapshotName === "") return;
     try {
-      await scoreClientV2.createSnapshot(_scoreId, {
+      await scoreClientV2.createSnapshot(scoreId, {
         name: newSnapshotName,
       });
       setNewSnapshotName("");
@@ -91,6 +95,10 @@ export default function SnapshotNameList(props: SnapshotNameListProps) {
       console.log(err);
     }
   };
+
+  const handleOnLatestClick = () => {
+    history.push(`/scores/${scoreId}`);
+  };
   return (
     <div style={{ width: "100%", height: "100%" }}>
       <div className={classes.toolbar}>
@@ -99,13 +107,22 @@ export default function SnapshotNameList(props: SnapshotNameListProps) {
         </IconButton>
       </div>
       <ul className={classes.list}>
+        <li>
+          <Button
+            variant={snapshotId ? undefined : "contained"}
+            onClick={handleOnLatestClick}
+            style={{ width: "100%" }}
+          >{`最新`}</Button>
+        </li>
         {(snapshotSummaries ?? []).map((snap) => {
           const handleOnClick = () => {
-            history.push(`/scores/${_scoreId}/snapshot/${snap.id}`);
+            history.push(`/scores/${scoreId}/snapshot/${snap.id}`);
           };
+          const selected = snapshotId === snap.id;
           return (
             <li key={snap.createAt.toString()}>
               <Button
+                variant={selected ? "contained" : undefined}
                 onClick={handleOnClick}
               >{`${snap.name} (${snap.createAt})`}</Button>
             </li>
