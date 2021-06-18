@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useHistory } from "react-router";
 import { scoreClientV2 } from "../../global";
 import { ScoreSummary } from "../../ScoreClientV2";
-import ScoreSummaryCard from "../atoms/ScoreSummaryCard";
+import ScoreSummaryCard from "../molecules/ScoreSummaryListContent/ScoreSummaryCard";
 
 export interface ScoreSummaryListContentProps {}
 

@@ -9,7 +9,7 @@ import {
   Typography,
 } from "@material-ui/core";
 import { useHistory } from "react-router";
-import { ScoreSummary } from "../../ScoreClientV2";
+import { ScoreSummary } from "../../../ScoreClientV2";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
