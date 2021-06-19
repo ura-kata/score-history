@@ -23,9 +23,11 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     scoreDataArea: {
       width: "calc(100% - 200px)",
+      margin: "10px 5px 10px 10px",
     },
     snapshotArea: {
       width: "200px",
+      margin: "10px 10px 10px 5px",
     },
   })
 );
@@ -81,8 +83,6 @@ export default function ScoreDetailContent(props: ScoreDetailContentProps) {
           <SnapshotNameList />
         </div>
       </div>
-
-      {/* {scoreId && pageId ? <PageContent scoreId={scoreId} /> : <></>} */}
     </div>
   );
 }

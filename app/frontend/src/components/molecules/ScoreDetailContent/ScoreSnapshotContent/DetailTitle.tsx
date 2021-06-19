@@ -7,9 +7,11 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     titleContainer: {
       width: "100%",
-    },
-    title: {
-      width: "auto",
+      "& h2": {
+        display: "flex",
+        margin: 0,
+        alignItems: "center",
+      },
     },
   })
 );
@@ -25,7 +27,9 @@ export default function DetailTitle(props: DetailTitleProps) {
   return (
     <div className={classes.root}>
       <div className={classes.titleContainer}>
-        <h2 className={classes.title}>{_title}</h2>
+        <h2>
+          <span>{_title}</span>
+        </h2>
       </div>
     </div>
   );

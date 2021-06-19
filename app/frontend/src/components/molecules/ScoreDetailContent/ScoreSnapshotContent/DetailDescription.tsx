@@ -8,10 +8,31 @@ const useStyles = makeStyles((theme: Theme) =>
     descriptionContainer: {
       width: "100%",
     },
-    description: {
-      width: "auto",
+    descriptionTitle: {
+      height: "30px",
+      width: "100%",
+      display: "flex",
+      alignItems: "center",
+      position: "relative",
+      "& > p": {
+        margin: 0,
+      },
+      borderBottom: "solid 2px #cce4ff",
+      "&::after": {
+        position: "absolute",
+        content: "' '",
+        borderBottom: "solid 2px #5472cd",
+        bottom: "-2px",
+        maxWidth: "50px",
+        width: "10%",
+      },
     },
-    descP: {},
+    description: {
+      width: "100%",
+      "& > p": {
+        margin: "2px 0",
+      },
+    },
   })
 );
 
@@ -26,11 +47,12 @@ export default function DetailDescription(props: DetailDescriptionProps) {
   return (
     <div className={classes.root}>
       <div className={classes.descriptionContainer}>
+        <div className={classes.descriptionTitle}>
+          <p>説明</p>
+        </div>
         <div className={classes.description}>
           {_description?.split("\n").map((p, index) => (
-            <p key={index} className={classes.descP}>
-              {p}
-            </p>
+            <p key={index}>{p ? p : <br />}</p>
           ))}
         </div>
       </div>

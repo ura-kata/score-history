@@ -18,21 +18,11 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     descContainer: {
       width: "100%",
-    },
-    thumbnailRoot: {
-      width: "100%",
-      display: "flex",
-      flexFlow: "column",
-    },
-    thumbnailControlBar: {
-      width: "100%",
-      height: "50px",
-      display: "flex",
-      justifyContent: "flex-end",
+      margin: "30px 0 0 0",
     },
     thumbnailContainer: {
       width: "100%",
-      display: "flex",
+      margin: "30px 0 0 0",
     },
   })
 );
@@ -87,7 +77,7 @@ export default function ScoreSnapshotContent(props: ScoreSnapshotContentProps) {
   }, [snapshotId]);
 
   return (
-    <div style={{ width: "100%", height: "100%" }}>
+    <div style={{ width: "100%" }}>
       <div className={classes.infoContainer}>
         <div className={classes.titleContainer}>
           <DetailTitle title={title} />
@@ -96,17 +86,14 @@ export default function ScoreSnapshotContent(props: ScoreSnapshotContentProps) {
           <DetailDescription description={description} />
         </div>
       </div>
-      <div className={classes.thumbnailRoot}>
-        <div className={classes.thumbnailControlBar}></div>
-        <div className={classes.thumbnailContainer}>
-          <SnapshotPageContent
-            ownerId={_userData?.id}
-            scoreId={scoreId}
-            snapshotId={snapshotId}
-            pages={pages}
-            pageId={snapshotPageId}
-          />
-        </div>
+      <div className={classes.thumbnailContainer}>
+        <SnapshotPageContent
+          ownerId={_userData?.id}
+          scoreId={scoreId}
+          snapshotId={snapshotId}
+          pages={pages}
+          pageId={snapshotPageId}
+        />
       </div>
     </div>
   );

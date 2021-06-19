@@ -22,14 +22,46 @@ const useStyles = makeStyles((theme: Theme) =>
     descriptionContainerNone: {
       display: "none",
     },
+    descriptionTitle: {
+      height: "30px",
+      width: "100%",
+      display: "flex",
+      alignItems: "center",
+      position: "relative",
+      "& > p": {
+        margin: 0,
+      },
+      borderBottom: "solid 2px #cce4ff",
+      "&::after": {
+        position: "absolute",
+        content: "' '",
+        borderBottom: "solid 2px #5472cd",
+        bottom: "-2px",
+        maxWidth: "50px",
+        width: "10%",
+      },
+    },
     description: {
-      width: "auto",
+      width: "100%",
+      "& > p": {
+        margin: "2px 0",
+      },
     },
     editorContainer: {
       width: "100%",
+      display: "flex",
+      justifyContent: "flex-start",
+      justifyItems: "center",
+      textAlign: "center",
+      alignItems: "flex-start",
+      "& > *": {
+        margin: "0 4px",
+      },
+      "& > div": {
+        width: "calc(100% - (30px - 4px * 2) * 2)",
+      },
     },
     editorContainerNone: { display: "none" },
-    descP: {},
   })
 );
 
@@ -98,15 +130,16 @@ export default function DetailEditableDescription(
           edit ? classes.descriptionContainerNone : classes.descriptionContainer
         }
       >
-        <div className={classes.description}>
-          {_description?.split("\n").map((p, index) => (
-            <p key={index} className={classes.descP}>
-              {p}
-            </p>
-          ))}
+        <div className={classes.descriptionTitle}>
+          <p>説明</p>
           <IconButton size="small" onClick={handleOnClickEdit}>
             <EditIcon />
           </IconButton>
+        </div>
+        <div className={classes.description}>
+          {_description?.split("\n").map((p, index) => (
+            <p key={index}>{p ? p : <br />}</p>
+          ))}
         </div>
       </div>
 

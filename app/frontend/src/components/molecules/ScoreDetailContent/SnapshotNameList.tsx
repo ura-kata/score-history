@@ -5,7 +5,10 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   IconButton,
+  List,
+  ListItem,
   makeStyles,
   TextField,
   Theme,
@@ -15,6 +18,7 @@ import { useHistory, useParams } from "react-router-dom";
 import { scoreClientV2 } from "../../../global";
 import { ScoreSnapshotSummary } from "../../../ScoreClientV2";
 import CameraAltIcon from "@material-ui/icons/CameraAlt";
+import moment from "moment";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -22,17 +26,37 @@ const useStyles = makeStyles((theme: Theme) =>
       width: "100%",
       height: "40px",
     },
-    list: {
-      padding: 0,
-      "& li": {
-        listStyle: "none",
+    dialogContainer: {
+      width: "100%",
+      "& > div": {
+        width: "100%",
+        "& > div": {
+          width: "100%",
+        },
       },
     },
-    dialogContent: {
-      width: "100px",
+    buttonContainer: {
+      width: "100%",
+      "& > p": {
+        width: "100%",
+        margin: 0,
+      },
+    },
+    name: {
+      fontSize: "0.9em",
+      fontWeight: 500,
+    },
+    at: {
+      fontSize: "0.5em",
+      fontWeight: 500,
     },
   })
 );
+
+function ToString(at: Date): string {
+  const m = moment(at).local();
+  return m.format("YYYY-MM-DD HH:mm:ss");
+}
 
 interface PathParameters {
   scoreId?: string;
@@ -106,33 +130,39 @@ export default function SnapshotNameList(props: SnapshotNameListProps) {
           <CameraAltIcon />
         </IconButton>
       </div>
-      <ul className={classes.list}>
-        <li>
-          <Button
-            variant={snapshotId ? undefined : "contained"}
-            onClick={handleOnLatestClick}
-            style={{ width: "100%" }}
-          >{`最新`}</Button>
-        </li>
-        {(snapshotSummaries ?? []).map((snap) => {
+      <List>
+        <ListItem
+          button
+          onClick={handleOnLatestClick}
+          selected={snapshotId ? false : true}
+        >{`最新`}</ListItem>
+        {(snapshotSummaries ?? []).map((snap, index) => {
           const handleOnClick = () => {
             history.push(`/scores/${scoreId}/snapshot/${snap.id}`);
           };
           const selected = snapshotId === snap.id;
           return (
-            <li key={snap.createAt.toString()}>
-              <Button
-                variant={selected ? "contained" : undefined}
+            <>
+              <Divider key={"div_" + index.toString()} />
+              <ListItem
+                key={snap.createAt.toString()}
+                button
                 onClick={handleOnClick}
-              >{`${snap.name} (${snap.createAt})`}</Button>
-            </li>
+                selected={selected}
+              >
+                <div className={classes.buttonContainer}>
+                  <p className={classes.name}>{snap.name}</p>
+                  <p className={classes.at}>{ToString(snap.createAt)}</p>
+                </div>
+              </ListItem>
+            </>
           );
         })}
-      </ul>
+      </List>
       <Dialog open={createSnapshotOpen} onClose={handleOnDialogClose}>
         <DialogTitle>{"スナップショットの作成"}</DialogTitle>
         <DialogContent>
-          <form>
+          <form className={classes.dialogContainer}>
             <div>
               <TextField
                 value={newSnapshotName}
