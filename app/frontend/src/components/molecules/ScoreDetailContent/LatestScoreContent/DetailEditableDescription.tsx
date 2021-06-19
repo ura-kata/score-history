@@ -39,6 +39,17 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     editorContainer: {
       width: "100%",
+      display: "flex",
+      justifyContent: "flex-start",
+      justifyItems: "center",
+      textAlign: "center",
+      alignItems: "flex-start",
+      "& > *": {
+        margin: "0 4px",
+      },
+      "& > div": {
+        width: "calc(100% - (30px - 4px * 2) * 2)",
+      },
     },
     editorContainerNone: { display: "none" },
   })
