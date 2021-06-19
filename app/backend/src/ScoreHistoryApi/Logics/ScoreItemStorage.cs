@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Configuration;
+using ScoreHistoryApi.Logics.Exceptions;
 using ScoreHistoryApi.Logics.ScoreObjectStorages;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
@@ -28,6 +29,9 @@ namespace ScoreHistoryApi.Logics
             if (data == null)
                 return ItemTypes.None;
 
+            if (data.Length == 0)
+                return ItemTypes.Empty;
+
             if (CheckPng(data))
                 return ItemTypes.ImagePng;
 
@@ -48,16 +52,20 @@ namespace ScoreHistoryApi.Logics
 
             static bool CheckJpeg(byte[] data)
             {
-                if (data.Length < FileSignatures.Jpeg1.Length)
+                if (data.Length < FileSignatures.JpegImage.Length)
                     return false;
 
                 var dataSpan = new Span<byte>(data, 0, 4);
 
-                if (dataSpan.SequenceEqual(FileSignatures.Jpeg1))
+                if (dataSpan.SequenceEqual(FileSignatures.JpegImage))
                     return true;
-                if (dataSpan.SequenceEqual(FileSignatures.Jpeg2))
+                if (dataSpan.SequenceEqual(FileSignatures.CannonEosJpegFile))
                     return true;
-                if (dataSpan.SequenceEqual(FileSignatures.Jpeg3))
+                if (dataSpan.SequenceEqual(FileSignatures.SamsungD500JpegFile))
+                    return true;
+                if (dataSpan.SequenceEqual(FileSignatures.StillPictureInterchangeFileFormat))
+                    return true;
+                if (dataSpan.SequenceEqual(FileSignatures.DigitalCameraJpgUsingExchangeableImageFileFormat))
                     return true;
                 return false;
             }
@@ -81,9 +89,12 @@ namespace ScoreHistoryApi.Logics
             0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
         };
 
-        public static readonly byte[] Jpeg1 = new byte[] {0xFF, 0xD8, 0xFF, 0xE0,};
-        public static readonly byte[] Jpeg2 = new byte[] {0xFF, 0xD8, 0xFF, 0xE2,};
-        public static readonly byte[] Jpeg3 = new byte[] {0xFF, 0xD8, 0xFF, 0xE3,};
+        public static readonly byte[] JpegImage = new byte[] {0xFF, 0xD8, 0xFF, 0xE0,};
+        public static readonly byte[] CannonEosJpegFile = new byte[] {0xFF, 0xD8, 0xFF, 0xE2,};
+        public static readonly byte[] SamsungD500JpegFile = new byte[] {0xFF, 0xD8, 0xFF, 0xE3,};
+
+        public static readonly byte[] DigitalCameraJpgUsingExchangeableImageFileFormat = new byte[] {0xFF, 0xD8, 0xFF, 0xE1,};
+        public static readonly byte[] StillPictureInterchangeFileFormat = new byte[] {0xFF, 0xD8, 0xFF, 0xE8,};
     }
 
     public class ScoreItemStorage : IScoreItemStorage
@@ -119,10 +130,14 @@ namespace ScoreHistoryApi.Logics
         }
         public async Task<SavedItemData> SaveObjectAsync(Guid ownerId, Guid scoreId, Guid itemId, byte[] data, ScoreObjectAccessControls accessControl)
         {
+            if (data is null)
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
             var itemType = ScoreItemStorageUtils.CheckItemType(data);
 
             if (itemType == ItemTypes.None)
-                throw new ArgumentException(nameof(data));
+                throw new NotSupportedItemFileException($"Not supported file. top 10 bytes : '{string.Join(" ",data.Take(10).Select(b=>b.ToString("X2")))}'");
 
             var keyDir = $"{ownerId:D}/{scoreId:D}/{ScoreItemStorageConstant.FolderName}/{itemId:D}/";
 

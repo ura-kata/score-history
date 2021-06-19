@@ -70,9 +70,10 @@ namespace ScoreHistoryApi.Controllers
             {
                 return await adder.AddAsync(ownerId, uploadingScoreItem);
             }
-            catch
+            catch (NotSupportedItemFileException ex)
             {
-                return StatusCode(400);
+                _logger.LogError(ex, "{Message}", ex.Message);
+                return StatusCode(ExtensionHttpStatusCodes.NotSupportedItemFile, new {message = ex.Message});
             }
         }
 

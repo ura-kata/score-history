@@ -11,5 +11,7 @@ namespace ScoreHistoryApi.Logics.ScoreObjectStorages
         ImagePng,
         /// <summary>JPEG Image</summary>
         ImageJpeg,
+        /// <summary>空</summary>
+        Empty
     }
 }

@@ -7,5 +7,8 @@ namespace ScoreHistoryApi
 
         /// <summary> 楽譜が存在しない </summary>
         public const int NotFoundScore = 521;
+
+        /// <summary> 楽譜ではサポートしていないファイル </summary>
+        public const int NotSupportedItemFile = 521;
     }
 }
