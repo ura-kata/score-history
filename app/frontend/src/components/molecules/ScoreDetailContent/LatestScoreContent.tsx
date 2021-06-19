@@ -25,12 +25,6 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       flexFlow: "column",
     },
-    thumbnailControlBar: {
-      width: "100%",
-      height: "50px",
-      display: "flex",
-      justifyContent: "flex-end",
-    },
     thumbnailContainer: {
       width: "100%",
       display: "flex",
@@ -81,10 +75,6 @@ export default function LatestScoreContent(props: LatestScoreContentProps) {
   const handleOnChangeDescription = (newDescription: string) => {
     setDescription(newDescription);
   };
-  const handleOnPageEditClick = () => {
-    history.push(`/scores/${scoreId}/edit-page`);
-  };
-
   const pages = useMemo(() => {
     return [...(detail?.data.pages ?? [])].sort((x, y) => {
       const xn = parseInt("0" + x.page);
@@ -114,11 +104,6 @@ export default function LatestScoreContent(props: LatestScoreContentProps) {
         </div>
       </div>
       <div className={classes.thumbnailRoot}>
-        <div className={classes.thumbnailControlBar}>
-          <IconButton onClick={handleOnPageEditClick}>
-            <EditIcon />
-          </IconButton>
-        </div>
         <div className={classes.thumbnailContainer}>
           {/* <ThumbnailListContent
             ownerId={_userData?.id}

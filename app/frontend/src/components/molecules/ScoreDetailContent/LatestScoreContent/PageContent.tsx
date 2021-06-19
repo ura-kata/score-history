@@ -15,6 +15,7 @@ import { ScorePage } from "../../../../ScoreClientV2";
 import "viewerjs/dist/viewer.min.css";
 import { ViewContent } from "./PageContent/ViewContent";
 import CloseIcon from "@material-ui/icons/Close";
+import EditIcon from "@material-ui/icons/Edit";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -73,6 +74,16 @@ const useStyles = makeStyles((theme: Theme) =>
         margin: 0,
       },
     },
+    title: {
+      width: "100%",
+      height: "30px",
+      display: "flex",
+      alignItems: "center",
+      "& > p": {
+        margin: 0,
+      },
+      "& > button": {},
+    },
   })
 );
 
@@ -112,8 +123,18 @@ export default function PageContent(props: PageContentProps) {
     history.push(`/scores/${_scoreId}`);
   };
 
+  const handleOnPageEditClick = () => {
+    history.push(`/scores/${_scoreId}/edit-page`);
+  };
+
   return (
     <div style={{ width: "100%" }}>
+      <div className={classes.title}>
+        <p>ページ</p>
+        <IconButton onClick={handleOnPageEditClick} size="small">
+          <EditIcon />
+        </IconButton>
+      </div>
       <div className={classes.thumbnailContainer}>
         {_ownerId && _scoreId ? (
           _pages.map((p) => {

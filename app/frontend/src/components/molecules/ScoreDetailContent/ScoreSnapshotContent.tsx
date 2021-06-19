@@ -24,12 +24,6 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       flexFlow: "column",
     },
-    thumbnailControlBar: {
-      width: "100%",
-      height: "50px",
-      display: "flex",
-      justifyContent: "flex-end",
-    },
     thumbnailContainer: {
       width: "100%",
       display: "flex",
@@ -97,7 +91,6 @@ export default function ScoreSnapshotContent(props: ScoreSnapshotContentProps) {
         </div>
       </div>
       <div className={classes.thumbnailRoot}>
-        <div className={classes.thumbnailControlBar}></div>
         <div className={classes.thumbnailContainer}>
           <SnapshotPageContent
             ownerId={_userData?.id}

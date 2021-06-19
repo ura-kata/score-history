@@ -73,6 +73,15 @@ const useStyles = makeStyles((theme: Theme) =>
         margin: 0,
       },
     },
+    title: {
+      width: "100%",
+      height: "30px",
+      display: "flex",
+      alignItems: "center",
+      "& > p": {
+        margin: 0,
+      },
+    },
   })
 );
 
@@ -116,6 +125,9 @@ export default function SnapshotPageContent(props: SnapshotPageContentProps) {
 
   return (
     <div style={{ width: "100%" }}>
+      <div className={classes.title}>
+        <p>ページ</p>
+      </div>
       <div className={classes.thumbnailContainer}>
         {_ownerId && _scoreId ? (
           _pages.map((p) => {
