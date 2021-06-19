@@ -19,15 +19,11 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     descContainer: {
       width: "100%",
-    },
-    thumbnailRoot: {
-      width: "100%",
-      display: "flex",
-      flexFlow: "column",
+      margin: "30px 0 0 0",
     },
     thumbnailContainer: {
       width: "100%",
-      display: "flex",
+      margin: "30px 0 0 0",
     },
   })
 );
@@ -86,7 +82,7 @@ export default function LatestScoreContent(props: LatestScoreContentProps) {
   }, [detail]);
 
   return (
-    <div style={{ width: "100%", height: "100%" }}>
+    <div style={{ width: "100%" }}>
       <div className={classes.infoContainer}>
         <div className={classes.titleContainer}>
           <DetailEditableTitle
@@ -103,20 +99,13 @@ export default function LatestScoreContent(props: LatestScoreContentProps) {
           />
         </div>
       </div>
-      <div className={classes.thumbnailRoot}>
-        <div className={classes.thumbnailContainer}>
-          {/* <ThumbnailListContent
-            ownerId={_userData?.id}
-            scoreId={scoreId}
-            pages={detail?.data.pages}
-          /> */}
-          <PageContent
-            ownerId={_userData?.id}
-            scoreId={scoreId}
-            pages={pages}
-            pageId={pageId}
-          />
-        </div>
+      <div className={classes.thumbnailContainer}>
+        <PageContent
+          ownerId={_userData?.id}
+          scoreId={scoreId}
+          pages={pages}
+          pageId={pageId}
+        />
       </div>
     </div>
   );
