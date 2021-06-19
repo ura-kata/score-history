@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using ScoreHistoryApi.Logics.Exceptions;
 using ScoreHistoryApi.Logics.ScoreItems;
 using ScoreHistoryApi.Models.ScoreItems;
 
@@ -44,8 +45,9 @@ namespace ScoreHistoryApi.Controllers
                 var itemsInfo = await getter.GetUserItemsInfoAsync(ownerId);
                 return new UserItemsInfoApiResponse(itemsInfo);
             }
-            catch
+            catch(Exception ex)
             {
+                _logger.LogError(ex, "{Message}", ex.Message);
                 return StatusCode(400);
             }
         }
@@ -61,6 +63,11 @@ namespace ScoreHistoryApi.Controllers
         public async Task<ActionResult<UploadedScoreObjectResult>> UploadObject([FromForm] UploadingScoreItem uploadingScoreItem)
         {
             // File Signature を確認
+            _logger.LogDebug("{ScoreId}, {OriginalName}", uploadingScoreItem.ScoreId, uploadingScoreItem.OriginalName);
+            _logger.LogDebug("Item: {FileName}, {Name}, {Length}, {Headers}, {ContentDisposition}, {ContentType}",
+                uploadingScoreItem.Item.FileName, uploadingScoreItem.Item.Name,
+                uploadingScoreItem.Item.Length, uploadingScoreItem.Item.Headers,
+                uploadingScoreItem.Item.ContentDisposition, uploadingScoreItem.Item.ContentType);
 
             var auth = this.GetAuthorizerData();
             var ownerId = auth.Sub;
@@ -68,7 +75,11 @@ namespace ScoreHistoryApi.Controllers
             var adder = _scoreItemLogics.Adder;
             try
             {
-                return await adder.AddAsync(ownerId, uploadingScoreItem);
+                var response = await adder.AddAsync(ownerId, uploadingScoreItem);
+
+                _logger.LogDebug("success : response : {Response}", response);
+
+                return response;
             }
             catch (NotSupportedItemFileException ex)
             {
@@ -87,6 +98,8 @@ namespace ScoreHistoryApi.Controllers
         [Route("user")]
         public async Task<IActionResult> DeleteObject([FromBody] DeletingScoreItems deletingScoreItems)
         {
+            _logger.LogDebug("{ScoreId}, {ItemIds}", deletingScoreItems.ScoreId, deletingScoreItems.ItemIds);
+
             var auth = this.GetAuthorizerData();
             var ownerId = auth.Sub;
 
@@ -97,8 +110,9 @@ namespace ScoreHistoryApi.Controllers
                 await deleter.DeleteItemsAsync(ownerId, deletingScoreItems);
                 return Ok();
             }
-            catch
+            catch(Exception ex)
             {
+                _logger.LogError(ex, "{Message}", ex.Message);
                 return StatusCode(400);
             }
         }

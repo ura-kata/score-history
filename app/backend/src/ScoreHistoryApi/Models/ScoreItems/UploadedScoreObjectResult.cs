@@ -6,7 +6,7 @@ namespace ScoreHistoryApi.Models.ScoreItems
     /// <summary>
     /// 楽譜のアイテムをアップロードしたときの結果情報
     /// </summary>
-    public class UploadedScoreObjectResult
+    public record UploadedScoreObjectResult
     {
         [JsonPropertyName("itemInfo")]
         public ScoreImageItemInfo ImageItemInfo { get; set; }

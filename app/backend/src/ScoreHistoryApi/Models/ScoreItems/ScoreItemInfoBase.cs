@@ -6,7 +6,7 @@ namespace ScoreHistoryApi.Models.ScoreItems
     /// <summary>
     /// 楽譜アイテム情報のベースクラス
     /// </summary>
-    public abstract class ScoreItemInfoBase
+    public abstract record ScoreItemInfoBase
     {
         /// <summary> 楽譜の ID </summary>
         [JsonPropertyName("scoreId")]
