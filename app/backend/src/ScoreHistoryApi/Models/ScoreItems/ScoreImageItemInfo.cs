@@ -5,7 +5,7 @@ namespace ScoreHistoryApi.Models.ScoreItems
     /// <summary>
     /// 楽譜アイテムの情報
     /// </summary>
-    public class ScoreImageItemInfo: ScoreItemInfoBase
+    public record ScoreImageItemInfo: ScoreItemInfoBase
     {
         /// <summary> オリジナルのファイル名 </summary>
         [BindProperty(Name = "originalName")]

@@ -1,8 +1,14 @@
 using System;
+using System.Threading.Tasks;
+using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.AspNetCoreServer;
+using Amazon.Lambda.Core;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace ScoreHistoryApi
 {
@@ -12,15 +18,18 @@ namespace ScoreHistoryApi
 
         protected override void Init(IWebHostBuilder builder)
         {
-            builder.UseStartup<Startup>();
-        }
-
-        protected override void Init(IHostBuilder builder)
-        {
-            builder.ConfigureAppConfiguration((hostingContext, config) =>
-            {
-                config.AddEnvironmentVariables("URA_KATA_");
-            });
+            builder
+                .ConfigureAppConfiguration((hostingContext, config) =>
+                {
+                    config.AddEnvironmentVariables("URA_KATA_");
+                })
+                .ConfigureLogging((context, loggingBuilder) =>
+                {
+                    loggingBuilder.ClearProviders();
+                    loggingBuilder.AddLambdaLogger(context.Configuration, "Logging");
+                    loggingBuilder.SetMinimumLevel(LogLevel.Trace);
+                })
+                .UseStartup<Startup>();
         }
 
         protected override void PostCreateHost(IHost webHost)
