@@ -22,14 +22,25 @@ const useStyles = makeStyles((theme: Theme) =>
     descriptionContainerNone: {
       display: "none",
     },
+    descriptionTitle: {
+      height: "30px",
+      width: "100%",
+      display: "flex",
+      alignItems: "center",
+      "& > p": {
+        margin: 0,
+      },
+    },
     description: {
-      width: "auto",
+      width: "100%",
+      "& > p": {
+        margin: "2px 0",
+      },
     },
     editorContainer: {
       width: "100%",
     },
     editorContainerNone: { display: "none" },
-    descP: {},
   })
 );
 
@@ -98,15 +109,16 @@ export default function DetailEditableDescription(
           edit ? classes.descriptionContainerNone : classes.descriptionContainer
         }
       >
-        <div className={classes.description}>
-          {_description?.split("\n").map((p, index) => (
-            <p key={index} className={classes.descP}>
-              {p}
-            </p>
-          ))}
+        <div className={classes.descriptionTitle}>
+          <p>説明</p>
           <IconButton size="small" onClick={handleOnClickEdit}>
             <EditIcon />
           </IconButton>
+        </div>
+        <div className={classes.description}>
+          {_description?.split("\n").map((p, index) => (
+            <p key={index}>{p}</p>
+          ))}
         </div>
       </div>
 
