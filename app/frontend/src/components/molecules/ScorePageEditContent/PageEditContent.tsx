@@ -558,13 +558,24 @@ export default function PageEditContent(props: PageEditContentProps) {
         }
       }
 
-      if (item) {
+      if (item && aoi.page) {
+        // replace
+        const page = aoi.page;
+        patchPages.push({
+          itemId: item.itemId,
+          targetPageId: page.id,
+          objectName: item.objectName,
+          page: i.toString(),
+        });
+      } else if (item) {
+        // add
         newPages.push({
           itemId: item.itemId,
           objectName: item.objectName,
           page: i.toString(),
         });
-      } else if (aoi.page && aoi.page.page !== i.toString()) {
+      } else if (aoi.page && parseInt(aoi.page.page) !== i) {
+        // page update
         const page = aoi.page;
         patchPages.push({
           itemId: page.itemId,
@@ -647,11 +658,20 @@ export default function PageEditContent(props: PageEditContentProps) {
   return (
     <div style={{ width: "100%", position: "relative" }}>
       <div className={classes.toolBar}>
-        <Button variant="contained" onClick={handleOnApplyClick}>
-          完了
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleOnApplyClick}
+          disabled={0 < opeList.length ? undefined : true}
+        >
+          更新
         </Button>
-        <Button variant="contained" onClick={handleOnCancelClick}>
-          キャンセル
+        <Button
+          variant="contained"
+          onClick={handleOnCancelClick}
+          disabled={0 < opeList.length ? undefined : true}
+        >
+          リセット
         </Button>
       </div>
       <div className={classes.editPageContainer}>
