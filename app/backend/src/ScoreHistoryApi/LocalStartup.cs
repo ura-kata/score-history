@@ -49,7 +49,12 @@ namespace ScoreHistoryApi
             services.AddControllers()
                 .AddJsonOptions(option =>
                 {
+                    option.JsonSerializerOptions.ReadCommentHandling = JsonCommentHandling.Skip;
+                    option.JsonSerializerOptions.DictionaryKeyPolicy = default;
+                    option.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                    option.JsonSerializerOptions.AllowTrailingCommas = true;
                     option.JsonSerializerOptions.Converters.Add(new ScoreAccessesJsonConverter());
+                    option.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
                 });
 
             services.AddSwaggerGen(option =>
