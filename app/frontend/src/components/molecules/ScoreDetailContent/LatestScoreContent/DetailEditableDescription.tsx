@@ -117,7 +117,7 @@ export default function DetailEditableDescription(
         </div>
         <div className={classes.description}>
           {_description?.split("\n").map((p, index) => (
-            <p key={index}>{p}</p>
+            <p key={index}>{p ? p : <br />}</p>
           ))}
         </div>
       </div>
