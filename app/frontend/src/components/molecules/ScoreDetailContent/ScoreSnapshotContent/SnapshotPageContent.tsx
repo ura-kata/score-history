@@ -78,8 +78,18 @@ const useStyles = makeStyles((theme: Theme) =>
       height: "30px",
       display: "flex",
       alignItems: "center",
+      position: "relative",
       "& > p": {
         margin: 0,
+      },
+      borderBottom: "solid 2px #cce4ff",
+      "&::after": {
+        position: "absolute",
+        content: "' '",
+        borderBottom: "solid 2px #5472cd",
+        bottom: "-2px",
+        maxWidth: "50px",
+        width: "10%",
       },
     },
   })
