@@ -18,16 +18,10 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     titleContainer: {
       width: "100%",
-      "& > div": {
-        height: "30px",
-        display: "flex",
-        alignItems: "center",
-        "& p": {
-          margin: 0,
-        },
-      },
       "& h2": {
+        display: "flex",
         margin: 0,
+        alignItems: "center",
       },
     },
     titleContainerNone: {
@@ -110,14 +104,12 @@ export default function DetailEditableTitle(props: DetailEditableTitleProps) {
       <div
         className={edit ? classes.titleContainerNone : classes.titleContainer}
       >
-        <div>
-          <p>タイトル</p>
+        <h2>
+          <span>{_title}</span>
           <IconButton size="small" onClick={handleOnClickEdit}>
             <EditIcon />
           </IconButton>
-        </div>
-
-        <h2>{_title}</h2>
+        </h2>
       </div>
 
       <div
