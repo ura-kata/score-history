@@ -132,6 +132,7 @@ export class ScoreHistoryApiStack extends cdk.Stack {
         URA_KATA_ScoreDynamoDbRegionSystemName:
           SCORE_DYNAMODB_REGION_SYSTEM_NAME,
         URA_KATA_ScoreS3RegionSystemName: SCORE_S3_REGION_SYSTEM_NAME,
+        Logging__LogLevel__Default: 'Debug',
       },
       stackProps
     );
