@@ -13,6 +13,12 @@ export class ScoreHistoryApiRestApi extends RestApi {
       deployOptions: {
         stageName: stageName,
       },
+      binaryMediaTypes: [
+        'multipart/form-data',
+        'image/jpeg',
+        'image/png',
+        'image/svg+xml',
+      ],
     });
   }
 }
