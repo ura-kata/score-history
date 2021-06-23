@@ -19,15 +19,14 @@ namespace ScoreHistoryApi.Logics.ScoreItems
             _configuration = configuration;
         }
 
-        public ScoreItemAdder Adder => new ScoreItemAdder(
-            new ScoreItemDatabase(_scoreQuota, _dynamoDbClient, _configuration),
-            new ScoreItemStorage(_scoreQuota, _s3Client, _configuration),
-            new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+        public ScoreItemAdder Adder => new(
+            _dynamoDbClient,
+            _s3Client,
+            _scoreQuota,
+            _configuration);
 
-        public ScoreItemInfoGetter InfoGetter =>
-            new ScoreItemInfoGetter(new ScoreItemDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+        public ScoreItemInfoGetter InfoGetter => new(_dynamoDbClient, _configuration);
 
-        public ScoreItemDeleter Deleter =>
-            new ScoreItemDeleter(new ScoreItemDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+        public ScoreItemDeleter Deleter => new(_dynamoDbClient, _configuration);
     }
 }

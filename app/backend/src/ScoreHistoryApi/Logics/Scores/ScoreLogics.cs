@@ -19,62 +19,40 @@ namespace ScoreHistoryApi.Logics.Scores
             _configuration = configuration;
         }
 
-        public Initializer Initializer => new Initializer(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration),
-            new ScoreItemDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+        public Initializer Initializer => new( _dynamoDbClient,_scoreQuota, _configuration);
 
-        public ScoreCreator Creator =>
-            new ScoreCreator(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+        public ScoreCreator Creator => new(_dynamoDbClient, _scoreQuota, _configuration);
 
-        public ScoreSummaryGetter SummaryGetter => new ScoreSummaryGetter(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+        public ScoreSummaryGetter SummaryGetter => new(_dynamoDbClient, _scoreQuota, _configuration);
 
-        public ScoreDeleter Deleter =>
-            new ScoreDeleter(
-                new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration),
-                new ScoreSnapshotStorage(_s3Client, _configuration));
+        public ScoreDeleter Deleter => new(_dynamoDbClient, _s3Client, _scoreQuota, _configuration);
 
-        public ScoreTitleSetter TitleSetter =>
-            new ScoreTitleSetter(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration), _scoreQuota);
+        public ScoreTitleSetter TitleSetter => new(_dynamoDbClient, _scoreQuota, _configuration);
 
-        public ScoreDescriptionSetter DescriptionSetter =>
-            new ScoreDescriptionSetter(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration), _scoreQuota);
+        public ScoreDescriptionSetter DescriptionSetter => new(_dynamoDbClient, _scoreQuota, _configuration);
 
-        public ScoreSnapshotCreator SnapshotCreator => new ScoreSnapshotCreator(
-            new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration),
-            new ScoreSnapshotStorage(_s3Client, _configuration));
+        public ScoreSnapshotCreator SnapshotCreator => new(_dynamoDbClient,_s3Client,_scoreQuota,_configuration);
 
-        public ScoreSnapshotSummaryGetter SnapshotSummaryGetter => new ScoreSnapshotSummaryGetter(
-            new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+        public ScoreSnapshotSummaryGetter SnapshotSummaryGetter => new(_dynamoDbClient, _configuration);
 
-        public ScoreDetailGetter DetailGetter =>
-            new ScoreDetailGetter(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+        public ScoreDetailGetter DetailGetter => new(_dynamoDbClient, _configuration);
 
-        public ScoreSnapshotDetailGetter SnapshotDetailGetter =>
-            new ScoreSnapshotDetailGetter(new ScoreSnapshotStorage(_s3Client, _configuration));
+        public ScoreSnapshotDetailGetter SnapshotDetailGetter => new(_s3Client, _configuration);
 
-        public ScoreSnapshotRemover SnapshotRemover =>
-            new ScoreSnapshotRemover(_dynamoDbClient, _s3Client, _configuration);
+        public ScoreSnapshotRemover SnapshotRemover => new(_dynamoDbClient, _s3Client, _configuration);
 
-        public ScoreAnnotationAdder AnnotationAdder =>
-            new ScoreAnnotationAdder(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+        public ScoreAnnotationAdder AnnotationAdder => new(_dynamoDbClient, _scoreQuota, _configuration);
 
-        public ScoreAnnotationRemover AnnotationRemover =>
-            new ScoreAnnotationRemover(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+        public ScoreAnnotationRemover AnnotationRemover => new(_dynamoDbClient, _scoreQuota, _configuration);
 
-        public ScoreAnnotationReplacer AnnotationReplacer =>
-            new ScoreAnnotationReplacer(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+        public ScoreAnnotationReplacer AnnotationReplacer => new(_dynamoDbClient, _scoreQuota, _configuration);
 
-        public ScorePageAdder PageAdder =>
-            new ScorePageAdder(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+        public ScorePageAdder PageAdder => new(_dynamoDbClient, _scoreQuota, _configuration);
 
-        public ScorePageRemover PageRemover =>
-            new ScorePageRemover(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+        public ScorePageRemover PageRemover => new(_dynamoDbClient, _scoreQuota, _configuration);
 
-        public ScorePageReplacer PageReplacer =>
-            new ScorePageReplacer(new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration));
+        public ScorePageReplacer PageReplacer => new(_dynamoDbClient, _scoreQuota, _configuration);
 
-        public ScoreAccessSetter AccessSetter => new ScoreAccessSetter(
-            new ScoreDatabase(_scoreQuota, _dynamoDbClient, _configuration),
-            new ScoreItemStorage(_scoreQuota, _s3Client, _configuration),
-            new ScoreSnapshotStorage(_s3Client, _configuration));
+        public ScoreAccessSetter AccessSetter => new(_dynamoDbClient, _s3Client, _scoreQuota, _configuration);
     }
 }
