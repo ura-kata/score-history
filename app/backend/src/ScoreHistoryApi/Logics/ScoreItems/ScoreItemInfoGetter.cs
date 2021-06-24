@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
 using Microsoft.Extensions.Configuration;
+using ScoreHistoryApi.Logics.ScoreDatabases;
 using ScoreHistoryApi.Logics.ScoreItemDatabases;
 using ScoreHistoryApi.Models.ScoreItems;
 
@@ -145,5 +146,88 @@ namespace ScoreHistoryApi.Logics.ScoreItems
                 }
             }
         }
+
+
+        public async Task<ScoreItemDatabaseItemDataBase> GetItemAsync(Guid ownerId, Guid scoreId, Guid itemId)
+        {
+            return await GetAsync(_dynamoDbClient, TableName, ownerId, scoreId, itemId);
+
+            static async Task<ScoreItemDatabaseItemDataBase> GetAsync(IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId, Guid itemId)
+            {
+                var partitionKey = ScoreItemDatabaseUtils.ConvertToPartitionKey(ownerId);
+                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+                var item = ScoreDatabaseUtils.ConvertToBase64(itemId);
+
+                try
+                {
+                    var request = new GetItemRequest()
+                    {
+                        TableName = tableName,
+                        Key = new Dictionary<string, AttributeValue>()
+                        {
+                            [ScoreItemDatabasePropertyNames.OwnerId] = new AttributeValue(partitionKey),
+                            [ScoreItemDatabasePropertyNames.ItemId] = new AttributeValue(score + item),
+                        },
+                    };
+                    var response = await client.GetItemAsync(request);
+
+                    if (!response.IsItemSet)
+                    {
+                        throw new InvalidOperationException("not found.");
+                    }
+
+                    var atValue = response.Item[ScoreItemDatabasePropertyNames.At];
+                    var sizeValue = response.Item[ScoreItemDatabasePropertyNames.Size];
+                    var typeValue = response.Item[ScoreItemDatabasePropertyNames.Type];
+                    var itemIdValue = response.Item[ScoreItemDatabasePropertyNames.ItemId];
+                    var objNameValue = response.Item[ScoreItemDatabasePropertyNames.ObjName];
+                    var ownerIdValue = response.Item[ScoreItemDatabasePropertyNames.OwnerId];
+                    var totalSizeValue = response.Item[ScoreItemDatabasePropertyNames.TotalSize];
+
+                    ScoreItemDatabaseItemDataBase result = default;
+
+                    if (typeValue.S == ScoreItemDatabaseConstant.TypeImage)
+                    {
+                        var orgNameValue = response.Item[ScoreItemDatabasePropertyNames.OrgName];
+                        var thumbnailValue = response.Item[ScoreItemDatabasePropertyNames.Thumbnail];
+
+                        var thumbObjNameValue =
+                            thumbnailValue.M[ScoreItemDatabasePropertyNames.ThumbnailPropertyNames.ObjName];
+                        var thumbSizeValue =
+                            thumbnailValue.M[ScoreItemDatabasePropertyNames.ThumbnailPropertyNames.Size];
+
+                        result = new ScoreItemDatabaseItemDataImage()
+                        {
+                            OrgName = orgNameValue.S,
+                            Thumbnail = new ScoreItemDatabaseItemDataImageThumbnail()
+                            {
+                                ObjName = thumbObjNameValue.S,
+                                Size = long.Parse(thumbSizeValue.N),
+                            },
+                        };
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException();
+                    }
+
+                    result.Size = long.Parse(sizeValue.N);
+                    result.OwnerId = ScoreItemDatabaseUtils.ConvertFromPartitionKey(partitionKey);
+                    result.ScoreId = ScoreDatabaseUtils.ConvertToGuid(score);
+                    result.ItemId = ScoreDatabaseUtils.ConvertToGuid(item);
+                    result.ObjName = objNameValue.S;
+
+                    return result;
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    throw;
+                }
+            }
+        }
+
+
     }
 }

@@ -17,7 +17,7 @@ namespace ScoreHistoryApi.Logics
         /// <param name="scoreId"></param>
         /// <param name="itemId"></param>
         /// <returns></returns>
-        Task DeleteAsync(Guid ownerId, Guid scoreId, Guid itemId);
+        // Task DeleteAsync(Guid ownerId, Guid scoreId, Guid itemId);
 
 
         /// <summary>
@@ -25,7 +25,7 @@ namespace ScoreHistoryApi.Logics
         /// </summary>
         /// <param name="ownerId"></param>
         /// <returns></returns>
-        Task DeleteOwnerItemsAsync(Guid ownerId);
+        // Task DeleteOwnerItemsAsync(Guid ownerId);
 
         /// <summary>
         /// 楽譜のアイテムを取得する
@@ -34,7 +34,7 @@ namespace ScoreHistoryApi.Logics
         /// <param name="scoreId"></param>
         /// <param name="itemId"></param>
         /// <returns></returns>
-        Task<ScoreItemDatabaseItemDataBase> GetItemAsync(Guid ownerId, Guid scoreId, Guid itemId);
+        // Task<ScoreItemDatabaseItemDataBase> GetItemAsync(Guid ownerId, Guid scoreId, Guid itemId);
 
     }
 }

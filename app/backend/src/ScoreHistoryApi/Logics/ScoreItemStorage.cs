@@ -124,55 +124,5 @@ namespace ScoreHistoryApi.Logics
 
 
 
-        public async Task DeleteObjectAsync(Guid ownerId, Guid scoreId, Guid itemId)
-        {
-            var prefix = $"{ownerId:D}/{scoreId:D}/{ScoreItemStorageConstant.FolderName}/{itemId:D}";
-            await DeleteObjectsAsync(prefix);
-        }
-
-        public async Task DeleteAllScoreObjectAsync(Guid ownerId, Guid scoreId)
-        {
-            var prefix = $"{ownerId:D}/{scoreId:D}/{ScoreItemStorageConstant.FolderName}";
-            await DeleteObjectsAsync(prefix);
-        }
-
-        public async Task DeleteAllOwnerObjectAsync(Guid ownerId)
-        {
-            var prefix = $"{ownerId:D}";
-            await DeleteObjectsAsync(prefix);
-        }
-
-        public async Task DeleteObjectsAsync(string prefix)
-        {
-            var objectKeyList = new List<string>();
-            string continuationToken = default;
-
-            do
-            {
-                var listRequest = new ListObjectsV2Request()
-                {
-                    BucketName = BucketName,
-                    Prefix = prefix,
-                    ContinuationToken = string.IsNullOrWhiteSpace(continuationToken) ? null : continuationToken,
-                };
-                var listResponse = await _s3Client.ListObjectsV2Async(listRequest);
-
-                objectKeyList.AddRange(listResponse.S3Objects.Select(x => x.Key));
-
-                continuationToken = listResponse.NextContinuationToken;
-
-            } while (!string.IsNullOrEmpty(continuationToken));
-
-            var request = new DeleteObjectsRequest()
-            {
-                BucketName = BucketName,
-                Objects = objectKeyList.Select(x=>new KeyVersion()
-                {
-                    Key = x
-                }).ToList(),
-            };
-            await _s3Client.DeleteObjectsAsync(request);
-        }
-
     }
 }

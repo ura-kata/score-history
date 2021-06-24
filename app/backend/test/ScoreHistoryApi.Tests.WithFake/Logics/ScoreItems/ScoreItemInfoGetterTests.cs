@@ -1,11 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using ScoreHistoryApi.Factories;
 using ScoreHistoryApi.Logics;
 using ScoreHistoryApi.Logics.ScoreItemDatabases;
 using ScoreHistoryApi.Logics.ScoreItems;
+using ScoreHistoryApi.Logics.Scores;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -13,6 +17,9 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.ScoreItems
 {
     public class ScoreItemInfoGetterTests
     {
+        public const string ScoreTableName = "ura-kata-score-history";
+        public const string ScoreBucket = "ura-kata-score-history-bucket";
+
         private readonly ITestOutputHelper _outputHelper;
 
         public ScoreItemInfoGetterTests(ITestOutputHelper outputHelper)
@@ -20,14 +27,17 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.ScoreItems
             _outputHelper = outputHelper;
         }
 
-        private async Task Initialize(Guid ownerId, (Guid scoreId, Guid[] itemIds)[] ids, ScoreItemDatabase scoreItemDatabase)
+        private async Task Initialize(Guid ownerId, (Guid scoreId, Guid[] itemIds)[] ids, ServiceProvider provider)
         {
+            var initializer = provider.GetRequiredService<Initializer>();
+            var creator = provider.GetRequiredService<ScoreItemAdder>();
+            var deleter = provider.GetRequiredService<ScoreItemDeleter>();
+            var infoGetter = provider.GetRequiredService<ScoreItemInfoGetter>();
+
             try
             {
-                _outputHelper.WriteLine($"{nameof(scoreItemDatabase.InitializeAsync)}: start");
                 var sw = Stopwatch.StartNew();
-                await scoreItemDatabase.InitializeAsync(ownerId);
-                _outputHelper.WriteLine($"{nameof(scoreItemDatabase.InitializeAsync)}: {sw.Elapsed.TotalMilliseconds} msec");
+                await initializer.InitializeScoreItemAsync(ownerId);
             }
             catch
             {
@@ -36,10 +46,8 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.ScoreItems
 
             try
             {
-                _outputHelper.WriteLine($"{nameof(scoreItemDatabase.DeleteOwnerItemsAsync)}: start");
                 var sw = Stopwatch.StartNew();
-                await scoreItemDatabase.DeleteOwnerItemsAsync(ownerId);
-                _outputHelper.WriteLine($"{nameof(scoreItemDatabase.DeleteOwnerItemsAsync)}: {sw.Elapsed.TotalMilliseconds} msec");
+                await deleter.DeleteOwnerItemsAsync(ownerId);
             }
             catch
             {
@@ -56,7 +64,6 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.ScoreItems
 
             try
             {
-                _outputHelper.WriteLine($"{nameof(scoreItemDatabase.CreateAsync)}: start");
                 var sw = Stopwatch.StartNew();
                 int i = 0;
                 foreach (var (scoreId, itemIds) in ids)
@@ -78,7 +85,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.ScoreItems
                             }
                         };
 
-                        await scoreItemDatabase.CreateAsync(itemData);
+                        await creator.CreateAsync(itemData);
 
                         if ((++i) % 200 == 0)
                         {
@@ -86,7 +93,6 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.ScoreItems
                         }
                     }
                 }
-                _outputHelper.WriteLine($"{nameof(scoreItemDatabase.CreateAsync)}: {sw.Elapsed.TotalMilliseconds} msec");
             }
             catch
             {
@@ -98,12 +104,33 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.ScoreItems
         public async Task GetOwnerItemsInfoAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history";
-            var scoreItemRelationTableName = "ura-kata-score-history";
-            var scoreItemDatabase = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName,
-                scoreItemRelationTableName);
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    [EnvironmentNames.ScoreDynamoDbTableName] = ScoreTableName,
+                    [EnvironmentNames.ScoreLargeDataDynamoDbTableName] = ScoreTableName,
+                    [EnvironmentNames.ScoreItemDynamoDbTableName] = ScoreTableName,
+                    [EnvironmentNames.ScoreItemRelationDynamoDbTableName] = ScoreTableName,
+                    [EnvironmentNames.ScoreItemS3Bucket] = ScoreBucket,
+                    [EnvironmentNames.ScoreDataSnapshotS3Bucket] = ScoreBucket,
+                })
+                .Build();
+            var serviceCollection = new ServiceCollection();
 
-            var target = new ScoreItemInfoGetter(scoreItemDatabase);
+            serviceCollection.AddSingleton(factory.Create());
+            serviceCollection.AddSingleton<ScoreQuota>();
+            serviceCollection.AddSingleton<IConfiguration>(configuration);
+            serviceCollection.AddScoped<Initializer>();
+            serviceCollection.AddScoped<ScoreItemAdder>();
+            serviceCollection.AddScoped<ScoreItemDeleter>();
+            serviceCollection.AddScoped<ScoreItemInfoGetter>();
+
+            await using var provider = serviceCollection.BuildServiceProvider();
+
+            var initializer = provider.GetRequiredService<Initializer>();
+            var creator = provider.GetRequiredService<ScoreItemAdder>();
+            var deleter = provider.GetRequiredService<ScoreItemDeleter>();
+            var infoGetter = provider.GetRequiredService<ScoreItemInfoGetter>();
 
             var ownerId = Guid.Parse("872c3d39-2e2e-4d70-9d6f-aaf2b20bd990");
 
@@ -121,14 +148,12 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.ScoreItems
                         .ToArray()),
             };
 
-            await Initialize(ownerId, ids, scoreItemDatabase);
+            await Initialize(ownerId, ids, provider);
 
             var sw = Stopwatch.StartNew();
-            _outputHelper.WriteLine($"{nameof(scoreItemDatabase.GetItemsAsync)}: start");
 
-            var data = await target.GetOwnerItemsInfoAsync(ownerId);
+            var data = await infoGetter.GetOwnerItemsInfoAsync(ownerId);
 
-            _outputHelper.WriteLine($"{nameof(scoreItemDatabase.GetItemsAsync)}: {sw.Elapsed.TotalMilliseconds} msec");
 
             Assert.Equal(2000, data.ItemInfos.Count);
 
@@ -149,12 +174,33 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.ScoreItems
         public async Task GetUserItemsInfoAsyncTest()
         {
             var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var tableName = "ura-kata-score-history";
-            var scoreItemRelationTableName = "ura-kata-score-history";
-            var scoreItemDatabase = new ScoreItemDatabase(new ScoreQuota(), factory.Create(), tableName,
-                scoreItemRelationTableName);
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    [EnvironmentNames.ScoreDynamoDbTableName] = ScoreTableName,
+                    [EnvironmentNames.ScoreLargeDataDynamoDbTableName] = ScoreTableName,
+                    [EnvironmentNames.ScoreItemDynamoDbTableName] = ScoreTableName,
+                    [EnvironmentNames.ScoreItemRelationDynamoDbTableName] = ScoreTableName,
+                    [EnvironmentNames.ScoreItemS3Bucket] = ScoreBucket,
+                    [EnvironmentNames.ScoreDataSnapshotS3Bucket] = ScoreBucket,
+                })
+                .Build();
+            var serviceCollection = new ServiceCollection();
 
-            var target = new ScoreItemInfoGetter(scoreItemDatabase);
+            serviceCollection.AddSingleton(factory.Create());
+            serviceCollection.AddSingleton<ScoreQuota>();
+            serviceCollection.AddSingleton<IConfiguration>(configuration);
+            serviceCollection.AddScoped<Initializer>();
+            serviceCollection.AddScoped<ScoreItemAdder>();
+            serviceCollection.AddScoped<ScoreItemDeleter>();
+            serviceCollection.AddScoped<ScoreItemInfoGetter>();
+
+            await using var provider = serviceCollection.BuildServiceProvider();
+
+            var initializer = provider.GetRequiredService<Initializer>();
+            var creator = provider.GetRequiredService<ScoreItemAdder>();
+            var deleter = provider.GetRequiredService<ScoreItemDeleter>();
+            var infoGetter = provider.GetRequiredService<ScoreItemInfoGetter>();
 
             var ownerId = Guid.Parse("cbf6f217-ca22-48ba-81f1-9b9abfa0dfbb");
 
@@ -172,14 +218,12 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.ScoreItems
                         .ToArray()),
             };
 
-            await Initialize(ownerId, ids, scoreItemDatabase);
+            await Initialize(ownerId, ids, provider);
 
             var sw = Stopwatch.StartNew();
-            _outputHelper.WriteLine($"{nameof(scoreItemDatabase.GetItemsAsync)}: start");
 
-            var data = await target.GetUserItemsInfoAsync(ownerId);
+            var data = await infoGetter.GetUserItemsInfoAsync(ownerId);
 
-            _outputHelper.WriteLine($"{nameof(scoreItemDatabase.GetItemsAsync)}: {sw.Elapsed.TotalMilliseconds} msec");
 
             Assert.Equal(2000, data.ItemInfos.Count);
 
@@ -189,6 +233,135 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.ScoreItems
                 .ToArray();
 
             var actualIds = data.ItemInfos
+                .Select(x => (s: x.ScoreId, i: x.ItemId))
+                .OrderBy(x=>x)
+                .ToArray();
+
+            Assert.Equal(expectedIds, actualIds);
+        }
+
+
+        [Fact]
+        public async Task GetItemsAsyncTest()
+        {
+            var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    [EnvironmentNames.ScoreDynamoDbTableName] = ScoreTableName,
+                    [EnvironmentNames.ScoreLargeDataDynamoDbTableName] = ScoreTableName,
+                    [EnvironmentNames.ScoreItemDynamoDbTableName] = ScoreTableName,
+                    [EnvironmentNames.ScoreItemRelationDynamoDbTableName] = ScoreTableName,
+                    [EnvironmentNames.ScoreItemS3Bucket] = ScoreBucket,
+                    [EnvironmentNames.ScoreDataSnapshotS3Bucket] = ScoreBucket,
+                })
+                .Build();
+            var serviceCollection = new ServiceCollection();
+
+            serviceCollection.AddSingleton(factory.Create());
+            serviceCollection.AddSingleton<ScoreQuota>();
+            serviceCollection.AddSingleton<IConfiguration>(configuration);
+            serviceCollection.AddScoped<Initializer>();
+            serviceCollection.AddScoped<ScoreItemAdder>();
+            serviceCollection.AddScoped<ScoreItemDeleter>();
+            serviceCollection.AddScoped<ScoreItemInfoGetter>();
+
+            await using var provider = serviceCollection.BuildServiceProvider();
+
+            var initializer = provider.GetRequiredService<Initializer>();
+            var creator = provider.GetRequiredService<ScoreItemAdder>();
+            var deleter = provider.GetRequiredService<ScoreItemDeleter>();
+            var infoGetter = provider.GetRequiredService<ScoreItemInfoGetter>();
+
+            var ownerId = Guid.Parse("6f76e99b-6835-4067-b4ff-22d3eb1d1c33");
+
+            var ids = new (Guid scoreId, Guid[] itemIds)[]
+            {
+                (Guid.Parse("a4442515-24b2-490d-bb5b-7446e1be1e0b"),
+                    Enumerable
+                        .Range(0,1000)
+                        .Select(x=>new Guid(x.ToString("00000000000000000000000000000000")))
+                        .ToArray()),
+                (Guid.Parse("9b318593-66de-45c4-a9b3-f1f5a05bb52f"),
+                    Enumerable
+                        .Range(0,1000)
+                        .Select(x=>new Guid(x.ToString("00000000000000000000000000000000")))
+                        .ToArray()),
+            };
+
+            try
+            {
+                await initializer.InitializeScoreItemAsync(ownerId);
+            }
+            catch
+            {
+                // 初期化のエラーは握りつぶす
+            }
+
+            try
+            {
+                await deleter.DeleteOwnerItemsAsync(ownerId);
+            }
+            catch
+            {
+                // エラーは握りつぶす
+            }
+
+            var objName = ScoreItemStorageConstant.JpegFileName;
+            var orgName = "origin_image.jpg";
+            var size = 1024 * 1;
+
+            var thumbnailObjName = ScoreItemStorageConstant.ThumbnailFileName;
+            var thumbnailSize = 1;
+
+
+            try
+            {
+                var sw = Stopwatch.StartNew();
+                int i = 0;
+                foreach (var (scoreId, itemIds) in ids)
+                {
+                    foreach (var itemId in itemIds)
+                    {
+                        var itemData = new ScoreItemDatabaseItemDataImage()
+                        {
+                            OwnerId = ownerId,
+                            ScoreId = scoreId,
+                            ItemId = itemId,
+                            ObjName = objName,
+                            OrgName = orgName,
+                            Size = size,
+                            Thumbnail = new ScoreItemDatabaseItemDataImageThumbnail()
+                            {
+                                ObjName = thumbnailObjName,
+                                Size = thumbnailSize,
+                            }
+                        };
+
+                        await creator.CreateAsync(itemData);
+
+                        if ((++i) % 200 == 0)
+                        {
+                            _outputHelper.WriteLine($"{i} / 2000");
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // エラーは握りつぶす
+            }
+
+            var data = await infoGetter.GetItemsAsync(ownerId);
+
+            Assert.Equal(2000, data.Length);
+
+            var expectedIds = ids
+                .SelectMany(x => x.itemIds.Select(y => (s:x.scoreId,i: y)))
+                .OrderBy(x => x)
+                .ToArray();
+
+            var actualIds = data
                 .Select(x => (s: x.ScoreId, i: x.ItemId))
                 .OrderBy(x=>x)
                 .ToArray();

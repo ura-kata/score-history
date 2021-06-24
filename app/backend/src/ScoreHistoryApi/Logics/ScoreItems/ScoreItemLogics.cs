@@ -27,6 +27,6 @@ namespace ScoreHistoryApi.Logics.ScoreItems
 
         public ScoreItemInfoGetter InfoGetter => new(_dynamoDbClient, _configuration);
 
-        public ScoreItemDeleter Deleter => new(_dynamoDbClient, _configuration);
+        public ScoreItemDeleter Deleter => new(_dynamoDbClient, _s3Client, _configuration);
     }
 }
