@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
 using Microsoft.Extensions.Configuration;
+using ScoreHistoryApi.Logics.DynamoDb;
+using ScoreHistoryApi.Logics.DynamoDb.PropertyNames;
 using ScoreHistoryApi.Logics.Exceptions;
-using ScoreHistoryApi.Logics.ScoreDatabases;
-using ScoreHistoryApi.Logics.ScoreItemDatabases;
 
 namespace ScoreHistoryApi.Logics.Scores
 {
@@ -15,12 +15,14 @@ namespace ScoreHistoryApi.Logics.Scores
         private readonly IAmazonDynamoDB _dynamoDbClient;
         private readonly IScoreQuota _scoreQuota;
         private readonly IConfiguration _configuration;
+        private readonly IScoreCommonLogic _commonLogic;
 
-        public Initializer(IAmazonDynamoDB dynamoDbClient, IScoreQuota scoreQuota, IConfiguration configuration)
+        public Initializer(IAmazonDynamoDB dynamoDbClient, IScoreQuota scoreQuota, IConfiguration configuration, IScoreCommonLogic commonLogic)
         {
             _dynamoDbClient = dynamoDbClient;
             _scoreQuota = scoreQuota;
             _configuration = configuration;
+            _commonLogic = commonLogic;
 
 
             var tableName = configuration[EnvironmentNames.ScoreDynamoDbTableName];
@@ -45,7 +47,7 @@ namespace ScoreHistoryApi.Logics.Scores
             {
                 await InitializeScoreAsync(ownerId);
             }
-            catch (AlreadyInitializedException ex)
+            catch (AlreadyInitializedException)
             {
 
                 // 初期化済み
@@ -55,7 +57,7 @@ namespace ScoreHistoryApi.Logics.Scores
             {
                 await InitializeScoreItemAsync(ownerId);
             }
-            catch (AlreadyInitializedException ex)
+            catch (AlreadyInitializedException)
             {
 
                 // 初期化済み
@@ -65,7 +67,7 @@ namespace ScoreHistoryApi.Logics.Scores
 
         public async Task InitializeScoreAsync(Guid ownerId)
         {
-            var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
+            var partitionKey = PartitionPrefix.Score + _commonLogic.ConvertIdFromGuid(ownerId);
 
             await PutAsync(_dynamoDbClient, ScoreTableName, partitionKey);
 
@@ -75,16 +77,17 @@ namespace ScoreHistoryApi.Logics.Scores
                 {
                     Item = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(partitionKey),
-                        [DynamoDbScorePropertyNames.SortKey] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
-                        [DynamoDbScorePropertyNames.ScoreCount] = new AttributeValue(){N = "0"}
+                        [ScoreSummaryPn.PartitionKey] = new(partitionKey),
+                        [ScoreSummaryPn.SortKey] = new(DynamoDbConstant.SummarySortKey),
+                        [ScoreSummaryPn.ScoreCount] = new(){N = "0"},
+                        [ScoreSummaryPn.Lock] = new(){N = "0"}
                     },
                     TableName = tableName,
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#owner"] = DynamoDbScorePropertyNames.PartitionKey
+                        ["#o"] = ScoreSummaryPn.PartitionKey
                     },
-                    ConditionExpression = "attribute_not_exists(#owner)",
+                    ConditionExpression = "attribute_not_exists(#o)",
                 };
                 try
                 {
@@ -109,7 +112,7 @@ namespace ScoreHistoryApi.Logics.Scores
 
         public async Task InitializeScoreItemAsync(Guid ownerId)
         {
-            var partitionKey = ScoreItemDatabaseUtils.ConvertToPartitionKey(ownerId);
+            var partitionKey = PartitionPrefix.Item + _commonLogic.ConvertIdFromGuid(ownerId);
 
             await PutAsync(_dynamoDbClient, ScoreItemTableName, partitionKey);
 
@@ -119,16 +122,18 @@ namespace ScoreHistoryApi.Logics.Scores
                 {
                     Item = new Dictionary<string, AttributeValue>()
                     {
-                        [ScoreItemDatabasePropertyNames.OwnerId] = new AttributeValue(partitionKey),
-                        [ScoreItemDatabasePropertyNames.ItemId] = new AttributeValue(ScoreItemDatabaseConstant.ItemIdSummary),
-                        [ScoreItemDatabasePropertyNames.Size] = new AttributeValue(){N = "0"},
+                        [ItemSummaryPn.PartitionKey] = new(partitionKey),
+                        [ItemSummaryPn.SortKey] = new(DynamoDbConstant.SummarySortKey),
+                        [ItemSummaryPn.TotalSize] = new(){N = "0"},
+                        [ItemSummaryPn.TotalCount] = new(){N = "0"},
+                        [ItemSummaryPn.Lock] = new(){N = "0"}
                     },
                     TableName = tableName,
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#owner"] = DynamoDbScorePropertyNames.PartitionKey
+                        ["#o"] = ItemSummaryPn.PartitionKey
                     },
-                    ConditionExpression = "attribute_not_exists(#owner)",
+                    ConditionExpression = "attribute_not_exists(#o)",
                 };
                 try
                 {

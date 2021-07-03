@@ -10,6 +10,7 @@ namespace ScoreHistoryApi.Logics.Scores
         private readonly IAmazonDynamoDB _dynamoDbClient;
         private readonly IAmazonS3 _s3Client;
         private readonly IConfiguration _configuration;
+        private readonly IScoreCommonLogic _commonLogic;
 
         public ScoreLogics(IScoreQuota scoreQuota, IAmazonDynamoDB dynamoDbClient, IAmazonS3 s3Client, IConfiguration configuration)
         {
@@ -17,9 +18,10 @@ namespace ScoreHistoryApi.Logics.Scores
             _dynamoDbClient = dynamoDbClient;
             _s3Client = s3Client;
             _configuration = configuration;
+            _commonLogic = new ScoreCommonLogic();
         }
 
-        public Initializer Initializer => new( _dynamoDbClient,_scoreQuota, _configuration);
+        public Initializer Initializer => new(_dynamoDbClient, _scoreQuota, _configuration, _commonLogic);
 
         public ScoreCreator Creator => new(_dynamoDbClient, _scoreQuota, _configuration);
 
