@@ -102,7 +102,7 @@ namespace ScoreHistoryApi.Logics.Scores
 
             var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
 
-            var annotationCountMax = _quota.AnnotationCountLimit;
+            var annotationCountMax = _quota.AnnotationCountMax;
 
             await AddAnnListAsync(_dynamoDbClient, ScoreDataTableName, ownerId, scoreId, newAnnotationContentHashDic);
             await UpdateAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId, newAnnotations, newHash, oldHash, now,annotationCountMax);

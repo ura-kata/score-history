@@ -45,7 +45,7 @@ namespace ScoreHistoryApi.Logics.Scores
 
             var trimDescription = description.Trim();
 
-            var titleMaxLength = _scoreQuota.DescriptionMaxLength;
+            var titleMaxLength = _scoreQuota.DescriptionLengthMax;
             if (titleMaxLength < trimDescription.Length)
                 throw new ArgumentException(nameof(description));
 
