@@ -23,7 +23,7 @@ namespace ScoreHistoryApi.Logics.Scores
 
         public Initializer Initializer => new(_dynamoDbClient, _scoreQuota, _configuration, _commonLogic);
 
-        public ScoreCreator Creator => new(_dynamoDbClient, _scoreQuota, _configuration);
+        public ScoreCreator Creator => new(_dynamoDbClient, _scoreQuota, _configuration, _commonLogic);
 
         public ScoreSummaryGetter SummaryGetter => new(_dynamoDbClient, _scoreQuota, _configuration);
 

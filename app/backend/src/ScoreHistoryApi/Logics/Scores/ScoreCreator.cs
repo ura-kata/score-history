@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
 using Microsoft.Extensions.Configuration;
+using ScoreHistoryApi.Logics.DynamoDb;
+using ScoreHistoryApi.Logics.DynamoDb.PropertyNames;
 using ScoreHistoryApi.Logics.Exceptions;
-using ScoreHistoryApi.Logics.ScoreDatabases;
 using ScoreHistoryApi.Models.Scores;
 
 namespace ScoreHistoryApi.Logics.Scores
@@ -17,26 +18,21 @@ namespace ScoreHistoryApi.Logics.Scores
         private readonly IAmazonDynamoDB _dynamoDbClient;
         private readonly IScoreQuota _quota;
         private readonly IConfiguration _configuration;
+        private readonly IScoreCommonLogic _commonLogic;
 
-        public ScoreCreator(IAmazonDynamoDB dynamoDbClient, IScoreQuota quota, IConfiguration configuration)
+        public ScoreCreator(IAmazonDynamoDB dynamoDbClient, IScoreQuota quota, IConfiguration configuration, IScoreCommonLogic commonLogic)
         {
             _dynamoDbClient = dynamoDbClient;
             _quota = quota;
             _configuration = configuration;
+            _commonLogic = commonLogic;
 
             var tableName = configuration[EnvironmentNames.ScoreDynamoDbTableName];
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new InvalidOperationException($"'{EnvironmentNames.ScoreDynamoDbTableName}' is not found.");
             ScoreTableName = tableName;
 
-            var scoreDataTableName = configuration[EnvironmentNames.ScoreLargeDataDynamoDbTableName];
-            if (string.IsNullOrWhiteSpace(scoreDataTableName))
-                throw new InvalidOperationException(
-                    $"'{EnvironmentNames.ScoreLargeDataDynamoDbTableName}' is not found.");
-            ScoreDataTableName = scoreDataTableName;
         }
-
-        public string ScoreDataTableName { get; set; }
 
         public string ScoreTableName { get; set; }
 
@@ -49,27 +45,40 @@ namespace ScoreHistoryApi.Logics.Scores
         /// <returns></returns>
         public async Task<NewlyScore> CreateAsync(Guid ownerId, NewScore newScore)
         {
-            return await CreateAsync(ownerId, newScore.Title, newScore.Description);
+            var title = newScore.Title;
+            var description = newScore.Description;
+
+            if (title == null)
+                throw new ArgumentNullException(nameof(newScore));
+
+            var preprocessingTitle = title.Trim();
+            if (preprocessingTitle == "")
+                throw new ArgumentException(nameof(newScore));
+
+            if (_quota.TitleLengthMax < preprocessingTitle.Length)
+                throw new ArgumentException(nameof(newScore));
+
+
+            var preprocessingDescription = description?.Trim();
+
+            if (_quota.DescriptionLengthMax < preprocessingDescription?.Length)
+                throw new ArgumentException(nameof(newScore));
+
+
+            var newScoreId = _commonLogic.NewGuid();
+
+            return await CreateAsync(ownerId, newScoreId, preprocessingTitle, preprocessingDescription);
         }
 
-        public async Task<NewlyScore> CreateAsync(Guid ownerId, string title, string? description)
-        {
-            var newScoreId = Guid.NewGuid();
-            return await CreateAsync(ownerId, newScoreId, title, description);
-        }
-
-        public async Task<NewlyScore> CreateAsync(Guid ownerId, Guid newScoreId, string title, string? description)
+        public async Task<NewlyScore> CreateAsync(Guid ownerId,Guid newScoreId, string title, string? description)
         {
             if (title == null)
                 throw new ArgumentNullException(nameof(title));
 
-            var preprocessingTitle = title.Trim();
-            if (preprocessingTitle == "")
-                throw new ArgumentException(nameof(title));
-
             var scoreCountMax = _quota.ScoreCountMax;
 
-            var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
+            var now = _commonLogic.Now;
+
 
             await PutScoreAsync(
                  ownerId, newScoreId, scoreCountMax,
@@ -91,95 +100,76 @@ namespace ScoreHistoryApi.Logics.Scores
         {
             var client = _dynamoDbClient;
             var tableName = ScoreTableName;
-            var dataTableName = ScoreDataTableName;
 
-            var scorePartitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
-            var largeDataPartitionKey = DynamoDbScoreDataUtils.ConvertToPartitionKey(ownerId);
-            var newScore = ScoreDatabaseUtils.ConvertToBase64(newScoreId);
+            var scorePartitionKey = PartitionPrefix.Score + _commonLogic.ConvertIdFromGuid(ownerId);
+            var newScore = _commonLogic.ConvertIdFromGuid(newScoreId);
 
-            var descriptionHash =
-                DynamoDbScoreDataUtils.CalcHash(DynamoDbScoreDataUtils.DescriptionPrefix, description ?? "");
-            var data = new DynamoDbScoreDataV1()
-            {
-                Title = title,
-                DescriptionHash = descriptionHash,
-            };
-            var dataAttributeValue = data.ConvertToAttributeValue();
-            var dataHash = data.CalcDataHash();
-            var createAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
-            var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
+            var createAt = now.ToUnixTimeMilliseconds();
+            var updateAt = createAt;
 
-            var dataId = DynamoDbScoreDataConstant.PrefixDescription + newScore + descriptionHash;
             var actions = new List<TransactWriteItem>()
             {
-                new TransactWriteItem()
+                new()
                 {
                     Update = new Update()
                     {
                         Key = new Dictionary<string, AttributeValue>()
                         {
-                            [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(scorePartitionKey),
-                            [DynamoDbScorePropertyNames.SortKey] =
-                                new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
+                            [ScoreSummaryPn.PartitionKey] = new(scorePartitionKey),
+                            [ScoreSummaryPn.SortKey] = new(DynamoDbConstant.SummarySortKey),
                         },
                         ExpressionAttributeNames = new Dictionary<string, string>()
                         {
-                            ["#count"] = DynamoDbScorePropertyNames.ScoreCount,
-                            ["#scores"] = DynamoDbScorePropertyNames.Scores,
+                            ["#sc"] = ScoreSummaryPn.ScoreCount,
+                            ["#lock"] = ScoreSummaryPn.Lock,
                         },
                         ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                         {
-                            [":increment"] = new AttributeValue() {N = "1"},
-                            [":countMax"] = new AttributeValue()
+                            [":inc"] = new() {N = "1"},
+                            [":countMax"] = new()
                             {
                                 N = maxCount.ToString()
                             },
-                            [":newScore"] = new AttributeValue()
-                            {
-                                SS = new List<string>() {newScore}
-                            }
                         },
-                        ConditionExpression = "#count < :countMax",
-                        UpdateExpression = "ADD #count :increment, #scores :newScore",
+                        ConditionExpression = "#sc < :countMax",
+                        UpdateExpression = "ADD #sc :inc, #lock :inc",
                         TableName = tableName,
                     },
                 },
-                new TransactWriteItem()
+                new()
                 {
                     Put = new Put()
                     {
                         Item = new Dictionary<string, AttributeValue>()
                         {
-                            [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(scorePartitionKey),
-                            [DynamoDbScorePropertyNames.SortKey] =
-                                new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + newScore),
-                            [DynamoDbScorePropertyNames.DataHash] = new AttributeValue(dataHash),
-                            [DynamoDbScorePropertyNames.CreateAt] = new AttributeValue(createAt),
-                            [DynamoDbScorePropertyNames.UpdateAt] = new AttributeValue(updateAt),
-                            [DynamoDbScorePropertyNames.Access] =
-                                new AttributeValue(ScoreDatabaseConstant.ScoreAccessPrivate),
-                            [DynamoDbScorePropertyNames.SnapshotCount] = new AttributeValue() {N = "0"},
-                            [DynamoDbScorePropertyNames.Data] = dataAttributeValue,
+                            [ScoreMainPn.PartitionKey] = new(scorePartitionKey),
+                            [ScoreMainPn.SortKey] = new(newScore),
+                            [ScoreMainPn.CreateAt] = new(){N = createAt.ToString()},
+                            [ScoreMainPn.UpdateAt] = new(){N = updateAt.ToString()},
+                            [ScoreMainPn.Access] = new(ScoreAccessKind.Private),
+                            [ScoreMainPn.Lock] = new(){N = "0"},
+                            [ScoreMainPn.Ver] = new(){N = DynamoDbConstant.Ver1},
+                            [ScoreMainPn.SnapshotCount] = new() {N = "0"},
+                            [ScoreMainPn.Snapshot] = new() {IsLSet = true, L = new List<AttributeValue>()},
+                            [ScoreMainPn.Data] = new ()
+                            {
+                                M = new Dictionary<string, AttributeValue>()
+                                {
+                                    [ScoreMainPn.DataPn.Title] = new(title),
+                                    [ScoreMainPn.DataPn.Description] = new(description),
+                                    [ScoreMainPn.DataPn.PageCount] = new(){N = "0"},
+                                    [ScoreMainPn.DataPn.Page] = new(){IsLSet = true, L = new List<AttributeValue>()},
+                                    [ScoreMainPn.DataPn.AnnotationCount] = new(){N = "0"},
+                                    [ScoreMainPn.DataPn.Annotation] = new(){IsLSet = true, L = new List<AttributeValue>()},
+                                }
+                            },
                         },
                         TableName = tableName,
                         ExpressionAttributeNames = new Dictionary<string, string>()
                         {
-                            ["#score"] = DynamoDbScorePropertyNames.SortKey,
+                            ["#s"] = ScoreMainPn.SortKey,
                         },
-                        ConditionExpression = "attribute_not_exists(#score)",
-                    }
-                },
-                new TransactWriteItem()
-                {
-                    Put = new Put()
-                    {
-                        Item = new Dictionary<string, AttributeValue>()
-                        {
-                            [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(largeDataPartitionKey),
-                            [DynamoDbScoreDataPropertyNames.DataId] = new AttributeValue(dataId),
-                            [DynamoDbScoreDataPropertyNames.Content] = new AttributeValue(description),
-                        },
-                        TableName = dataTableName,
+                        ConditionExpression = "attribute_not_exists(#s)",
                     }
                 },
             };
@@ -212,14 +202,13 @@ namespace ScoreHistoryApi.Logics.Scores
                         TableName = tableName,
                         Key = new Dictionary<string, AttributeValue>()
                         {
-                            [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(scorePartitionKey),
-                            [DynamoDbScorePropertyNames.SortKey] =
-                                new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
+                            [ScoreSummaryPn.PartitionKey] = new(scorePartitionKey),
+                            [ScoreSummaryPn.SortKey] = new(DynamoDbConstant.SummarySortKey),
                         },
                     };
                     var checkResponse = await client.GetItemAsync(request);
 
-                    if (checkResponse.Item.TryGetValue(DynamoDbScorePropertyNames.ScoreCount, out _))
+                    if (checkResponse.Item.TryGetValue(ScoreSummaryPn.ScoreCount, out _))
                     {
                         throw new CreatedScoreException(CreatedScoreExceptionCodes.ExceededUpperLimit, ex);
                     }
@@ -227,8 +216,6 @@ namespace ScoreHistoryApi.Logics.Scores
                     {
                         throw new UninitializedScoreException(ex);
                     }
-
-                    ;
                 }
 
                 var putReason = ex.CancellationReasons[1];
