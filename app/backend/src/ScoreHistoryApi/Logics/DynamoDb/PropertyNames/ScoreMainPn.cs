@@ -16,11 +16,13 @@ namespace ScoreHistoryApi.Logics.DynamoDb.PropertyNames
         public const string UpdateAt = "ua";
         /// <summary>アクセスについて</summary>
         public const string Access = "as";
+        /// <summary>楽観ロック</summary>
+        public const string Lock = "l";
+        /// <summary>データ構造のバージョン</summary>
+        public const string Ver = "v";
+
         /// <summary>スナップショットの数</summary>
         public const string SnapshotCount = "nc";
-        /// <summary>楽観ロック</summary>
-        public const string OptimisticLock = "l";
-
         /// <summary>スナップショット</summary>
         public const string Snapshot = "n";
         /// <summary>スナップショットの Property Name</summary>
@@ -34,8 +36,6 @@ namespace ScoreHistoryApi.Logics.DynamoDb.PropertyNames
             public const string CreateAt = "ca";
         }
 
-        /// <summary>データ構造のバージョン</summary>
-        public const string DataVersion = "v";
         /// <summary>データ</summary>
         public const string Data = "d";
 

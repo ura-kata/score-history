@@ -7,16 +7,10 @@ namespace ScoreHistoryApi.Logics.DynamoDb.PropertyNames
     {
         /// <summary>sc: + user ID</summary>
         public const string PartitionKey = "o";
-        /// <summary>score ID + :a: + 000 + 0</summary>
+        /// <summary>score ID + :a: + 00 + 0</summary>
         public const string SortKey = "s";
 
         /// <summary>アノテーションデータ</summary>
         public const string Annotation = "a";
-        /// <summary>アノテーションの Property Name</summary>
-        public static class AnnotationPn
-        {
-            /// <summary>アノテーションの内容</summary>
-            public const string Content = "c";
-        }
     }
 }

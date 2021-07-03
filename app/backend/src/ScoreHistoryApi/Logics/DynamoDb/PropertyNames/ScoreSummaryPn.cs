@@ -10,6 +10,8 @@ namespace ScoreHistoryApi.Logics.DynamoDb.PropertyNames
         /// <summary>固定値 summary</summary>
         public const string SortKey = "s";
 
+        /// <summary>楽観ロック</summary>
+        public const string Lock = "l";
         /// <summary>楽譜の数</summary>
         public const string ScoreCount = "sc";
     }
