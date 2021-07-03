@@ -118,8 +118,8 @@ namespace ScoreHistoryApi.Logics.Scores
                     {
                         Key = new Dictionary<string, AttributeValue>()
                         {
-                            [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(scorePartitionKey),
-                            [DynamoDbScorePropertyNames.ScoreId] =
+                            [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(scorePartitionKey),
+                            [DynamoDbScorePropertyNames.SortKey] =
                                 new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
                         },
                         ExpressionAttributeNames = new Dictionary<string, string>()
@@ -150,8 +150,8 @@ namespace ScoreHistoryApi.Logics.Scores
                     {
                         Item = new Dictionary<string, AttributeValue>()
                         {
-                            [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(scorePartitionKey),
-                            [DynamoDbScorePropertyNames.ScoreId] =
+                            [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(scorePartitionKey),
+                            [DynamoDbScorePropertyNames.SortKey] =
                                 new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + newScore),
                             [DynamoDbScorePropertyNames.DataHash] = new AttributeValue(dataHash),
                             [DynamoDbScorePropertyNames.CreateAt] = new AttributeValue(createAt),
@@ -164,7 +164,7 @@ namespace ScoreHistoryApi.Logics.Scores
                         TableName = tableName,
                         ExpressionAttributeNames = new Dictionary<string, string>()
                         {
-                            ["#score"] = DynamoDbScorePropertyNames.ScoreId,
+                            ["#score"] = DynamoDbScorePropertyNames.SortKey,
                         },
                         ConditionExpression = "attribute_not_exists(#score)",
                     }
@@ -212,8 +212,8 @@ namespace ScoreHistoryApi.Logics.Scores
                         TableName = tableName,
                         Key = new Dictionary<string, AttributeValue>()
                         {
-                            [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(scorePartitionKey),
-                            [DynamoDbScorePropertyNames.ScoreId] =
+                            [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(scorePartitionKey),
+                            [DynamoDbScorePropertyNames.SortKey] =
                                 new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
                         },
                     };

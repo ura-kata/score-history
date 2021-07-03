@@ -95,12 +95,12 @@ namespace ScoreHistoryApi.Logics
                             TableName = tableName,
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
-                                [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + snapshot),
+                                [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(partitionKey),
+                                [DynamoDbScorePropertyNames.SortKey] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSnapPrefix + score + snapshot),
                             },
                             ExpressionAttributeNames = new Dictionary<string, string>()
                             {
-                                ["#score"] = DynamoDbScorePropertyNames.ScoreId,
+                                ["#score"] = DynamoDbScorePropertyNames.SortKey,
                             },
                             ConditionExpression = "attribute_exists(#score)",
                         },
@@ -112,8 +112,8 @@ namespace ScoreHistoryApi.Logics
                             TableName = tableName,
                             Key = new Dictionary<string, AttributeValue>()
                             {
-                                [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
-                                [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                                [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(partitionKey),
+                                [DynamoDbScorePropertyNames.SortKey] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                             },
                             ExpressionAttributeNames = new Dictionary<string, string>()
                             {

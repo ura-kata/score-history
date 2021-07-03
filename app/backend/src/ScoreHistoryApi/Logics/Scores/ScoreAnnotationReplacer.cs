@@ -144,8 +144,8 @@ namespace ScoreHistoryApi.Logics.Scores
                     TableName = tableName,
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
-                        [DynamoDbScorePropertyNames.ScoreId] =
+                        [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(partitionKey),
+                        [DynamoDbScorePropertyNames.SortKey] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                 };
@@ -205,8 +205,8 @@ namespace ScoreHistoryApi.Logics.Scores
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
-                        [DynamoDbScorePropertyNames.ScoreId] =
+                        [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(partitionKey),
+                        [DynamoDbScorePropertyNames.SortKey] =
                             new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                     ExpressionAttributeNames = new Dictionary<string, string>()

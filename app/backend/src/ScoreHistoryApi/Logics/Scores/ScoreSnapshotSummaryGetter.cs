@@ -50,8 +50,8 @@ namespace ScoreHistoryApi.Logics.Scores
                     TableName = tableName,
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#owner"] = DynamoDbScorePropertyNames.OwnerId,
-                        ["#score"] = DynamoDbScorePropertyNames.ScoreId,
+                        ["#owner"] = DynamoDbScorePropertyNames.PartitionKey,
+                        ["#score"] = DynamoDbScorePropertyNames.SortKey,
                         ["#snapshotName"] = DynamoDbScorePropertyNames.SnapshotName,
                         ["#createAt"] = DynamoDbScorePropertyNames.CreateAt,
                     },
@@ -71,7 +71,7 @@ namespace ScoreHistoryApi.Logics.Scores
 
                     return response.Items
                         .Select(x =>(
-                                score: x[DynamoDbScorePropertyNames.ScoreId].S,
+                                score: x[DynamoDbScorePropertyNames.SortKey].S,
                                 name: x[DynamoDbScorePropertyNames.SnapshotName].S,
                                 createAt: x[DynamoDbScorePropertyNames.CreateAt].S)
                         )

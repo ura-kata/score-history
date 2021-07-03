@@ -63,8 +63,8 @@ namespace ScoreHistoryApi.Logics.Scores
                     TableName = tableName,
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#owner"] = DynamoDbScorePropertyNames.OwnerId,
-                        ["#score"] = DynamoDbScorePropertyNames.ScoreId,
+                        ["#owner"] = DynamoDbScorePropertyNames.PartitionKey,
+                        ["#score"] = DynamoDbScorePropertyNames.SortKey,
                         ["#data"] = DynamoDbScorePropertyNames.Data,
                         ["#title"] = DynamoDbScorePropertyNames.DataPropertyNames.Title,
                         ["#desc"] = DynamoDbScorePropertyNames.DataPropertyNames.DescriptionHash,
@@ -110,8 +110,8 @@ namespace ScoreHistoryApi.Logics.Scores
                     return response.Items
                         .Select(x =>
                         {
-                            var ownerId64 = x[DynamoDbScorePropertyNames.OwnerId].S;
-                            var scoreId64 = x[DynamoDbScorePropertyNames.ScoreId].S.Substring(subStartIndex);
+                            var ownerId64 = x[DynamoDbScorePropertyNames.PartitionKey].S;
+                            var scoreId64 = x[DynamoDbScorePropertyNames.SortKey].S.Substring(subStartIndex);
                             var title = x[DynamoDbScorePropertyNames.Data].M[DynamoDbScorePropertyNames.DataPropertyNames.Title].S;
                             var descriptionHash = x[DynamoDbScorePropertyNames.Data].M[DynamoDbScorePropertyNames.DataPropertyNames.DescriptionHash].S;
                             var description = descriptionSet[scoreId64 + descriptionHash];

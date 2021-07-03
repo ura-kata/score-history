@@ -180,12 +180,12 @@ namespace ScoreHistoryApi.Logics.Scores
                 {
                     Key = new Dictionary<string, AttributeValue>()
                     {
-                        [DynamoDbScorePropertyNames.OwnerId] = new AttributeValue(partitionKey),
-                        [DynamoDbScorePropertyNames.ScoreId] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
+                        [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(partitionKey),
+                        [DynamoDbScorePropertyNames.SortKey] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
                     },
                     ExpressionAttributeNames = new Dictionary<string, string>()
                     {
-                        ["#score"] = DynamoDbScorePropertyNames.ScoreId,
+                        ["#score"] = DynamoDbScorePropertyNames.SortKey,
                         ["#updateAt"] = DynamoDbScorePropertyNames.UpdateAt,
                         ["#access"] = DynamoDbScorePropertyNames.Access,
                     },
