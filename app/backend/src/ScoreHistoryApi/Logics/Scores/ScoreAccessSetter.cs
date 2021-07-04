@@ -7,6 +7,8 @@ using Amazon.DynamoDBv2.Model;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Configuration;
+using ScoreHistoryApi.Logics.DynamoDb;
+using ScoreHistoryApi.Logics.DynamoDb.PropertyNames;
 using ScoreHistoryApi.Logics.ScoreDatabases;
 using ScoreHistoryApi.Logics.ScoreObjectStorages;
 using ScoreHistoryApi.Models.Scores;
@@ -19,13 +21,15 @@ namespace ScoreHistoryApi.Logics.Scores
         private readonly IAmazonS3 _s3Client;
         private readonly IScoreQuota _quota;
         private readonly IConfiguration _configuration;
+        private readonly IScoreCommonLogic _commonLogic;
 
-        public ScoreAccessSetter(IAmazonDynamoDB dynamoDbClient, IAmazonS3 s3Client, IScoreQuota quota, IConfiguration configuration)
+        public ScoreAccessSetter(IAmazonDynamoDB dynamoDbClient, IAmazonS3 s3Client, IScoreQuota quota, IConfiguration configuration, IScoreCommonLogic commonLogic)
         {
             _dynamoDbClient = dynamoDbClient;
             _s3Client = s3Client;
             _quota = quota;
             _configuration = configuration;
+            _commonLogic = commonLogic;
 
 
             var tableName = configuration[EnvironmentNames.ScoreDynamoDbTableName];
@@ -157,56 +161,53 @@ namespace ScoreHistoryApi.Logics.Scores
 
         public async Task SetAccessAsync(Guid ownerId, Guid scoreId, ScoreAccesses access)
         {
-            var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
+            var now = _commonLogic.Now;
+            var tableName = ScoreTableName;
+            var client = _dynamoDbClient;
 
-            await UpdateAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId, access, now);
 
-            static async Task UpdateAsync(
-                IAmazonDynamoDB client,
-                string tableName,
-                Guid ownerId,
-                Guid scoreId,
-                ScoreAccesses access,
-                DateTimeOffset now
-                )
+            var partitionKey = PartitionPrefix.Score + _commonLogic.ConvertIdFromGuid(ownerId);
+            var score = _commonLogic.ConvertIdFromGuid(scoreId);
+
+            var updateAt = now.ToUnixTimeMilliseconds();
+            var accessText = access switch
             {
-                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
-                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+                ScoreAccesses.Public => ScoreAccessKind.Public,
+                _=>ScoreAccessKind.Private
+            };
 
-                var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
-                var accessText = ScoreDatabaseUtils.ConvertFromScoreAccess(access);
-
-                var request = new UpdateItemRequest()
+            var request = new UpdateItemRequest()
+            {
+                Key = new Dictionary<string, AttributeValue>()
                 {
-                    Key = new Dictionary<string, AttributeValue>()
-                    {
-                        [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(partitionKey),
-                        [DynamoDbScorePropertyNames.SortKey] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
-                    },
-                    ExpressionAttributeNames = new Dictionary<string, string>()
-                    {
-                        ["#score"] = DynamoDbScorePropertyNames.SortKey,
-                        ["#updateAt"] = DynamoDbScorePropertyNames.UpdateAt,
-                        ["#access"] = DynamoDbScorePropertyNames.Access,
-                    },
-                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
-                    {
-                        [":access"] = new AttributeValue(accessText),
-                        [":updateAt"] = new AttributeValue(updateAt),
-                    },
-                    ConditionExpression = "attribute_exists(#score)",
-                    UpdateExpression = "SET #updateAt = :updateAt, #access = :access",
-                    TableName = tableName,
-                };
-                try
+                    [ScoreMainPn.PartitionKey] = new(partitionKey),
+                    [ScoreMainPn.SortKey] = new(score),
+                },
+                ExpressionAttributeNames = new Dictionary<string, string>()
                 {
-                    await client.UpdateItemAsync(request);
-                }
-                catch (Exception ex)
+                    ["#s"] = ScoreMainPn.SortKey,
+                    ["#ua"] = ScoreMainPn.UpdateAt,
+                    ["#as"] = ScoreMainPn.Access,
+                    ["#l"] = ScoreMainPn.Lock,
+                },
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                 {
-                    Console.WriteLine(ex.Message);
-                    throw;
-                }
+                    [":as"] = new(accessText),
+                    [":ua"] = new(){N = updateAt.ToString()},
+                    [":inc"] = new(){N = "1"},
+                },
+                ConditionExpression = "attribute_exists(#s)",
+                UpdateExpression = "SET #ua = :ua, #as = :as ADD #l :inc",
+                TableName = tableName,
+            };
+            try
+            {
+                await client.UpdateItemAsync(request);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
             }
         }
     }

@@ -244,7 +244,7 @@ namespace ScoreHistoryApi.Controllers
 
             try
             {
-                await annotationsAdder.AddAnnotations(ownerId, id, annotations);
+                await annotationsAdder.AddAnnotationsAsync(ownerId, id, annotations);
             }
             catch (ArgumentNullException)
             {

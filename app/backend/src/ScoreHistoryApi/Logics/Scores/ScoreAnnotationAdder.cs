@@ -5,7 +5,9 @@ using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
 using Microsoft.Extensions.Configuration;
-using ScoreHistoryApi.Logics.ScoreDatabases;
+using ScoreHistoryApi.Logics.DynamoDb;
+using ScoreHistoryApi.Logics.DynamoDb.Models;
+using ScoreHistoryApi.Logics.DynamoDb.PropertyNames;
 using ScoreHistoryApi.Models.Scores;
 
 namespace ScoreHistoryApi.Logics.Scores
@@ -15,30 +17,25 @@ namespace ScoreHistoryApi.Logics.Scores
         private readonly IAmazonDynamoDB _dynamoDbClient;
         private readonly IScoreQuota _quota;
         private readonly IConfiguration _configuration;
+        private readonly IScoreCommonLogic _commonLogic;
 
-        public ScoreAnnotationAdder(IAmazonDynamoDB dynamoDbClient, IScoreQuota quota, IConfiguration configuration)
+        public ScoreAnnotationAdder(IAmazonDynamoDB dynamoDbClient, IScoreQuota quota, IConfiguration configuration,
+            IScoreCommonLogic commonLogic)
         {
             _dynamoDbClient = dynamoDbClient;
             _quota = quota;
             _configuration = configuration;
+            _commonLogic = commonLogic;
 
             var tableName = configuration[EnvironmentNames.ScoreDynamoDbTableName];
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new InvalidOperationException($"'{EnvironmentNames.ScoreDynamoDbTableName}' is not found.");
             ScoreTableName = tableName;
-
-            var scoreDataTableName = configuration[EnvironmentNames.ScoreLargeDataDynamoDbTableName];
-            if (string.IsNullOrWhiteSpace(scoreDataTableName))
-                throw new InvalidOperationException(
-                    $"'{EnvironmentNames.ScoreLargeDataDynamoDbTableName}' is not found.");
-            ScoreDataTableName = scoreDataTableName;
         }
-
-        public string ScoreDataTableName { get; set; }
 
         public string ScoreTableName { get; set; }
 
-        public async Task AddAnnotations(Guid ownerId, Guid scoreId, List<NewScoreAnnotation> annotations)
+        public async Task AddAnnotationsAsync(Guid ownerId, Guid scoreId, List<NewScoreAnnotation> annotations)
         {
             if (annotations.Count == 0)
             {
@@ -53,7 +50,14 @@ namespace ScoreHistoryApi.Logics.Scores
                 var trimContent = ann.Content?.Trim();
                 if (trimContent is null)
                 {
-                    throw new ArgumentException($"{nameof(annotations)}[{i}].{nameof(NewScoreAnnotation.Content)} is null.");
+                    throw new ArgumentException(
+                        $"{nameof(annotations)}[{i}].{nameof(NewScoreAnnotation.Content)} is null.");
+                }
+
+                if (_quota.AnnotationLengthMax < trimContent.Length)
+                {
+                    throw new ArgumentException(
+                        $"{nameof(annotations)}[{i}].{nameof(NewScoreAnnotation.Content)} is too long.");
                 }
 
                 trimmedAnnotations.Add(new NewScoreAnnotation()
@@ -62,221 +66,326 @@ namespace ScoreHistoryApi.Logics.Scores
                 });
             }
 
-            await AddAnnotationsAsync(ownerId, scoreId, trimmedAnnotations);
+            await AddAnnotationsInnerAsync(ownerId, scoreId, trimmedAnnotations);
         }
 
-        public async Task AddAnnotationsAsync(Guid ownerId, Guid scoreId, List<NewScoreAnnotation> annotations)
+        public async Task AddAnnotationsInnerAsync(Guid ownerId, Guid scoreId, List<NewScoreAnnotation> annotations)
         {
             if (annotations.Count == 0)
                 throw new ArgumentException(nameof(annotations));
 
-            var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId);
+            var (oldAnnotations, oldAnnotationCount, oldLock, existedChunks) = await GetAsync(ownerId, scoreId);
 
-            data.Annotations ??= new List<DynamoDbScoreAnnotationV1>();
+            var sortedIds = oldAnnotations.OrderBy(x => x.Id).Select(x=>x.Id).ToArray();
 
-            var newAnnotations = new List<DynamoDbScoreAnnotationV1>();
-
-            var annotationId = data.Annotations.Count == 0 ? 0 : data.Annotations.Select(x => x.Id).Max() + 1;
-
-            var newAnnotationContentHashDic = new Dictionary<string, NewScoreAnnotation>();
-            var existedContentHashSet = new HashSet<string>();
-            data.Annotations.ForEach(h => existedContentHashSet.Add(h.ContentHash));
-
-            foreach (var annotation in annotations)
+            long next = 0;
+            int idIndex = 0;
+            long NewId()
             {
-                var hash = DynamoDbScoreDataUtils.CalcHash(DynamoDbScoreDataUtils.AnnotationPrefix, annotation.Content);
-
-                if(!existedContentHashSet.Contains(hash))
-                    newAnnotationContentHashDic[hash] = annotation;
-
-                var a = new DynamoDbScoreAnnotationV1()
+                for (; idIndex < sortedIds.Length; ++idIndex, ++next)
                 {
-                    Id = annotationId++,
-                    ContentHash = hash,
-                };
-                newAnnotations.Add(a);
-                data.Annotations.Add(a);
+                    var id = sortedIds[idIndex];
+                    if (next == id)
+                    {
+                        continue;
+                    }
+
+                    return next++;
+                }
+                return next++;
             }
 
-            var newHash = data.CalcDataHash();
+            var annotationOnMains = new List<AnnotationOnMain>();
+            var annotationOnDatas = new List<AnnotationOnData>();
+            foreach (var annotation in annotations)
+            {
+                var id = NewId();
+                annotationOnMains.Add(new AnnotationOnMain()
+                {
+                    Id = id,
+                    Length = annotation.Content.Length,
+                });
+                annotationOnDatas.Add(new AnnotationOnData()
+                {
+                    Id = id,
+                    Content = annotation.Content,
+                });
+            }
 
-            var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
+
+            var now = _commonLogic.Now;
 
             var annotationCountMax = _quota.AnnotationCountMax;
 
-            await AddAnnListAsync(_dynamoDbClient, ScoreDataTableName, ownerId, scoreId, newAnnotationContentHashDic);
-            await UpdateAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId, newAnnotations, newHash, oldHash, now,annotationCountMax);
+            await UpdateAsync(ownerId, scoreId, annotationOnMains, oldLock, now, annotationCountMax);
 
-            static async Task AddAnnListAsync(
-                IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId,
-                Dictionary<string, NewScoreAnnotation> newAnnotations)
+            var existedChunkSet = new HashSet<string>(existedChunks.Distinct());
+
+            await UpdateAnnotationsAsync(ownerId, scoreId, existedChunkSet, annotationOnDatas);
+
+        }
+
+        async Task UpdateAnnotationsAsync(Guid ownerId, Guid scoreId, HashSet<string> oldChunks, List<AnnotationOnData> newAnnotations)
+        {
+            var partitionKey = PartitionPrefix.Score + _commonLogic.ConvertIdFromGuid(ownerId);
+            var score = _commonLogic.ConvertIdFromGuid(scoreId);
+
+            const int oneChunkLength = 240;
+            const int oneChunkCountMax = 200;
+
+            var chunkDataList = newAnnotations.SelectMany(an =>
             {
-                const int chunkSize = 25;
-
-                var partitionKey = DynamoDbScoreDataUtils.ConvertToPartitionKey(ownerId);
-                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
-
-                var chunkList = newAnnotations.Select((x, index) => (x, index))
-                    .GroupBy(x => x.index / chunkSize)
-                    .Select(x => x.Select(y => (hash: y.x.Key, ann: y.x.Value)).ToArray())
-                    .ToArray();
-
-                foreach (var valueTuples in chunkList)
-                {
-                    await AddAnnList25Async(client, tableName, partitionKey, score, valueTuples);
-                }
-
-                static async Task AddAnnList25Async(
-                    IAmazonDynamoDB client, string tableName, string partitionKey, string score,
-                    (string hash, NewScoreAnnotation ann)[] annotations)
-                {
-                    Dictionary<string,List<WriteRequest>> request = new Dictionary<string, List<WriteRequest>>()
+                var extraCount = Math.Max(0, (int) Math.Ceiling(an.Content.Length / (double) oneChunkLength));
+                var chunks = Enumerable.Range(0, extraCount).Select(index =>
                     {
-                        [tableName] = annotations.Select(a=>
+                        var chunk = $"{(an.Id / oneChunkCountMax):00}{index:0}";
+                        var start = index * oneChunkLength;
+                        var length = Math.Min(an.Content.Length - start, oneChunkLength);
+                        var content = an.Content.Substring(start, length);
+                        return (chunk,id: an.Id, content);
+                    })
+                    .ToArray();
+                return chunks;
+            }).ToArray();
+
+            var chunkDataGroup = chunkDataList.GroupBy(x => x.chunk, x => x);
+
+            foreach (var chunkData in chunkDataGroup)
+            {
+                var chunk = chunkData.Key;
+
+                if (oldChunks.Contains(chunk))
+                {
+                    UpdateItemRequest request = new()
+                    {
+                        TableName = ScoreTableName,
+                        Key = new Dictionary<string, AttributeValue>()
                         {
-                            var dataId = DynamoDbScoreDataConstant.PrefixAnnotation + score +  a.hash;
-                            return new WriteRequest()
-                            {
-                                PutRequest = new PutRequest()
-                                {
-                                    Item = new Dictionary<string, AttributeValue>()
-                                    {
-                                        [DynamoDbScoreDataPropertyNames.OwnerId] = new AttributeValue(partitionKey),
-                                        [DynamoDbScoreDataPropertyNames.DataId] = new AttributeValue(dataId),
-                                        [DynamoDbScoreDataPropertyNames.Content] = new AttributeValue(a.ann.Content),
-                                    }
-                                }
-                            };
-                        }).ToList(),
+                            [ScoreAnnotationPn.PartitionKey] = new(partitionKey),
+                            [ScoreAnnotationPn.SortKey] = new(score + SortDelimiter.Annotation + chunk),
+                        },
+                        ExpressionAttributeNames = new Dictionary<string, string>()
+                        {
+                            ["#a"] = ScoreAnnotationPn.Annotation,
+                        },
+                        ExpressionAttributeValues = new Dictionary<string, AttributeValue>(),
+                    };
+
+                    foreach (var data in chunkData)
+                    {
+                        var id = data.id.ToString("00000");
+
+                        request.ExpressionAttributeNames["#" + id] = id;
+                        request.ExpressionAttributeValues[":" + id] = new(data.content);
+                    }
+
+                    request.UpdateExpression = "SET " + string.Join(", ", chunkData.Select(x =>
+                    {
+                        var id = x.id.ToString("00000");
+                        return $"#a.#{id} = :{id}";
+                    }));
+
+                    try
+                    {
+                        await _dynamoDbClient.UpdateItemAsync(request);
+                    }
+                    catch (Exception)
+                    {
+                        // TODO Retry をする
+                    }
+                }
+                else
+                {
+                    var annotation = new Dictionary<string, AttributeValue>();
+
+                    foreach (var data in chunkData)
+                    {
+                        var id = data.id.ToString("00000");
+                        annotation[id] = new AttributeValue(data.content);
+                    }
+
+                    PutItemRequest request = new()
+                    {
+                        TableName = ScoreTableName,
+                        Item = new Dictionary<string, AttributeValue>()
+                        {
+                            [ScoreAnnotationPn.PartitionKey] = new(partitionKey),
+                            [ScoreAnnotationPn.SortKey] = new(score + SortDelimiter.Annotation + chunk),
+                            [ScoreAnnotationPn.Annotation] = new(){M = annotation},
+                        },
                     };
                     try
                     {
-                        await client.BatchWriteItemAsync(request);
+                        await _dynamoDbClient.PutItemAsync(request);
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        // TODO 追加に失敗したときにリトライ処理を入れる
-                        Console.WriteLine(ex.Message);
-                        throw;
+                        // TODO Retry をする
                     }
-
                 }
             }
 
-            static async Task<(DynamoDbScoreDataV1 data,string hash)> GetAsync(
-                IAmazonDynamoDB client,
-                string tableName,
-                Guid ownerId,
-                Guid scoreId)
+
+
+
+        }
+
+
+        async Task<(AnnotationOnMain[] annotations, long annotationCount, long optimisticLock, string[] existedChunks)> GetAsync(
+            Guid ownerId,
+            Guid scoreId)
+        {
+            var partitionKey = PartitionPrefix.Score + _commonLogic.ConvertIdFromGuid(ownerId);
+            var score = _commonLogic.ConvertIdFromGuid(scoreId);
+
+            var request = new QueryRequest()
             {
-                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
-                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
-
-                var request = new GetItemRequest()
+                TableName = ScoreTableName,
+                KeyConditionExpression = "#o = :o and begins_with(#s, :s)",
+                ProjectionExpression = "#o,#s,#d.#d_a,#d.#d_ac,#l",
+                ExpressionAttributeNames = new Dictionary<string, string>()
                 {
-                    TableName = tableName,
-                    Key = new Dictionary<string, AttributeValue>()
-                    {
-                        [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(partitionKey),
-                        [DynamoDbScorePropertyNames.SortKey] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
-                    },
-                };
-                var response = await client.GetItemAsync(request);
-                var data = response.Item[DynamoDbScorePropertyNames.Data];
+                    ["#o"] = ScoreMainPn.PartitionKey,
+                    ["#s"] = ScoreMainPn.SortKey,
+                    ["#d"] = ScoreMainPn.Data,
+                    ["#d_a"] = ScoreMainPn.DataPn.Annotation,
+                    ["#d_ac"] = ScoreMainPn.DataPn.AnnotationCount,
+                    ["#l"] = ScoreMainPn.Lock,
+                },
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                {
+                    [":o"] = new(partitionKey),
+                    [":s"] = new(score),
+                },
+            };
+            var response = await _dynamoDbClient.QueryAsync(request);
 
-                if (data is null)
-                    throw new InvalidOperationException("not found.");
-
-
-                DynamoDbScoreDataV1.TryMapFromAttributeValue(data, out var result);
-
-                var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
-                return (result,hash);
+            if (response.Items.Count == 0)
+            {
+                throw new InvalidOperationException("not found.");
             }
 
-            static AttributeValue ConvertFromAnnotations(List<DynamoDbScoreAnnotationV1> annotations)
+            var items = response.Items.Select(x =>
             {
-                var result = new AttributeValue()
-                {
-                    L = new List<AttributeValue>()
-                };
+                var o = x[ScoreMainPn.PartitionKey].S;
+                var s = x[ScoreMainPn.SortKey].S;
+                return (o, s, value: x);
+            }).ToArray();
 
-                foreach (var annotation in annotations)
+            var main = items.First(x => x.s == score);
+            var substStart = score.Length + SortDelimiter.Annotation.Length;
+            var chunks = items
+                .Where(x=>x.s != score)
+                .Select(x => x.s.Substring(substStart))
+                .ToArray();
+
+            if (!main.value.TryGetValue(ScoreMainPn.Data, out var data))
+            {
+                throw new InvalidOperationException("not found.");
+            }
+
+            if (!main.value.TryGetValue(ScoreMainPn.Lock, out var optimisticLockValue))
+            {
+                throw new InvalidOperationException("not found.");
+            }
+
+            if (!data.M.TryGetValue(ScoreMainPn.DataPn.Annotation, out var annotationValue))
+            {
+                throw new InvalidOperationException("not found.");
+            }
+
+            if (!data.M.TryGetValue(ScoreMainPn.DataPn.AnnotationCount, out var annotationCountValue))
+            {
+                throw new InvalidOperationException("not found.");
+            }
+
+
+            if (!long.TryParse(optimisticLockValue.N, out var optimisticLock))
+            {
+                throw new InvalidOperationException("not found.");
+            }
+
+            var annotations = annotationValue.L.Select(ann =>
+            {
+                ann.M.TryGetValue(ScoreMainPn.DataPn.AnnotationPn.Id, out var idValue);
+                ann.M.TryGetValue(ScoreMainPn.DataPn.AnnotationPn.Length, out var lengthValue);
+                long.TryParse(idValue?.N, out var id);
+                long.TryParse(lengthValue?.N, out var length);
+
+                return new AnnotationOnMain()
                 {
-                    var a = new Dictionary<string, AttributeValue>()
+                    Id = id,
+                    Length = length,
+                };
+            }).ToArray();
+
+            long.TryParse(annotationCountValue.N, out var annotationCount);
+
+
+            return (annotations, annotationCount, optimisticLock, chunks);
+        }
+
+
+        async Task UpdateAsync(
+            Guid ownerId,
+            Guid scoreId,
+            List<AnnotationOnMain> newAnnotations,
+            long oldLock,
+            DateTimeOffset now,
+            int annotationCountMax
+        )
+        {
+            var partitionKey = PartitionPrefix.Score + _commonLogic.ConvertIdFromGuid(ownerId);
+            var score = _commonLogic.ConvertIdFromGuid(scoreId);
+
+            var updateAt = now.ToUnixTimeMilliseconds();
+
+            var tableName = ScoreTableName;
+
+            var request = new UpdateItemRequest()
+            {
+                Key = new Dictionary<string, AttributeValue>()
+                {
+                    [ScoreMainPn.PartitionKey] = new(partitionKey),
+                    [ScoreMainPn.SortKey] = new(score),
+                },
+                ExpressionAttributeNames = new Dictionary<string, string>()
+                {
+                    ["#ua"] = ScoreMainPn.UpdateAt,
+                    ["#d"] = ScoreMainPn.Data,
+                    ["#a"] = ScoreMainPn.DataPn.Annotation,
+                    ["#ac"] = ScoreMainPn.DataPn.AnnotationCount,
+                    ["#l"] = ScoreMainPn.Lock,
+                },
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                {
+                    [":newAnn"] = new (){L= newAnnotations.Select(x=>new AttributeValue()
                     {
-                        [DynamoDbScorePropertyNames.DataPropertyNames.AnnotationsPropertyNames.Id] = new AttributeValue()
+                        M = new Dictionary<string, AttributeValue>()
                         {
-                            N = annotation.Id.ToString(),
+                            [ScoreMainPn.DataPn.AnnotationPn.Id] = new (){N = x.Id.ToString()},
+                            [ScoreMainPn.DataPn.AnnotationPn.Length] = new (){N = x.Length.ToString()},
                         }
-                    };
-                    if (annotation.ContentHash != null)
-                    {
-                        a[DynamoDbScorePropertyNames.DataPropertyNames.AnnotationsPropertyNames.ContentHash] = new AttributeValue(annotation.ContentHash);
-                    }
-                    if(a.Count == 0)
-                        continue;
-
-                    result.L.Add(new AttributeValue() {M = a});
-                }
-
-                return result;
-            }
-
-            static async Task UpdateAsync(
-                IAmazonDynamoDB client,
-                string tableName,
-                Guid ownerId,
-                Guid scoreId,
-                List<DynamoDbScoreAnnotationV1> newAnnotations,
-                string newHash,
-                string oldHash,
-                DateTimeOffset now,
-                int annotationCountMax
-                )
+                    }).ToList()},
+                    [":ua"] = new (){N = updateAt.ToString()},
+                    [":inc"] = new (){N = "1"},
+                    [":l"] = new (){N = oldLock.ToString()},
+                    [":addCount"] = new (){N = newAnnotations.Count.ToString()},
+                    [":countMax"] = new() {N = (annotationCountMax - newAnnotations.Count).ToString()},
+                },
+                ConditionExpression = "#l = :l and #d.#ac < :countMax",
+                UpdateExpression =
+                    "SET #ua = :ua, #d.#a = list_append(#d.#a, :newAnn) ADD #d.#ac :addCount, #l :inc",
+                TableName = tableName,
+            };
+            try
             {
-                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
-                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
-
-                var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
-
-                var request = new UpdateItemRequest()
-                {
-                    Key = new Dictionary<string, AttributeValue>()
-                    {
-                        [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(partitionKey),
-                        [DynamoDbScorePropertyNames.SortKey] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
-                    },
-                    ExpressionAttributeNames = new Dictionary<string, string>()
-                    {
-                        ["#updateAt"] = DynamoDbScorePropertyNames.UpdateAt,
-                        ["#hash"] = DynamoDbScorePropertyNames.DataHash,
-                        ["#data"] = DynamoDbScorePropertyNames.Data,
-                        ["#annotations"] = DynamoDbScorePropertyNames.DataPropertyNames.Annotations,
-                        ["#a_count"] = DynamoDbScorePropertyNames.DataPropertyNames.AnnotationCount,
-                    },
-                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
-                    {
-                        [":newAnnotations"] = ConvertFromAnnotations(newAnnotations),
-                        [":newHash"] = new AttributeValue(newHash),
-                        [":oldHash"] = new AttributeValue(oldHash),
-                        [":updateAt"] = new AttributeValue(updateAt),
-                        [":annCountMax"] = new AttributeValue(){N = (annotationCountMax - newAnnotations.Count).ToString()},
-                        [":addAnnCount"] = new AttributeValue(){N = newAnnotations.Count.ToString()},
-                    },
-                    ConditionExpression = "#hash = :oldHash and #data.#a_count < :annCountMax",
-                    UpdateExpression = "SET #updateAt = :updateAt, #hash = :newHash, #data.#annotations = list_append(#data.#annotations, :newAnnotations) ADD #data.#a_count :addAnnCount",
-                    TableName = tableName,
-                };
-                try
-                {
-                    await client.UpdateItemAsync(request);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                    throw;
-                }
+                await _dynamoDbClient.UpdateItemAsync(request);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
             }
         }
     }
