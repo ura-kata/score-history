@@ -150,7 +150,7 @@ namespace ScoreHistoryApi.Logics.Scores
                             [ScoreMainPn.Lock] = new(){N = "0"},
                             [ScoreMainPn.Ver] = new(){N = DynamoDbConstant.Ver1},
                             [ScoreMainPn.SnapshotCount] = new() {N = "0"},
-                            [ScoreMainPn.Snapshot] = new() {IsLSet = true, L = new List<AttributeValue>()},
+                            [ScoreMainPn.Snapshot] = new() {IsLSet = true},
                             [ScoreMainPn.Data] = new ()
                             {
                                 M = new Dictionary<string, AttributeValue>()
@@ -158,9 +158,9 @@ namespace ScoreHistoryApi.Logics.Scores
                                     [ScoreMainPn.DataPn.Title] = new(title),
                                     [ScoreMainPn.DataPn.Description] = new(description),
                                     [ScoreMainPn.DataPn.PageCount] = new(){N = "0"},
-                                    [ScoreMainPn.DataPn.Page] = new(){IsLSet = true, L = new List<AttributeValue>()},
+                                    [ScoreMainPn.DataPn.Page] = new(){IsLSet = true},
                                     [ScoreMainPn.DataPn.AnnotationCount] = new(){N = "0"},
-                                    [ScoreMainPn.DataPn.Annotation] = new(){IsLSet = true, L = new List<AttributeValue>()},
+                                    [ScoreMainPn.DataPn.Annotation] = new(){IsLSet = true},
                                 }
                             },
                         },
