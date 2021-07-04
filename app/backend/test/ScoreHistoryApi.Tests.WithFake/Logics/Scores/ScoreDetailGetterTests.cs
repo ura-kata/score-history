@@ -94,7 +94,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.Scores
 
             try
             {
-                await annotationAdder.AddAnnotationsAsync(ownerId, scoreId, newAnnotations);
+                await annotationAdder.AddAnnotationsInnerAsync(ownerId, scoreId, newAnnotations);
             }
             catch (Exception)
             {

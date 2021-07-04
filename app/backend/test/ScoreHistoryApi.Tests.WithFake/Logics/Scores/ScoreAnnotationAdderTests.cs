@@ -88,7 +88,7 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.Scores
                 new NewScoreAnnotation(){Content = "アノテーション2"},
                 new NewScoreAnnotation(){Content = "アノテーション3"},
             };
-            await annotationAdder.AddAnnotationsAsync(ownerId, scoreId, newAnnotations);
+            await annotationAdder.AddAnnotationsInnerAsync(ownerId, scoreId, newAnnotations);
         }
 
     }
