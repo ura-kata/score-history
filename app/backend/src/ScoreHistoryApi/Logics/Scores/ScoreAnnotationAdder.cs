@@ -8,7 +8,6 @@ using Microsoft.Extensions.Configuration;
 using ScoreHistoryApi.Logics.DynamoDb;
 using ScoreHistoryApi.Logics.DynamoDb.Models;
 using ScoreHistoryApi.Logics.DynamoDb.PropertyNames;
-using ScoreHistoryApi.Logics.ScoreDatabases;
 using ScoreHistoryApi.Models.Scores;
 
 namespace ScoreHistoryApi.Logics.Scores
@@ -75,7 +74,7 @@ namespace ScoreHistoryApi.Logics.Scores
             if (annotations.Count == 0)
                 throw new ArgumentException(nameof(annotations));
 
-            var (oldAnnotations, oldAnnotationCount oldLock, existedChunks) = await GetAsync(ownerId, scoreId);
+            var (oldAnnotations, oldAnnotationCount, oldLock, existedChunks) = await GetAsync(ownerId, scoreId);
 
             var sortedIds = oldAnnotations.OrderBy(x => x.Id).Select(x=>x.Id).ToArray();
 
@@ -96,13 +95,20 @@ namespace ScoreHistoryApi.Logics.Scores
                 return next++;
             }
 
-            var newAnnotations = new List<AnnotationOnMain>();
+            var annotationOnMains = new List<AnnotationOnMain>();
+            var annotationOnDatas = new List<AnnotationOnData>();
             foreach (var annotation in annotations)
             {
-                newAnnotations.Add(new AnnotationOnMain()
+                var id = NewId();
+                annotationOnMains.Add(new AnnotationOnMain()
                 {
-                    Id = NewId(),
+                    Id = id,
                     Length = annotation.Content.Length,
+                });
+                annotationOnDatas.Add(new AnnotationOnData()
+                {
+                    Id = id,
+                    Content = annotation.Content,
                 });
             }
 
@@ -111,7 +117,116 @@ namespace ScoreHistoryApi.Logics.Scores
 
             var annotationCountMax = _quota.AnnotationCountMax;
 
-            await UpdateAsync(ownerId, scoreId, newAnnotations, oldLock, now, annotationCountMax);
+            await UpdateAsync(ownerId, scoreId, annotationOnMains, oldLock, now, annotationCountMax);
+
+            var existedChunkSet = new HashSet<string>(existedChunks.Distinct());
+
+            await UpdateAnnotationsAsync(ownerId, scoreId, existedChunkSet, annotationOnDatas);
+
+        }
+
+        async Task UpdateAnnotationsAsync(Guid ownerId, Guid scoreId, HashSet<string> oldChunks, List<AnnotationOnData> newAnnotations)
+        {
+            var partitionKey = PartitionPrefix.Score + _commonLogic.ConvertIdFromGuid(ownerId);
+            var score = _commonLogic.ConvertIdFromGuid(scoreId);
+
+            const int oneChunkLength = 240;
+            const int oneChunkCountMax = 200;
+
+            var chunkDataList = newAnnotations.SelectMany(an =>
+            {
+                var extraCount = Math.Max(0, (int) Math.Ceiling(an.Content.Length / (double) oneChunkLength));
+                var chunks = Enumerable.Range(0, extraCount).Select(index =>
+                    {
+                        var chunk = $"{(an.Id / oneChunkCountMax):00}{index:0}";
+                        var start = index * oneChunkLength;
+                        var length = Math.Min(an.Content.Length - start, oneChunkLength);
+                        var content = an.Content.Substring(start, length);
+                        return (chunk,id: an.Id, content);
+                    })
+                    .ToArray();
+                return chunks;
+            }).ToArray();
+
+            var chunkDataGroup = chunkDataList.GroupBy(x => x.chunk, x => x);
+
+            foreach (var chunkData in chunkDataGroup)
+            {
+                var chunk = chunkData.Key;
+
+                if (oldChunks.Contains(chunk))
+                {
+                    UpdateItemRequest request = new()
+                    {
+                        TableName = ScoreTableName,
+                        Key = new Dictionary<string, AttributeValue>()
+                        {
+                            [ScoreAnnotationPn.PartitionKey] = new(partitionKey),
+                            [ScoreAnnotationPn.SortKey] = new(score + SortDelimiter.Annotation + chunk),
+                        },
+                        ExpressionAttributeNames = new Dictionary<string, string>()
+                        {
+                            ["#a"] = ScoreAnnotationPn.Annotation,
+                        },
+                        ExpressionAttributeValues = new Dictionary<string, AttributeValue>(),
+                    };
+
+                    foreach (var data in chunkData)
+                    {
+                        var id = data.id.ToString("00000");
+
+                        request.ExpressionAttributeNames["#" + id] = id;
+                        request.ExpressionAttributeValues[":" + id] = new(data.content);
+                    }
+
+                    request.UpdateExpression = "SET " + string.Join(", ", chunkData.Select(x =>
+                    {
+                        var id = x.id.ToString("00000");
+                        return $"#a.#{id} = :{id}";
+                    }));
+
+                    try
+                    {
+                        await _dynamoDbClient.UpdateItemAsync(request);
+                    }
+                    catch (Exception)
+                    {
+                        // TODO Retry をする
+                    }
+                }
+                else
+                {
+                    var annotation = new Dictionary<string, AttributeValue>();
+
+                    foreach (var data in chunkData)
+                    {
+                        var id = data.id.ToString("00000");
+                        annotation[id] = new AttributeValue(data.content);
+                    }
+
+                    PutItemRequest request = new()
+                    {
+                        TableName = ScoreTableName,
+                        Item = new Dictionary<string, AttributeValue>()
+                        {
+                            [ScoreAnnotationPn.PartitionKey] = new(partitionKey),
+                            [ScoreAnnotationPn.SortKey] = new(score + SortDelimiter.Annotation + chunk),
+                            [ScoreAnnotationPn.Annotation] = new(){M = annotation},
+                        },
+                    };
+                    try
+                    {
+                        await _dynamoDbClient.PutItemAsync(request);
+                    }
+                    catch (Exception)
+                    {
+                        // TODO Retry をする
+                    }
+                }
+            }
+
+
+
 
         }
 
@@ -159,14 +274,17 @@ namespace ScoreHistoryApi.Logics.Scores
 
             var main = items.First(x => x.s == score);
             var substStart = score.Length + SortDelimiter.Annotation.Length;
-            var chunks = items.Select(x => x.s.Substring(substStart)).ToArray();
+            var chunks = items
+                .Where(x=>x.s != score)
+                .Select(x => x.s.Substring(substStart))
+                .ToArray();
 
             if (!main.value.TryGetValue(ScoreMainPn.Data, out var data))
             {
                 throw new InvalidOperationException("not found.");
             }
 
-            if (!data.M.TryGetValue(ScoreMainPn.Lock, out var optimisticLockValue))
+            if (!main.value.TryGetValue(ScoreMainPn.Lock, out var optimisticLockValue))
             {
                 throw new InvalidOperationException("not found.");
             }
@@ -252,10 +370,10 @@ namespace ScoreHistoryApi.Logics.Scores
                     [":ua"] = new (){N = updateAt.ToString()},
                     [":inc"] = new (){N = "1"},
                     [":l"] = new (){N = oldLock.ToString()},
-                    [":addCount"] = new (){N = oldLock.ToString()},
+                    [":addCount"] = new (){N = newAnnotations.Count.ToString()},
                     [":countMax"] = new() {N = (annotationCountMax - newAnnotations.Count).ToString()},
                 },
-                ConditionExpression = "#l = :l and #data.#ac < :countMax",
+                ConditionExpression = "#l = :l and #d.#ac < :countMax",
                 UpdateExpression =
                     "SET #ua = :ua, #d.#a = list_append(#d.#a, :newAnn) ADD #d.#ac :addCount, #l :inc",
                 TableName = tableName,

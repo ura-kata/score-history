@@ -43,7 +43,7 @@ namespace ScoreHistoryApi.Logics.Scores
 
         public ScoreSnapshotRemover SnapshotRemover => new(_dynamoDbClient, _s3Client, _configuration);
 
-        public ScoreAnnotationAdder AnnotationAdder => new(_dynamoDbClient, _scoreQuota, _configuration);
+        public ScoreAnnotationAdder AnnotationAdder => new(_dynamoDbClient, _scoreQuota, _configuration, _commonLogic);
 
         public ScoreAnnotationRemover AnnotationRemover => new(_dynamoDbClient, _scoreQuota, _configuration);
 
