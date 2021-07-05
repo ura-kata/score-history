@@ -18,6 +18,10 @@ namespace ScoreHistoryApi.Logics.DynamoDb.PropertyNames
         public const string Access = "as";
         /// <summary>楽観ロック</summary>
         public const string Lock = "l";
+        /// <summary>トランザクションタイムアウト</summary>
+        public const string TransactionTimeout = "xt";
+        /// <summary>トランザクションスタート</summary>
+        public const string TransactionStart = "xs";
         /// <summary>データ構造のバージョン</summary>
         public const string Ver = "v";
 

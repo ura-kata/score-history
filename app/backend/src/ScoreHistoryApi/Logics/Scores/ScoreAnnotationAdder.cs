@@ -114,18 +114,41 @@ namespace ScoreHistoryApi.Logics.Scores
 
 
             var now = _commonLogic.Now;
+            var timeout = now.AddSeconds(10);
+
+            // このリクエスト処理を完了しなければならない時間
+            // timeout と同じ時間にしないのは次のリクエストとアノテーションデータ更新部分 (UpdateAnnotationsAsync) が
+            // 確実に並列に実行されないことを保証するため
+            var processTimeout = now.AddSeconds(5);
+            var newLock = _commonLogic.NewGuid();
 
             var annotationCountMax = _quota.AnnotationCountMax;
-
-            await UpdateAsync(ownerId, scoreId, annotationOnMains, oldLock, now, annotationCountMax);
+            var newAnnotationCount = annotations.Count;
 
             var existedChunkSet = new HashSet<string>(existedChunks.Distinct());
 
-            await UpdateAnnotationsAsync(ownerId, scoreId, existedChunkSet, annotationOnDatas);
+            await TransactionStartAndCheckAsync(
+                ownerId, scoreId, oldLock, newLock, now, timeout,
+                annotationCountMax, newAnnotationCount);
+
+            await UpdateAnnotationsAsync(ownerId, scoreId, existedChunkSet, annotationOnDatas, processTimeout);
+
+            var now2 = _commonLogic.Now;
+
+            if (processTimeout <= now2)
+            {
+                // アノテーションデータの保存に時間がかかりタイムアウトが発生するまでに処理が終わっていない場合
+                // 次のリクエストで来ている可能性があるのでこのリクエストは失敗とする
+                throw new InvalidOperationException("timeout");
+            }
+            var newLock2 = _commonLogic.NewGuid();
+
+            await UpdateMainAndTransactionCommitAsync(
+                ownerId, scoreId, annotationOnMains,newLock, newLock2, now2, annotationCountMax);
 
         }
 
-        async Task UpdateAnnotationsAsync(Guid ownerId, Guid scoreId, HashSet<string> oldChunks, List<AnnotationOnData> newAnnotations)
+        async Task UpdateAnnotationsAsync(Guid ownerId, Guid scoreId, HashSet<string> oldChunks, List<AnnotationOnData> newAnnotations, DateTimeOffset timeout)
         {
             var partitionKey = PartitionPrefix.Score + _commonLogic.ConvertIdFromGuid(ownerId);
             var score = _commonLogic.ConvertIdFromGuid(scoreId);
@@ -185,6 +208,14 @@ namespace ScoreHistoryApi.Logics.Scores
                         return $"#a.#{id} = :{id}";
                     }));
 
+                    var now = _commonLogic.Now;
+                    if (timeout <= now)
+                    {
+                        // タイムアウトの時間を過ぎている場合次のリクエストが来ている可能性があるので
+                        // 今回のリクエストは失敗とする
+                        throw new InvalidOperationException("Timeout");
+                    }
+
                     try
                     {
                         await _dynamoDbClient.UpdateItemAsync(request);
@@ -192,6 +223,7 @@ namespace ScoreHistoryApi.Logics.Scores
                     catch (Exception)
                     {
                         // TODO Retry をする
+                        throw;
                     }
                 }
                 else
@@ -214,6 +246,14 @@ namespace ScoreHistoryApi.Logics.Scores
                             [ScoreAnnotationPn.Annotation] = new(){M = annotation},
                         },
                     };
+
+                    var now = _commonLogic.Now;
+                    if (timeout <= now)
+                    {
+                        // タイムアウトの時間を過ぎている場合次のリクエストが来ている可能性があるので
+                        // 今回のリクエストは失敗とする
+                        throw new InvalidOperationException("Timeout");
+                    }
                     try
                     {
                         await _dynamoDbClient.PutItemAsync(request);
@@ -221,17 +261,15 @@ namespace ScoreHistoryApi.Logics.Scores
                     catch (Exception)
                     {
                         // TODO Retry をする
+                        throw;
                     }
                 }
             }
 
-
-
-
         }
 
 
-        async Task<(AnnotationOnMain[] annotations, long annotationCount, long optimisticLock, string[] existedChunks)> GetAsync(
+        async Task<(AnnotationOnMain[] annotations, long annotationCount, string optimisticLock, string[] existedChunks)> GetAsync(
             Guid ownerId,
             Guid scoreId)
         {
@@ -299,12 +337,6 @@ namespace ScoreHistoryApi.Logics.Scores
                 throw new InvalidOperationException("not found.");
             }
 
-
-            if (!long.TryParse(optimisticLockValue.N, out var optimisticLock))
-            {
-                throw new InvalidOperationException("not found.");
-            }
-
             var annotations = annotationValue.L.Select(ann =>
             {
                 ann.M.TryGetValue(ScoreMainPn.DataPn.AnnotationPn.Id, out var idValue);
@@ -321,16 +353,79 @@ namespace ScoreHistoryApi.Logics.Scores
 
             long.TryParse(annotationCountValue.N, out var annotationCount);
 
+            var optimisticLock = optimisticLockValue.S;
+
 
             return (annotations, annotationCount, optimisticLock, chunks);
         }
 
+        async Task TransactionStartAndCheckAsync(
+            Guid ownerId,
+            Guid scoreId,
+            string oldLock,
+            Guid newLock,
+            DateTimeOffset now,
+            DateTimeOffset timeout,
+            int annotationCountMax,
+            int newAnnotationCount
+        )
+        {
+            var partitionKey = PartitionPrefix.Score + _commonLogic.ConvertIdFromGuid(ownerId);
+            var score = _commonLogic.ConvertIdFromGuid(scoreId);
 
-        async Task UpdateAsync(
+            var newLockValue = _commonLogic.ConvertIdFromGuid(newLock);
+            var timeoutValue = timeout.ToUnixTimeMilliseconds().ToString();
+            var nowValue = now.ToUnixTimeMilliseconds().ToString();
+
+            var tableName = ScoreTableName;
+
+            var request = new UpdateItemRequest()
+            {
+                Key = new Dictionary<string, AttributeValue>()
+                {
+                    [ScoreMainPn.PartitionKey] = new(partitionKey),
+                    [ScoreMainPn.SortKey] = new(score),
+                },
+                ExpressionAttributeNames = new Dictionary<string, string>()
+                {
+                    ["#l"] = ScoreMainPn.Lock,
+                    ["#xt"] = ScoreMainPn.TransactionTimeout,
+                    ["#xs"] = ScoreMainPn.TransactionStart,
+                    ["#d"] = ScoreMainPn.Data,
+                    ["#ac"] = ScoreMainPn.DataPn.AnnotationCount,
+                },
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                {
+                    [":new"] = new (){S = newLockValue},
+                    [":old"] = new (){S = oldLock},
+                    [":timeout"] = new (){N=timeoutValue},
+                    [":now"] = new (){N=nowValue},
+                    [":countMax"] = new() {N = (annotationCountMax - newAnnotationCount).ToString()},
+                },
+                // もしもリクエストが完了する前に次のリクエストがきて、かつトランザクションを開始してしまったときに
+                // 現在のリクエストが失敗するようにするために xs を設定する
+                ConditionExpression = "#l = :old and #xt <= :now and #d.#ac < :countMax",
+                UpdateExpression = "SET #l = :new, #xt = :timeout, #xs = :now",
+                TableName = tableName,
+            };
+            try
+            {
+                await _dynamoDbClient.UpdateItemAsync(request);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+        }
+
+
+        async Task UpdateMainAndTransactionCommitAsync(
             Guid ownerId,
             Guid scoreId,
             List<AnnotationOnMain> newAnnotations,
-            long oldLock,
+            Guid oldLock,
+            Guid newLock,
             DateTimeOffset now,
             int annotationCountMax
         )
@@ -339,6 +434,9 @@ namespace ScoreHistoryApi.Logics.Scores
             var score = _commonLogic.ConvertIdFromGuid(scoreId);
 
             var updateAt = now.ToUnixTimeMilliseconds();
+
+            var oldLockValue = _commonLogic.ConvertIdFromGuid(oldLock);
+            var newLockValue = _commonLogic.ConvertIdFromGuid(newLock);
 
             var tableName = ScoreTableName;
 
@@ -356,6 +454,8 @@ namespace ScoreHistoryApi.Logics.Scores
                     ["#a"] = ScoreMainPn.DataPn.Annotation,
                     ["#ac"] = ScoreMainPn.DataPn.AnnotationCount,
                     ["#l"] = ScoreMainPn.Lock,
+                    ["#xt"] = ScoreMainPn.TransactionTimeout,
+                    ["#xs"] = ScoreMainPn.TransactionStart,
                 },
                 ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                 {
@@ -368,14 +468,18 @@ namespace ScoreHistoryApi.Logics.Scores
                         }
                     }).ToList()},
                     [":ua"] = new (){N = updateAt.ToString()},
-                    [":inc"] = new (){N = "1"},
-                    [":l"] = new (){N = oldLock.ToString()},
+                    [":oldL"] = new (){S = oldLockValue},
+                    [":newL"] = new (){S = newLockValue},
                     [":addCount"] = new (){N = newAnnotations.Count.ToString()},
                     [":countMax"] = new() {N = (annotationCountMax - newAnnotations.Count).ToString()},
+                    [":zero"] = new() {N = "0"},
                 },
-                ConditionExpression = "#l = :l and #d.#ac < :countMax",
+                // 最終的な更新処理の終了である Main の更新はトランザクションスタート <= now < トランザクションタイムアウト を
+                // 満たしていなければ次のリクエストが来ていないと言えないので失敗するようにする
+                // API のリクエスト時点で Lock の値を含めるようにすればさらにいい
+                ConditionExpression = "#l = :oldL and #d.#ac < :countMax and #xs <= :ua and :ua < #xt",
                 UpdateExpression =
-                    "SET #ua = :ua, #d.#a = list_append(#d.#a, :newAnn) ADD #d.#ac :addCount, #l :inc",
+                    "SET #ua = :ua, #d.#a = list_append(#d.#a, :newAnn), #xs = :zero, #xt = :zero, #l = :newL ADD #d.#ac :addCount",
                 TableName = tableName,
             };
             try

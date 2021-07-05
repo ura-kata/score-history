@@ -69,9 +69,12 @@ namespace ScoreHistoryApi.Logics.Scores
         {
             var partitionKey = PartitionPrefix.Score + _commonLogic.ConvertIdFromGuid(ownerId);
 
-            await PutAsync(_dynamoDbClient, ScoreTableName, partitionKey);
+            var newLockValue = _commonLogic.NewGuid();
+            var newLock = _commonLogic.ConvertIdFromGuid(newLockValue);
 
-            static async Task PutAsync(IAmazonDynamoDB client, string tableName, string partitionKey)
+            await PutAsync(_dynamoDbClient, ScoreTableName, partitionKey, newLock);
+
+            static async Task PutAsync(IAmazonDynamoDB client, string tableName, string partitionKey, string newLock)
             {
                 var request = new PutItemRequest()
                 {
@@ -80,7 +83,7 @@ namespace ScoreHistoryApi.Logics.Scores
                         [ScoreSummaryPn.PartitionKey] = new(partitionKey),
                         [ScoreSummaryPn.SortKey] = new(DynamoDbConstant.SummarySortKey),
                         [ScoreSummaryPn.ScoreCount] = new(){N = "0"},
-                        [ScoreSummaryPn.Lock] = new(){N = "0"}
+                        [ScoreSummaryPn.Lock] = new(){S = newLock}
                     },
                     TableName = tableName,
                     ExpressionAttributeNames = new Dictionary<string, string>()
@@ -113,10 +116,12 @@ namespace ScoreHistoryApi.Logics.Scores
         public async Task InitializeScoreItemAsync(Guid ownerId)
         {
             var partitionKey = PartitionPrefix.Item + _commonLogic.ConvertIdFromGuid(ownerId);
+            var newLockValue = _commonLogic.NewGuid();
+            var newLock = _commonLogic.ConvertIdFromGuid(newLockValue);
 
-            await PutAsync(_dynamoDbClient, ScoreItemTableName, partitionKey);
+            await PutAsync(_dynamoDbClient, ScoreItemTableName, partitionKey, newLock);
 
-            static async Task PutAsync(IAmazonDynamoDB client, string tableName, string partitionKey)
+            static async Task PutAsync(IAmazonDynamoDB client, string tableName, string partitionKey, string newLock)
             {
                 var request = new PutItemRequest()
                 {
@@ -126,7 +131,7 @@ namespace ScoreHistoryApi.Logics.Scores
                         [ItemSummaryPn.SortKey] = new(DynamoDbConstant.SummarySortKey),
                         [ItemSummaryPn.TotalSize] = new(){N = "0"},
                         [ItemSummaryPn.TotalCount] = new(){N = "0"},
-                        [ItemSummaryPn.Lock] = new(){N = "0"}
+                        [ItemSummaryPn.Lock] = new(){S = newLock},
                     },
                     TableName = tableName,
                     ExpressionAttributeNames = new Dictionary<string, string>()
