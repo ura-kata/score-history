@@ -107,6 +107,12 @@ namespace ScoreHistoryApi.Logics.Scores
             var createAt = now.ToUnixTimeMilliseconds();
             var updateAt = createAt;
 
+            var newLockSummary = _commonLogic.NewGuid();
+            var newLockSummaryValue = _commonLogic.ConvertIdFromGuid(newLockSummary);
+
+            var newLockMain = _commonLogic.NewGuid();
+            var newLockMainValue = _commonLogic.ConvertIdFromGuid(newLockMain);
+
             var actions = new List<TransactWriteItem>()
             {
                 new()
@@ -125,14 +131,15 @@ namespace ScoreHistoryApi.Logics.Scores
                         },
                         ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
                         {
-                            [":inc"] = new() {N = "1"},
+                            [":inc"] = new (){N="1"},
+                            [":newL"] = new (newLockSummaryValue),
                             [":countMax"] = new()
                             {
                                 N = maxCount.ToString()
                             },
                         },
                         ConditionExpression = "#sc < :countMax",
-                        UpdateExpression = "ADD #sc :inc, #lock :inc",
+                        UpdateExpression = "SET #lock = :newL ADD #sc :inc",
                         TableName = tableName,
                     },
                 },
@@ -147,7 +154,9 @@ namespace ScoreHistoryApi.Logics.Scores
                             [ScoreMainPn.CreateAt] = new(){N = createAt.ToString()},
                             [ScoreMainPn.UpdateAt] = new(){N = updateAt.ToString()},
                             [ScoreMainPn.Access] = new(ScoreAccessKind.Private),
-                            [ScoreMainPn.Lock] = new(){N = "0"},
+                            [ScoreMainPn.Lock] = new(newLockMainValue),
+                            [ScoreMainPn.TransactionTimeout] = new() {N = "0"},
+                            [ScoreMainPn.TransactionStart] = new() {N = "0"},
                             [ScoreMainPn.Ver] = new(){N = DynamoDbConstant.Ver1},
                             [ScoreMainPn.SnapshotCount] = new() {N = "0"},
                             [ScoreMainPn.Snapshot] = new() {IsLSet = true},
