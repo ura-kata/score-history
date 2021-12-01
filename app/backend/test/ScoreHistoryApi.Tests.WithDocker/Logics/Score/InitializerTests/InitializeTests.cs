@@ -36,7 +36,7 @@ namespace ScoreHistoryApi.Tests.WithDocker.Logics.Score.InitializerTests
             _fixture = fixture;
             _helper = helper;
 
-            _tableName = "Initializer";
+            _tableName = this.GetType().FullName.Replace(".", "_"); ;
 
             _configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
             _amazonDynamoDb = new DynamoDbClientFactory().SetEndpointUrl(_fixture.Endpoint).Create();
