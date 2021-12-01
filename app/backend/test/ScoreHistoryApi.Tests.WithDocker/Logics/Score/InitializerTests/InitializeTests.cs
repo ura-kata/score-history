@@ -29,7 +29,7 @@ namespace ScoreHistoryApi.Tests.WithDocker.Logics.Score.InitializerTests
 
         // 定数
         private Guid _ownerId = Guid.Parse("eb184d71-3b6e-4619-a1f6-1ddb41de72f0");
-        
+
 
         public InitializeTests(DynamoDbDockerFixture fixture, ITestOutputHelper helper)
         {
