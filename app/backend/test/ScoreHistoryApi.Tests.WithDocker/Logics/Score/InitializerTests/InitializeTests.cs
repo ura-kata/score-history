@@ -9,6 +9,8 @@ using ScoreHistoryApi.Factories;
 using ScoreHistoryApi.Logics;
 using ScoreHistoryApi.Logics.Scores;
 using ScoreHistoryApi.Tests.WithDocker.Utils;
+using ScoreHistoryApi.Tests.WithDocker.Utils.Extensions;
+using ScoreHistoryApi.Tests.WithDocker.Utils.Mocks;
 using Xunit;
 using Xunit.Abstractions;
 
