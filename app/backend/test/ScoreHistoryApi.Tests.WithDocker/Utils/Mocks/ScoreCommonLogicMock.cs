@@ -22,5 +22,23 @@ namespace ScoreHistoryApi.Tests.WithDocker.Utils.Mocks
             Setup(x => x.NewGuid())
                 .Returns(() => DefaultNewGuid);
         }
+
+        public void SetupNewGuidSequential()
+        {
+            int i = 0;
+
+            Setup(x => x.NewGuid())
+                .Returns(() => ConvertTo(i++));
+        }
+
+        public static Guid ConvertTo(int value)
+        {
+            var id = value.ToString("x32")
+                .Insert(20, "-")
+                .Insert(16, "-")
+                .Insert(12, "-")
+                .Insert(8, "-");
+            return new Guid(id);
+        }
     }
 }
