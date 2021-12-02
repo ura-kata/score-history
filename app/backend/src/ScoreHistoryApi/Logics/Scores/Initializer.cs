@@ -29,16 +29,8 @@ namespace ScoreHistoryApi.Logics.Scores
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new InvalidOperationException($"'{EnvironmentNames.ScoreDynamoDbTableName}' is not found.");
             ScoreTableName = tableName;
-
-            var scoreItemTableName = configuration[EnvironmentNames.ScoreItemDynamoDbTableName];
-            if (string.IsNullOrWhiteSpace(scoreItemTableName))
-                throw new InvalidOperationException(
-                    $"'{EnvironmentNames.ScoreItemDynamoDbTableName}' is not found.");
-            ScoreItemTableName = scoreItemTableName;
         }
-
-        public string ScoreItemTableName { get; set; }
-
+        
         public string ScoreTableName { get; set; }
 
         public async Task Initialize(Guid ownerId)
@@ -119,7 +111,7 @@ namespace ScoreHistoryApi.Logics.Scores
             var newLockValue = _commonLogic.NewGuid();
             var newLock = _commonLogic.ConvertIdFromGuid(newLockValue);
 
-            await PutAsync(_dynamoDbClient, ScoreItemTableName, partitionKey, newLock);
+            await PutAsync(_dynamoDbClient, ScoreTableName, partitionKey, newLock);
 
             static async Task PutAsync(IAmazonDynamoDB client, string tableName, string partitionKey, string newLock)
             {
