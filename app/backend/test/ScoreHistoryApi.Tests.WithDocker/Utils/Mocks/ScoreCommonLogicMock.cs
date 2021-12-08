@@ -10,6 +10,7 @@ namespace ScoreHistoryApi.Tests.WithDocker.Utils.Mocks
 
         public DateTimeOffset DefaultNow { get; set; } = DateTimeOffset.Parse("2021-04-01T00:00:00+09:00");
         public Guid DefaultNewGuid { get; set; } = Guid.Empty;
+        public string DefaultLock { get; set; } = "lock";
 
         public ScoreCommonLogicMock()
         {
@@ -21,6 +22,8 @@ namespace ScoreHistoryApi.Tests.WithDocker.Utils.Mocks
                 .Returns(()=>DefaultNow);
             Setup(x => x.NewGuid())
                 .Returns(() => DefaultNewGuid);
+            Setup(x => x.NewLock())
+                .Returns(() => DefaultLock);
         }
 
         public void SetupNewGuidSequential()

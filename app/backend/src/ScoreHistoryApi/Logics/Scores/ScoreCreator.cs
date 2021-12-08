@@ -110,8 +110,7 @@ namespace ScoreHistoryApi.Logics.Scores
             var newLockSummary = _commonLogic.NewGuid();
             var newLockSummaryValue = _commonLogic.ConvertIdFromGuid(newLockSummary);
 
-            var newLockMain = _commonLogic.NewGuid();
-            var newLockMainValue = _commonLogic.ConvertIdFromGuid(newLockMain);
+            var newLockMainValue = _commonLogic.NewLock();
 
             var actions = new List<TransactWriteItem>()
             {

@@ -28,6 +28,12 @@ namespace ScoreHistoryApi.Logics
         /// 新しい Guid を作成する
         /// </summary>
         Guid NewGuid();
+
+        /// <summary>
+        /// 新しいロック文字列を作成する
+        /// </summary>
+        /// <returns></returns>
+        string NewLock();
     }
 
     /// <summary>
@@ -59,5 +65,15 @@ namespace ScoreHistoryApi.Logics
         /// </summary>
         /// <returns></returns>
         public Guid NewGuid() => Guid.NewGuid();
+
+        /// <summary>
+        /// 新しいロック文字列を作成する
+        /// </summary>
+        /// <returns></returns>
+        public string NewLock()
+        {
+            var id = Guid.NewGuid();
+            return ConvertIdFromGuid(id);
+        }
     }
 }
