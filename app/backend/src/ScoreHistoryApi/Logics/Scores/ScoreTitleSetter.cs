@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
 using Microsoft.Extensions.Configuration;
+using ScoreHistoryApi.Logics.DynamoDb.PropertyNames;
 using ScoreHistoryApi.Logics.ScoreDatabases;
 
 namespace ScoreHistoryApi.Logics.Scores
@@ -13,12 +14,19 @@ namespace ScoreHistoryApi.Logics.Scores
         private readonly IAmazonDynamoDB _dynamoDbClient;
         private readonly IScoreQuota _scoreQuota;
         private readonly IConfiguration _configuration;
+        private readonly IScoreCommonLogic _commonLogic;
 
-        public ScoreTitleSetter(IAmazonDynamoDB dynamoDbClient, IScoreQuota scoreQuota, IConfiguration configuration)
+        public ScoreTitleSetter(
+            IAmazonDynamoDB dynamoDbClient,
+            IScoreQuota scoreQuota,
+            IConfiguration configuration,
+            IScoreCommonLogic commonLogic
+            )
         {
             _dynamoDbClient = dynamoDbClient;
             _scoreQuota = scoreQuota;
             _configuration = configuration;
+            _commonLogic = commonLogic;
 
             var tableName = configuration[EnvironmentNames.ScoreDynamoDbTableName];
             if (string.IsNullOrWhiteSpace(tableName))
@@ -47,92 +55,49 @@ namespace ScoreHistoryApi.Logics.Scores
 
         public async Task UpdateTitleAsync(Guid ownerId, Guid scoreId, string title)
         {
-            var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
-            var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
+            var partitionKey = "sc:" + _commonLogic.ConvertIdFromGuid(ownerId);
+            var sortKey = _commonLogic.ConvertIdFromGuid(scoreId);
 
-            var (data, oldHash) = await GetAsync(_dynamoDbClient, ScoreTableName, partitionKey, score);
 
-            data.Title = title;
+            var newLockValue = _commonLogic.NewLock();
+            var now = _commonLogic.Now;
+            var at = now.ToUnixTimeMilliseconds();
 
-            var newHash = data.CalcDataHash();
-
-            var now = ScoreDatabaseUtils.UnixTimeMillisecondsNow();
-            await UpdateAsync(_dynamoDbClient, ScoreTableName, partitionKey, score, title, newHash, oldHash, now);
-
-            static async Task<(DynamoDbScoreDataV1 data,string hash)> GetAsync(
-                IAmazonDynamoDB client,
-                string tableName,
-                string partitionKey,
-                string score)
+            var request = new UpdateItemRequest()
             {
-                var request = new GetItemRequest()
+                Key = new Dictionary<string, AttributeValue>()
                 {
-                    TableName = tableName,
-                    Key = new Dictionary<string, AttributeValue>()
-                    {
-                        [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(partitionKey),
-                        [DynamoDbScorePropertyNames.SortKey] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
-                    },
-                };
-                var response = await client.GetItemAsync(request);
-                var data = response.Item[DynamoDbScorePropertyNames.Data];
-
-                if (data is null)
-                    throw new InvalidOperationException("not found.");
-
-
-                DynamoDbScoreDataV1.TryMapFromAttributeValue(data, out var result);
-                var hash = response.Item[DynamoDbScorePropertyNames.DataHash].S;
-                return (result,hash);
+                    [ScoreMainPn.PartitionKey] = new(partitionKey),
+                    [ScoreMainPn.SortKey] = new(sortKey),
+                },
+                ExpressionAttributeNames = new Dictionary<string, string>()
+                {
+                    ["#updateAt"] = ScoreMainPn.UpdateAt,
+                    ["#lock"] = ScoreMainPn.Lock,
+                    ["#xs"] = ScoreMainPn.TransactionStart,
+                    ["#xt"] = ScoreMainPn.TransactionTimeout,
+                    ["#data"] = ScoreMainPn.Data,
+                    ["#title"] = ScoreMainPn.DataPn.Title,
+                },
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                {
+                    [":newTitle"] = new(title),
+                    [":newLock"] = new(newLockValue),
+                    [":at"] = new(){N = at.ToString()},
+                    [":x"] = new() { N = "0" },
+                },
+                ConditionExpression = "#xt < :at",// TODO API の POST に変更対象の lock の値を付加してその値も比較する
+                UpdateExpression = "SET #updateAt = :at, #lock = :newLock, #data.#title = :newTitle, #xs = :x, #xt = :x",
+                TableName = ScoreTableName,
+            };
+            try
+            {
+                await _dynamoDbClient.UpdateItemAsync(request);
             }
-
-            static async Task UpdateAsync(
-                IAmazonDynamoDB client,
-                string tableName,
-                string partitionKey,
-                string score,
-                string newTitle,
-                string newHash,
-                string oldHash,
-                DateTimeOffset now
-                )
+            catch (Exception ex)
             {
-                var updateAt = ScoreDatabaseUtils.ConvertToUnixTimeMilli(now);
-
-                var request = new UpdateItemRequest()
-                {
-                    Key = new Dictionary<string, AttributeValue>()
-                    {
-                        [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(partitionKey),
-                        [DynamoDbScorePropertyNames.SortKey] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
-                    },
-                    ExpressionAttributeNames = new Dictionary<string, string>()
-                    {
-                        ["#updateAt"] = DynamoDbScorePropertyNames.UpdateAt,
-                        ["#hash"] = DynamoDbScorePropertyNames.DataHash,
-                        ["#data"] = DynamoDbScorePropertyNames.Data,
-                        ["#title"] = DynamoDbScorePropertyNames.DataPropertyNames.Title,
-                    },
-                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
-                    {
-                        [":newTitle"] = new AttributeValue(newTitle),
-                        [":newHash"] = new AttributeValue(newHash),
-                        [":oldHash"] = new AttributeValue(oldHash),
-                        [":updateAt"] = new AttributeValue(updateAt),
-                    },
-                    ConditionExpression = "#hash = :oldHash",
-                    UpdateExpression = "SET #updateAt = :updateAt, #hash = :newHash, #data.#title = :newTitle",
-                    TableName = tableName,
-                };
-                try
-                {
-                    await client.UpdateItemAsync(request);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                    throw;
-                }
+                Console.WriteLine(ex.Message);
+                throw;
             }
         }
     }

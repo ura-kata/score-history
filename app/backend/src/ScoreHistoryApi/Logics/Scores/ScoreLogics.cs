@@ -29,7 +29,7 @@ namespace ScoreHistoryApi.Logics.Scores
 
         public ScoreDeleter Deleter => new(_dynamoDbClient, _s3Client, _scoreQuota, _configuration);
 
-        public ScoreTitleSetter TitleSetter => new(_dynamoDbClient, _scoreQuota, _configuration);
+        public ScoreTitleSetter TitleSetter => new(_dynamoDbClient, _scoreQuota, _configuration, _commonLogic);
 
         public ScoreDescriptionSetter DescriptionSetter => new(_dynamoDbClient, _scoreQuota, _configuration);
 
