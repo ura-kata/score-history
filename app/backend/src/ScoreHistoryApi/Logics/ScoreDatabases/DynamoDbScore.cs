@@ -63,9 +63,9 @@ namespace ScoreHistoryApi.Logics.ScoreDatabases
         /// <exception cref="ArgumentException"></exception>
         public DynamoDbScore(Dictionary<string, AttributeValue> item)
         {
-            OwnerId = item[DynamoDbScorePropertyNames.OwnerId].S;
+            OwnerId = item[DynamoDbScorePropertyNames.PartitionKey].S;
 
-            var scoreId = item[DynamoDbScorePropertyNames.ScoreId].S;
+            var scoreId = item[DynamoDbScorePropertyNames.SortKey].S;
 
             if (scoreId == ScoreDatabaseConstant.ScoreIdSummary)
             {

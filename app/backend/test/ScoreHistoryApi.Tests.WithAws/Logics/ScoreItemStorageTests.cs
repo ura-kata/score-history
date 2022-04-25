@@ -1,16 +1,23 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using ScoreHistoryApi.Factories;
 using ScoreHistoryApi.Logics;
+using ScoreHistoryApi.Logics.ScoreItems;
 using ScoreHistoryApi.Logics.ScoreObjectStorages;
+using ScoreHistoryApi.Logics.Scores;
 using Xunit;
 
 namespace ScoreHistoryApi.Tests.WithAws.Logics
 {
     public class ScoreItemStorageTests
     {
+
+        public const string ScoreTableName = "ura-kata-score-history";
+
         public string RegionSystemName { get; set; }
         public string BucketName { get; set; }
         public IConfiguration Configuration { get; }
@@ -41,8 +48,38 @@ namespace ScoreHistoryApi.Tests.WithAws.Logics
         {
             var factory = new S3ClientFactory()
                 .SetRegionSystemName(RegionSystemName);
+            var dynamoDbClientFactory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
             var bucketName = BucketName;
-            var target = new ScoreItemStorage(new ScoreQuota(), factory.Create(), bucketName);
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    [EnvironmentNames.ScoreDynamoDbTableName] = ScoreTableName,
+                    [EnvironmentNames.ScoreLargeDataDynamoDbTableName] = ScoreTableName,
+                    [EnvironmentNames.ScoreItemDynamoDbTableName] = ScoreTableName,
+                    [EnvironmentNames.ScoreItemRelationDynamoDbTableName] = ScoreTableName,
+                    [EnvironmentNames.ScoreItemS3Bucket] = BucketName,
+                    [EnvironmentNames.ScoreDataSnapshotS3Bucket] = BucketName,
+                })
+                .Build();
+            var serviceCollection = new ServiceCollection();
+
+            serviceCollection.AddSingleton(dynamoDbClientFactory.Create());
+            serviceCollection.AddSingleton(factory.Create());
+            serviceCollection.AddSingleton<ScoreQuota>();
+            serviceCollection.AddSingleton<IConfiguration>(configuration);
+            serviceCollection.AddScoped<Initializer>();
+            serviceCollection.AddScoped<ScoreItemAdder>();
+            serviceCollection.AddScoped<ScoreItemDeleter>();
+            serviceCollection.AddScoped<ScoreItemInfoGetter>();
+            serviceCollection.AddScoped<ScoreAccessSetter>();
+
+            await using var provider = serviceCollection.BuildServiceProvider();
+
+            var initializer = provider.GetRequiredService<Initializer>();
+            var creator = provider.GetRequiredService<ScoreItemAdder>();
+            var deleter = provider.GetRequiredService<ScoreItemDeleter>();
+            var infoGetter = provider.GetRequiredService<ScoreItemInfoGetter>();
+            var accessSetter = provider.GetRequiredService<ScoreAccessSetter>();
 
             var ownerId = Guid.Parse("4935be9f-8b08-4de9-a615-96ec04c2e4c5");
             var scoreIds = new[]
@@ -66,11 +103,11 @@ namespace ScoreHistoryApi.Tests.WithAws.Logics
             {
                 foreach (var itemId in itemIds)
                 {
-                    await target.SaveObjectAsync(ownerId, scoreId, itemId, data, ScoreObjectAccessControls.Private);
+                    await creator.SaveObjectAsync(ownerId, scoreId, itemId, data, ScoreObjectAccessControls.Private);
                 }
             }
 
-            await target.SetAccessControlPolicyAsync(ownerId, scoreIds[0], ScoreObjectAccessControls.Public);
+            await accessSetter.SetScoreItemAccessControlPolicyAsync(ownerId, scoreIds[0], ScoreObjectAccessControls.Public);
         }
     }
 }
