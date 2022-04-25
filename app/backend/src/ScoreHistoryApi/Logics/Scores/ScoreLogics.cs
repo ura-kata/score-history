@@ -27,7 +27,7 @@ namespace ScoreHistoryApi.Logics.Scores
 
         public ScoreSummaryGetter SummaryGetter => new(_dynamoDbClient, _scoreQuota, _configuration, _commonLogic);
 
-        public ScoreDeleter Deleter => new(_dynamoDbClient, _s3Client, _scoreQuota, _configuration);
+        public ScoreDeleter Deleter => new(_dynamoDbClient, _s3Client, _scoreQuota, _configuration, _commonLogic);
 
         public ScoreTitleSetter TitleSetter => new(_dynamoDbClient, _scoreQuota, _configuration, _commonLogic);
 

@@ -7,6 +7,8 @@ using Amazon.DynamoDBv2.Model;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Configuration;
+using ScoreHistoryApi.Logics.DynamoDb;
+using ScoreHistoryApi.Logics.DynamoDb.PropertyNames;
 using ScoreHistoryApi.Logics.Exceptions;
 using ScoreHistoryApi.Logics.ScoreDatabases;
 
@@ -18,55 +20,34 @@ namespace ScoreHistoryApi.Logics.Scores
         private readonly IAmazonS3 _s3Client;
         private readonly IScoreQuota _scoreQuota;
         private readonly IConfiguration _configuration;
+        private readonly IScoreCommonLogic _commonLogic;
 
-        public ScoreDeleter(IAmazonDynamoDB dynamoDbClient, IAmazonS3 s3Client, IScoreQuota scoreQuota, IConfiguration configuration)
+        public ScoreDeleter(IAmazonDynamoDB dynamoDbClient, IAmazonS3 s3Client, IScoreQuota scoreQuota, IConfiguration configuration, IScoreCommonLogic commonLogic)
         {
             _dynamoDbClient = dynamoDbClient;
             _s3Client = s3Client;
             _scoreQuota = scoreQuota;
             _configuration = configuration;
+            _commonLogic = commonLogic;
 
 
             var tableName = configuration[EnvironmentNames.ScoreDynamoDbTableName];
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new InvalidOperationException($"'{EnvironmentNames.ScoreDynamoDbTableName}' is not found.");
             ScoreTableName = tableName;
-
-            var scoreDataTableName = configuration[EnvironmentNames.ScoreLargeDataDynamoDbTableName];
-            if (string.IsNullOrWhiteSpace(scoreDataTableName))
-                throw new InvalidOperationException(
-                    $"'{EnvironmentNames.ScoreLargeDataDynamoDbTableName}' is not found.");
-            ScoreDataTableName = scoreDataTableName;
-
-            var scoreItemRelationTableName = configuration[EnvironmentNames.ScoreItemRelationDynamoDbTableName];
-            if (string.IsNullOrWhiteSpace(scoreItemRelationTableName))
-                throw new InvalidOperationException(
-                    $"'{EnvironmentNames.ScoreItemRelationDynamoDbTableName}' is not found.");
-            ScoreItemRelationTableName = scoreItemRelationTableName;
-
-
+            
 
             var scoreItemS3Bucket = configuration[EnvironmentNames.ScoreItemS3Bucket];
             if (string.IsNullOrWhiteSpace(scoreItemS3Bucket))
                 throw new InvalidOperationException(
                     $"'{EnvironmentNames.ScoreItemS3Bucket}' is not found.");
             ScoreItemS3Bucket = scoreItemS3Bucket;
-
-            var scoreDataSnapshotS3Bucket = configuration[EnvironmentNames.ScoreDataSnapshotS3Bucket];
-            if (string.IsNullOrWhiteSpace(scoreDataSnapshotS3Bucket))
-                throw new InvalidOperationException(
-                    $"'{EnvironmentNames.ScoreDataSnapshotS3Bucket}' is not found.");
-            ScoreDataSnapshotS3Bucket = scoreDataSnapshotS3Bucket;
         }
 
-        public string ScoreItemRelationTableName { get; set; }
 
-        public string ScoreDataSnapshotS3Bucket { get; set; }
 
         public string ScoreItemS3Bucket { get; set; }
-
-        public string ScoreDataTableName { get; set; }
-
+        
         public string ScoreTableName { get; set; }
 
         public async Task DeleteAsync(Guid ownerId, Guid scoreId)
@@ -90,7 +71,7 @@ namespace ScoreHistoryApi.Logics.Scores
             {
                 var listRequest = new ListObjectsV2Request()
                 {
-                    BucketName = ScoreDataSnapshotS3Bucket,
+                    BucketName = ScoreItemS3Bucket,
                     Prefix = prefix,
                     ContinuationToken = string.IsNullOrWhiteSpace(continuationToken) ? null : continuationToken,
                 };
@@ -104,7 +85,7 @@ namespace ScoreHistoryApi.Logics.Scores
 
             var request = new DeleteObjectsRequest()
             {
-                BucketName = ScoreDataSnapshotS3Bucket,
+                BucketName = ScoreItemS3Bucket,
                 Objects = objectKeyList.Select(x=>new KeyVersion()
                 {
                     Key = x
@@ -113,113 +94,115 @@ namespace ScoreHistoryApi.Logics.Scores
             await _s3Client.DeleteObjectsAsync(request);
         }
 
+
+        public async Task DeleteMainAsync(Guid ownerId, Guid scoreId)
+        {
+            var partitionKey = PartitionPrefix.Score + _commonLogic.ConvertIdFromGuid(ownerId);
+            var score = _commonLogic.ConvertIdFromGuid(scoreId);
+
+            var newLockSummary = _commonLogic.NewGuid();
+            var newLockSummaryValue = _commonLogic.ConvertIdFromGuid(newLockSummary);
+
+            var actions = new List<TransactWriteItem>()
+                {
+                    new()
+                    {
+                        Delete = new Delete()
+                        {
+                            Key = new Dictionary<string, AttributeValue>()
+                            {
+                                [ScoreMainPn.PartitionKey] = new(partitionKey),
+                                [ScoreMainPn.SortKey] = new(score),
+                            },
+                            ExpressionAttributeNames = new Dictionary<string, string>()
+                            {
+                                ["#score"] = ScoreMainPn.SortKey,
+                            },
+                            ConditionExpression = "attribute_exists(#score)",
+                            TableName = ScoreTableName,
+                        }
+                    },
+                    new()
+                    {
+                        Update = new Update()
+                        {
+                            Key = new Dictionary<string, AttributeValue>()
+                            {
+                                [ScoreMainPn.PartitionKey] = new(partitionKey),
+                                [ScoreMainPn.SortKey] = new(DynamoDbConstant.SummarySortKey),
+                            },
+                            ExpressionAttributeNames = new Dictionary<string, string>()
+                            {
+                                ["#sc"] = ScoreSummaryPn.ScoreCount,
+                                ["#lock"] = ScoreSummaryPn.Lock,
+                            },
+                            ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                            {
+                                [":increment"] = new AttributeValue(){N = "-1"},
+                                [":newL"] = new (newLockSummaryValue),
+                            },
+                            UpdateExpression = "ADD #count :increment DELETE #scores :score",
+                            TableName = ScoreTableName,
+                        },
+                    },
+                };
+            try
+            {
+                await _dynamoDbClient.TransactWriteItemsAsync(new TransactWriteItemsRequest()
+                {
+                    TransactItems = actions,
+                    ReturnConsumedCapacity = ReturnConsumedCapacity.TOTAL
+                });
+            }
+            catch (ResourceNotFoundException ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+            catch (InternalServerErrorException ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+            catch (TransactionCanceledException ex)
+            {
+                var deleteReason = ex.CancellationReasons[0];
+
+                if (deleteReason.Code == "ConditionalCheckFailed")
+                {
+                    throw new NotFoundScoreException(ex);
+                }
+                var updateReason = ex.CancellationReasons[1];
+
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+        }
+
         public async Task DeleteScoreAsync(Guid ownerId, Guid scoreId)
         {
-            await DeleteMainAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId);
+            await DeleteMainAsync(ownerId, scoreId);
 
             // スナップショットの削除は SQS を使ったほうがいいかも
             var snapshotScoreIds = await GetSnapshotScoreIdsAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId);
 
             await DeleteSnapshotsAsync(_dynamoDbClient, ScoreTableName, ownerId, snapshotScoreIds);
 
-            var dataIds = await GetScoreAnnotationDataIdsAsync(_dynamoDbClient, ScoreDataTableName, ownerId, scoreId);
+            var dataIds = await GetScoreAnnotationDataIdsAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId);
             var descriptionDataIds =
-                await GetScoreDescriptionDataIdsAsync(_dynamoDbClient, ScoreDataTableName, ownerId, scoreId);
+                await GetScoreDescriptionDataIdsAsync(_dynamoDbClient, ScoreTableName, ownerId, scoreId);
 
-            await DeleteDataAsync(_dynamoDbClient, ScoreDataTableName, ownerId, dataIds.Concat(descriptionDataIds).ToArray());
+            await DeleteDataAsync(_dynamoDbClient, ScoreTableName, ownerId, dataIds.Concat(descriptionDataIds).ToArray());
 
-            var itemRelations = await GetItemRelations(_dynamoDbClient, ScoreItemRelationTableName, ownerId);
+            var itemRelations = await GetItemRelations(_dynamoDbClient, ScoreTableName, ownerId);
 
-            await DeleteItemRelations(_dynamoDbClient, ScoreItemRelationTableName, ownerId, itemRelations);
+            await DeleteItemRelations(_dynamoDbClient, ScoreTableName, ownerId, itemRelations);
 
-            static async Task DeleteMainAsync(IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId)
-            {
-                var partitionKey = ScoreDatabaseUtils.ConvertToPartitionKey(ownerId);
-                var score = ScoreDatabaseUtils.ConvertToBase64(scoreId);
-
-                var actions = new List<TransactWriteItem>()
-                {
-                    new TransactWriteItem()
-                    {
-                        Delete = new Delete()
-                        {
-                            Key = new Dictionary<string, AttributeValue>()
-                            {
-                                [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(partitionKey),
-                                [DynamoDbScorePropertyNames.SortKey] = new AttributeValue(ScoreDatabaseConstant.ScoreIdMainPrefix + score),
-                            },
-                            ExpressionAttributeNames = new Dictionary<string, string>()
-                            {
-                                ["#score"] = DynamoDbScorePropertyNames.SortKey,
-                            },
-                            ConditionExpression = "attribute_exists(#score)",
-                            TableName = tableName,
-                        }
-                    },
-                    new TransactWriteItem()
-                    {
-                        Update = new Update()
-                        {
-                            Key = new Dictionary<string, AttributeValue>()
-                            {
-                                [DynamoDbScorePropertyNames.PartitionKey] = new AttributeValue(partitionKey),
-                                [DynamoDbScorePropertyNames.SortKey] = new AttributeValue(ScoreDatabaseConstant.ScoreIdSummary),
-                            },
-                            ExpressionAttributeNames = new Dictionary<string, string>()
-                            {
-                                ["#count"] = DynamoDbScorePropertyNames.ScoreCount,
-                                ["#scores"] = DynamoDbScorePropertyNames.Scores,
-                            },
-                            ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
-                            {
-                                [":increment"] = new AttributeValue(){N = "-1"},
-                                [":score"] = new AttributeValue()
-                                {
-                                    SS = new List<string>(){score}
-                                }
-                            },
-                            UpdateExpression = "ADD #count :increment DELETE #scores :score",
-                            TableName = tableName,
-                        },
-                    },
-                };
-                try
-                {
-                    await client.TransactWriteItemsAsync(new TransactWriteItemsRequest()
-                    {
-                        TransactItems = actions,
-                        ReturnConsumedCapacity = ReturnConsumedCapacity.TOTAL
-                    });
-                }
-                catch (ResourceNotFoundException ex)
-                {
-                    Console.WriteLine(ex.Message);
-                    throw;
-                }
-                catch (InternalServerErrorException ex)
-                {
-                    Console.WriteLine(ex.Message);
-                    throw;
-                }
-                catch (TransactionCanceledException ex)
-                {
-                    var deleteReason = ex.CancellationReasons[0];
-
-                    if (deleteReason.Code == "ConditionalCheckFailed")
-                    {
-                        throw new NotFoundScoreException(ex);
-                    }
-                    var updateReason = ex.CancellationReasons[1];
-
-                    Console.WriteLine(ex.Message);
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                    throw;
-                }
-            }
 
             static async Task<string[]> GetSnapshotScoreIdsAsync(IAmazonDynamoDB client, string tableName, Guid ownerId, Guid scoreId)
             {

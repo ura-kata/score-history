@@ -4,95 +4,60 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using ScoreHistoryApi.Factories;
 using ScoreHistoryApi.Logics;
 using ScoreHistoryApi.Logics.Scores;
 using ScoreHistoryApi.Models.Scores;
+using ScoreHistoryApi.Tests.WithFake.Utils.Extensions;
+using ScoreHistoryApi.Tests.WithFake.Utils.Factories;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace ScoreHistoryApi.Tests.WithFake.Logics.Scores
 {
     public class ScoreDeleterTests
     {
-        public const string ScoreTableName = "ura-kata-score-history";
-        public const string ScoreBucket = "ura-kata-score-history-bucket";
+        private readonly ITestOutputHelper _helper;
+        private readonly ServiceCollection _services;
+        private readonly IConfigurationRoot _configuration;
+
+        private Guid _ownerId = Guid.Parse("36a2264f-9843-4c51-96d4-92c4626571ef");
+        private Guid _scoreId = Guid.Parse("ce815421-4538-4b2e-bcb5-4a43f8c01320");
+
+        public ScoreDeleterTests(ITestOutputHelper helper)
+        {
+            _helper = helper;
+            _configuration = new TestDefaultConfigurationFactory().Build();
+
+            _services = new ServiceCollection();
+            _services.AddScoped<IConfiguration>(_ => _configuration);
+            _services.AddScoped(_ => new TestDefaultDynamoDbClientFactory().Build());
+            _services.AddScoped(_ => new TestDefaultS3ClientFactory().Build());
+            _services.AddScoped<IScoreQuota>(_ => new ScoreQuota());
+            _services.AddScoped<IScoreCommonLogic, ScoreCommonLogic>();
+
+            _services.AddScoped<Initializer>();
+            _services.AddScoped<ScoreCreator>();
+            _services.AddScoped<ScorePageAdder>();
+            _services.AddScoped<ScoreAnnotationAdder>();
+            _services.AddScoped<ScoreSnapshotCreator>();
+
+            _services.AddScoped<ScoreDeleter>();
+
+            _helper = null;
+
+        }
 
         [Fact]
         public async Task DeleteAsyncTest()
         {
-
-          var factory = new DynamoDbClientFactory().SetEndpointUrl(new Uri("http://localhost:18000"));
-            var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string>()
-                {
-                    [EnvironmentNames.ScoreDynamoDbTableName] = ScoreTableName,
-                    [EnvironmentNames.ScoreLargeDataDynamoDbTableName] = ScoreTableName,
-                    [EnvironmentNames.ScoreItemDynamoDbTableName] = ScoreTableName,
-                    [EnvironmentNames.ScoreItemRelationDynamoDbTableName] = ScoreTableName,
-                    [EnvironmentNames.ScoreItemS3Bucket] = ScoreBucket,
-                    [EnvironmentNames.ScoreDataSnapshotS3Bucket] = ScoreBucket,
-                })
-                .Build();
-            var serviceCollection = new ServiceCollection();
-
-            serviceCollection.AddSingleton(factory.Create());
-            serviceCollection.AddSingleton<ScoreQuota>();
-            serviceCollection.AddSingleton<IConfiguration>(configuration);
-            serviceCollection.AddScoped<Initializer>();
-            serviceCollection.AddScoped<ScoreDeleter>();
-            serviceCollection.AddScoped<ScoreDetailGetter>();
-            serviceCollection.AddScoped<ScoreCreator>();
-            serviceCollection.AddScoped<ScorePageAdder>();
-            serviceCollection.AddScoped<ScorePageRemover>();
-            serviceCollection.AddScoped<ScoreAnnotationAdder>();
-            serviceCollection.AddScoped<ScoreAnnotationRemover>();
-            serviceCollection.AddScoped<ScoreAnnotationReplacer>();
-            serviceCollection.AddScoped<ScoreSnapshotCreator>();
-            serviceCollection.AddScoped<ScoreSnapshotRemover>();
-            serviceCollection.AddScoped<ScoreSnapshotDetailGetter>();
-            serviceCollection.AddScoped<ScoreSnapshotSummaryGetter>();
-
-            await using var provider = serviceCollection.BuildServiceProvider();
-
-
-            var initializer = provider.GetRequiredService<Initializer>();
-            var creator = provider.GetRequiredService<ScoreCreator>();
-            var deleter = provider.GetRequiredService<ScoreDeleter>();
-            var getter = provider.GetRequiredService<ScoreDetailGetter>();
-            var pageAdder = provider.GetRequiredService<ScorePageAdder>();
-            var pageRemover = provider.GetRequiredService<ScorePageRemover>();
-            var annotationAdder = provider.GetRequiredService<ScoreAnnotationAdder>();
-            var annotationRemover = provider.GetRequiredService<ScoreAnnotationRemover>();
-            var annotationReplacer = provider.GetRequiredService<ScoreAnnotationReplacer>();
-            var snapshotCreator = provider.GetRequiredService<ScoreSnapshotCreator>();
-            var snapshotRemover = provider.GetRequiredService<ScoreSnapshotRemover>();
-            var snapshotDetailGetter = provider.GetRequiredService<ScoreSnapshotDetailGetter>();
-            var snapshotSummaryGetter = provider.GetRequiredService<ScoreSnapshotSummaryGetter>();
-
-
-
-            var ownerId = Guid.Parse("36a2264f-9843-4c51-96d4-92c4626571ef");
-            var scoreId = Guid.Parse("ce815421-4538-4b2e-bcb5-4a43f8c01320");
+            // 前処理
 
             var title = "test score";
             var description = "楽譜の説明(楽譜削除)";
 
-            try
-            {
-                await initializer.InitializeScoreAsync(ownerId);
-            }
-            catch
-            {
-                // 初期化のエラーは握りつぶす
-            }
-            try
-            {
-                await creator.CreateAsync(ownerId, scoreId, title, description);
-            }
-            catch
-            {
-                // 初期化のエラーは握りつぶす
-            }
+            await _services.InvokeIgnoreErrorAsync<Initializer>(init => init.InitializeScoreAsync(_ownerId));
+            await _services.InvokeIgnoreErrorAsync<ScoreCreator>(creator =>
+                creator.CreateAsync(_ownerId, _scoreId, title, description));
 
             var newAnnotations = new List<NewScoreAnnotation>()
             {
@@ -103,14 +68,8 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.Scores
                 new NewScoreAnnotation(){Content = Guid.NewGuid().ToString()},
             };
 
-            try
-            {
-                await annotationAdder.AddAnnotationsInnerAsync(ownerId, scoreId, newAnnotations);
-            }
-            catch (Exception)
-            {
-                // 握りつぶす
-            }
+            await _services.InvokeIgnoreErrorAsync<ScoreAnnotationAdder>(add =>
+                add.AddAnnotationsInnerAsync(_ownerId, _scoreId, newAnnotations));
 
 
             var newPages = new List<NewScorePage>()
@@ -142,14 +101,10 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.Scores
                 }
             };
 
-            try
-            {
-                await pageAdder.AddPagesAsync(ownerId, scoreId, newPages);
-            }
-            catch (Exception)
-            {
-                // 握りつぶす
-            }
+
+            await _services.InvokeIgnoreErrorAsync<ScorePageAdder>(add =>
+                add.AddPagesAsync(_ownerId, _scoreId, newPages));
+            
 
             var snapshotNames = new string[]
             {
@@ -159,19 +114,22 @@ namespace ScoreHistoryApi.Tests.WithFake.Logics.Scores
                 "スナップショット名4",
             }.OrderBy(x => x).ToArray();
 
-            try
+            await _services.InvokeIgnoreErrorAsync<ScoreSnapshotCreator>(async creator =>
             {
                 foreach (var snapshotName in snapshotNames)
                 {
-                    await snapshotCreator.CreateSnapshotAsync(ownerId, scoreId, snapshotName);
+                    await creator.CreateSnapshotAsync(_ownerId, _scoreId, snapshotName);
                 }
-            }
-            catch (Exception)
-            {
-                // 握りつぶす
-            }
+            });
 
-            await deleter.DeleteAsync(ownerId, scoreId);
+            await using var provider = _services.BuildServiceProvider();
+
+            var deleter = provider.GetRequiredService<ScoreDeleter>();
+
+
+            // 実行
+
+            await deleter.DeleteAsync(_ownerId, _scoreId);
         }
     }
 }
