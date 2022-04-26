@@ -10,16 +10,16 @@ namespace Db.V1.Models
         /// <summary>
         /// スナップショットの ID
         /// </summary>
-        public Guid Id { get; set; }
+        public Guid? Id { get; set; }
 
         /// <summary>
         /// スナップショットの名前
         /// </summary>
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// 作成日時
         /// </summary>
-        public DateTimeOffset CreateAt { get; set; }
+        public DateTimeOffset? CreateAt { get; set; }
     }
 }

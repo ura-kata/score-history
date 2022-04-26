@@ -10,21 +10,21 @@ namespace Db.V1.Models
         /// <summary>
         /// owner id
         /// </summary>
-        public Guid OwnerId { get; set; }
+        public Guid? OwnerId { get; set; }
 
         /// <summary>
         /// 楽譜の保存数
         /// </summary>
-        public int ScoreCount { get; set; }
+        public int? ScoreCount { get; set; }
 
         /// <summary>
         /// 作成日時
         /// </summary>
-        public DateTimeOffset CreateAt { get; set; }
+        public DateTimeOffset? CreateAt { get; set; }
 
         /// <summary>
         /// 更新日時
         /// </summary>
-        public DateTimeOffset UpdateAt { get; set; }
+        public DateTimeOffset? UpdateAt { get; set; }
     }
 }

@@ -8,16 +8,16 @@ namespace Db.V1.Models
         /// <summary>
         /// アノテーションの id
         /// </summary>
-        public int Id { get; set; }
+        public int? Id { get; set; }
 
         /// <summary>
         /// アノテーションデータとの関連 id
         /// </summary>
-        public int RefId { get; set; }
+        public int? RefId { get; set; }
 
         /// <summary>
         /// アノテーションの文字列の長さ
         /// </summary>
-        public int Length { get; set; }
+        public int? Length { get; set; }
     }
 }

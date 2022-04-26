@@ -10,41 +10,41 @@ namespace Db.V1.Models
         /// <summary>
         /// タイトル
         /// </summary>
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         /// <summary>
         /// 説明
         /// </summary>
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         /// <summary>
         /// ページ枚数
         /// </summary>
-        public int PageCount { get; set; }
+        public int? PageCount { get; set; }
 
         /// <summary>
         /// 次のページの id
         /// </summary>
-        public int NextPageId { get; set; }
+        public int? NextPageId { get; set; }
 
         /// <summary>
         /// ページ
         /// </summary>
-        public List<PageDb> Pages { get; set; }
+        public List<PageDb>? Pages { get; set; }
 
         /// <summary>
         /// アノテーションの数
         /// </summary>
-        public int AnnotationCount { get; set; }
+        public int? AnnotationCount { get; set; }
 
         /// <summary>
         /// 次のアノテーションの id
         /// </summary>
-        public int NextAnnotationId { get; set; }
+        public int? NextAnnotationId { get; set; }
 
         /// <summary>
         /// アノテーション
         /// </summary>
-        public List<AnnotationRefDb> Annotations { get; set; }
+        public List<AnnotationRefDb>? Annotations { get; set; }
     }
 }

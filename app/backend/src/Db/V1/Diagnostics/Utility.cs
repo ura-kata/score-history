@@ -1,4 +1,3 @@
-#nullable enable
 using System;
 
 namespace Db.V1.Diagnostics
@@ -17,7 +16,7 @@ namespace Db.V1.Diagnostics
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        Guid ConvertIdFromDynamo(string id);
+        Guid ConvertFromDbId(string id);
 
         /// <summary>
         /// 現在時間
@@ -34,6 +33,18 @@ namespace Db.V1.Diagnostics
         /// </summary>
         /// <returns></returns>
         string NewLock();
+
+        /// <summary>
+        /// DB に保存する時間に変換する
+        /// </summary>
+        /// <returns></returns>
+        string ConvertToDbTime(DateTimeOffset time);
+
+        /// <summary>
+        /// DB に保存する時間から <see cref="DateTimeOffset"/> に変換する
+        /// </summary>
+        /// <returns></returns>
+        DateTimeOffset ConvertFromDbTime(string dbTime);
     }
 
     /// <summary>
@@ -53,7 +64,7 @@ namespace Db.V1.Diagnostics
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public Guid ConvertIdFromDynamo(string id) => new Guid(Convert.FromBase64String(id + "=="));
+        public Guid ConvertFromDbId(string id) => new Guid(Convert.FromBase64String(id + "=="));
 
         /// <summary>
         /// 現在時間
@@ -74,6 +85,24 @@ namespace Db.V1.Diagnostics
         {
             var id = Guid.NewGuid();
             return ConvertIdFromGuid(id);
+        }
+
+        /// <summary>
+        /// DB に保存する時間に変換する
+        /// </summary>
+        /// <returns></returns>
+        public string ConvertToDbTime(DateTimeOffset time)
+        {
+            return time.ToUnixTimeMilliseconds().ToString();
+        }
+
+        /// <summary>
+        /// DB に保存する時間から <see cref="DateTimeOffset"/> に変換する
+        /// </summary>
+        /// <returns></returns>
+        public DateTimeOffset ConvertFromDbTime(string dbTime)
+        {
+            return DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(dbTime));
         }
     }
 }

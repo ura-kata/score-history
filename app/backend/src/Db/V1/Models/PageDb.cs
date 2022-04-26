@@ -10,21 +10,21 @@ namespace Db.V1.Models
         /// <summary>
         /// ページの id
         /// </summary>
-        public int Id { get; set; }
+        public int? Id { get; set; }
 
         /// <summary>
         /// アイテムの id
         /// </summary>
-        public Guid ItemId { get; set; }
+        public Guid? ItemId { get; set; }
 
         /// <summary>
         /// アイテムオブジェクトの種類
         /// </summary>
-        public string Kind { get; set; }
+        public string? Kind { get; set; }
 
         /// <summary>
         /// ページの名前
         /// </summary>
-        public string Name { get; set; }
+        public string? Name { get; set; }
     }
 }
