@@ -9,7 +9,7 @@ namespace Db.V1.Diagnostics
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        string ConvertIdFromGuid(Guid id);
+        string ConvertIdToDbId(Guid id);
 
         /// <summary>
         /// DynamoDB に保存した ID を Guid に変換する
@@ -57,7 +57,7 @@ namespace Db.V1.Diagnostics
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public string ConvertIdFromGuid(Guid id) => Convert.ToBase64String(id.ToByteArray()).Substring(0, 22);
+        public string ConvertIdToDbId(Guid id) => Convert.ToBase64String(id.ToByteArray()).Substring(0, 22);
 
         /// <summary>
         /// DynamoDB に保存した ID を Guid に変換する
@@ -84,7 +84,7 @@ namespace Db.V1.Diagnostics
         public string NewLock()
         {
             var id = Guid.NewGuid();
-            return ConvertIdFromGuid(id);
+            return ConvertIdToDbId(id);
         }
 
         /// <summary>
