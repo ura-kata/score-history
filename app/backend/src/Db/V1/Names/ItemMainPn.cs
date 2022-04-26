@@ -27,10 +27,10 @@ namespace Db.V1.Names
         public const string Ver = "v";
 
         /// <summary>楽譜に含まれるアイテムのトータルサイズ</summary>
-        public const string TotalSize = "t";
+        public const string TotalSizeInScore = "t";
 
         /// <summary>楽譜に含まれるアイテムの数</summary>
-        public const string TotalCount = "c";
+        public const string TotalCountInScore = "c";
 
         /// <summary>アイテムのリスト</summary>
         public const string Items = "i";

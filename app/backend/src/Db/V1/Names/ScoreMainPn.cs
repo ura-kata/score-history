@@ -82,7 +82,7 @@ namespace Db.V1.Names
                 public const string ItemId = "t";
 
                 /// <summary>アイテムオブジェクトの種類</summary>
-                public const string ItemObjectKind = "k";
+                public const string Kind = "k";
 
                 /// <summary>Page</summary>
                 public const string Name = "p";
